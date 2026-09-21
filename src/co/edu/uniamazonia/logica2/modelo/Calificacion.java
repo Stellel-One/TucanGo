@@ -1,48 +1,55 @@
 package co.edu.uniamazonia.logica2.modelo;
 
-/**
- * Entidad que representa la calificación de un viaje en TucanGo.
- * <p>
- * Permite a los estudiantes evaluar el servicio (1–5 estrellas) y dejar
- * un comentario. Es clave para la reputación y seguridad del sistema.
- * </p>
- *
- * @author Equipo TucanGo
- * @version 1.0
- */
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Calificacion {
 
-    /** Puntaje de 1 a 5 estrellas. */
-    private int puntaje;
-
-    /** Comentario libre del estudiante sobre el viaje. */
+    private double puntaje;
     private String comentario;
+    private String rolEmisor;
+    private String fechaHora;
 
-    /**
-     * Construye una calificación con puntaje y comentario.
-     *
-     * @param puntaje   valor 1–5
-     * @param comentario texto libre (puede ser vacío)
-     * @throws IllegalArgumentException si puntaje fuera de rango
-     */
-    public Calificacion(int puntaje, String comentario) {
-        if (puntaje < 1 || puntaje > 5) {
-            throw new IllegalArgumentException("El puntaje debe estar entre 1 y 5");
-        }
+    public Calificacion(double puntaje, String comentario, String rolEmisor) {
+        validarPuntaje(puntaje);
         this.puntaje = puntaje;
-        this.comentario = comentario != null ? comentario : "";
+        this.comentario = comentario;
+        this.rolEmisor = rolEmisor;
+        this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
-    // Getters y Setters
+    public Calificacion(double puntaje, String comentario, String rolEmisor, String fechaHora) {
+        validarPuntaje(puntaje);
+        this.puntaje = puntaje;
+        this.comentario = comentario;
+        this.rolEmisor = rolEmisor;
+        this.fechaHora = fechaHora;
+    }
 
-    public int getPuntaje() {
+    private void validarPuntaje(double puntaje) {
+        if (puntaje < 1.0 || puntaje > 5.0) {
+            throw new IllegalArgumentException("El puntaje debe estar estrictamente en el rango [1.0, 5.0]");
+        }
+    }
+
+    public void registrarCalificacion(double puntaje, String comentario, String emisor) {
+        validarPuntaje(puntaje);
+        this.puntaje = puntaje;
+        this.comentario = comentario;
+        this.rolEmisor = emisor;
+        this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    public double obtenerPuntaje() {
+        return this.puntaje;
+    }
+
+    public double getPuntaje() {
         return puntaje;
     }
 
-    public void setPuntaje(int puntaje) {
-        if (puntaje < 1 || puntaje > 5) {
-            throw new IllegalArgumentException("El puntaje debe estar entre 1 y 5");
-        }
+    public void setPuntaje(double puntaje) {
+        validarPuntaje(puntaje);
         this.puntaje = puntaje;
     }
 
@@ -51,29 +58,32 @@ public class Calificacion {
     }
 
     public void setComentario(String comentario) {
-        this.comentario = comentario != null ? comentario : "";
+        this.comentario = comentario;
     }
 
-    // Responsabilidades
-
-    /**
-     * Registra la calificación en el sistema.
-     */
-    public void registrarCalificacion() {
-        System.out.println("Calificación registrada: " + puntaje + "/5 - \"" + comentario + "\"");
+    public String getRolEmisor() {
+        return rolEmisor;
     }
 
-    /**
-     * Obtiene el puntaje numérico de la calificación.
-     *
-     * @return puntaje 1–5
-     */
-    public int obtenerPuntaje() {
-        return puntaje;
+    public void setRolEmisor(String rolEmisor) {
+        this.rolEmisor = rolEmisor;
+    }
+
+    public String getFechaHora() {
+        return fechaHora;
+    }
+
+    public void setFechaHora(String fechaHora) {
+        this.fechaHora = fechaHora;
     }
 
     @Override
     public String toString() {
-        return "Calificacion{puntaje=" + puntaje + ", comentario='" + comentario + "'}";
+        return "Calificacion{" +
+                "puntaje=" + puntaje +
+                ", comentario='" + comentario + '\'' +
+                ", rolEmisor='" + rolEmisor + '\'' +
+                ", fechaHora='" + fechaHora + '\'' +
+                '}';
     }
 }

@@ -1,103 +1,120 @@
 package co.edu.uniamazonia.logica2.modelo;
 
-/**
- * Entidad que representa a un motorista verificado en el sistema TucanGo.
- * <p>
- * Solo motoristas con documentación al día (identificación, placa, SOAT vigente)
- * pueden aceptar viajes. El sistema verifica estos documentos antes de habilitarlos.
- * </p>
- *
- * @author Equipo TucanGo
- * @version 1.0
- */
-public class Motorista {
+import java.util.ArrayList;
+import java.util.List;
 
-    /** Número de identificación (cédula/licencia de conducción). */
-    private String identificacion;
+public class Motorista extends Persona {
 
-    /** Placa de la motocicleta autorizada. */
-    private String placa;
+    private boolean disponible;
+    private List<Moto> motos;
+    private List<Viaje> viajesAtendidos;
 
-    /** Indica si el SOAT está vigente (true) o vencido (false). */
-    private boolean soatVigente;
-
-    /**
-     * Construye un motorista con sus datos de verificación.
-     *
-     * @param identificacion número de identificación
-     * @param placa          placa del vehículo
-     * @param soatVigente    estado del SOAT
-     */
-    public Motorista(String identificacion, String placa, boolean soatVigente) {
-        this.identificacion = identificacion;
-        this.placa = placa;
-        this.soatVigente = soatVigente;
+    public Motorista(String identificacion, String nombre, String telefono, String correoInstitucional) {
+        super(identificacion, nombre, telefono, correoInstitucional);
+        this.disponible = true;
+        this.motos = new ArrayList<>();
+        this.viajesAtendidos = new ArrayList<>();
     }
 
-    // Getters y Setters
-
-    public String getIdentificacion() {
-        return identificacion;
+    public Motorista(String identificacion, String nombre, String telefono, String correoInstitucional, boolean disponible) {
+        super(identificacion, nombre, telefono, correoInstitucional);
+        this.disponible = disponible;
+        this.motos = new ArrayList<>();
+        this.viajesAtendidos = new ArrayList<>();
     }
 
-    public void setIdentificacion(String identificacion) {
-        this.identificacion = identificacion;
+    public void registrarMoto(Moto moto) {
+        if (moto != null) {
+            if (this.motos.isEmpty()) {
+                moto.setActiva(true);
+            }
+            this.motos.add(moto);
+        }
     }
 
-    public String getPlaca() {
-        return placa;
-    }
-
-    public void setPlaca(String placa) {
-        this.placa = placa;
-    }
-
-    public boolean isSoatVigente() {
-        return soatVigente;
-    }
-
-    public void setSoatVigente(boolean soatVigente) {
-        this.soatVigente = soatVigente;
-    }
-
-    // Responsabilidades
-
-    /**
-     * Acepta una solicitud de viaje.
-     *
-     * @return true si el motorista acepta el viaje
-     */
-    public boolean aceptarViaje() {
-        if (!soatVigente) {
-            System.out.println("Motorista " + identificacion + " no puede aceptar viajes: SOAT vencido.");
+    public boolean seleccionarMotoActiva(String placa) {
+        if (placa == null || placa.isBlank()) {
             return false;
         }
-        System.out.println("Motorista " + identificacion + " (placa " + placa + ") acepta el viaje.");
+        boolean encontrada = false;
+        for (Moto m : this.motos) {
+            if (m.getPlaca().equalsIgnoreCase(placa)) {
+                encontrada = true;
+                break;
+            }
+        }
+        if (!encontrada) {
+            return false;
+        }
+        for (Moto m : this.motos) {
+            m.setActiva(m.getPlaca().equalsIgnoreCase(placa));
+        }
         return true;
     }
 
-    /**
-     * Registra la disponibilidad del motorista para atender viajes.
-     */
-    public void registrarDisponibilidad() {
-        System.out.println("Motorista " + identificacion + " se marca como disponible.");
+    public Moto obtenerMotoActiva() {
+        for (Moto m : this.motos) {
+            if (m.isActiva()) {
+                return m;
+            }
+        }
+        return null;
     }
 
-    /**
-     * Verifica que la documentación del motorista esté al día.
-     *
-     * @return true si identificación y SOAT son válidos
-     */
+    public boolean aceptarViaje(String codigoViaje) {
+        if (this.disponible && verificarDocumentos() && codigoViaje != null && !codigoViaje.isBlank()) {
+            this.disponible = false;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean aceptarViaje(Viaje viaje) {
+        if (viaje != null && this.disponible && verificarDocumentos()) {
+            viaje.setEstado(EstadoViaje.ACEPTADO);
+            this.viajesAtendidos.add(viaje);
+            this.disponible = false;
+            return true;
+        }
+        return false;
+    }
+
+    public void registrarDisponibilidad(boolean estado) {
+        this.disponible = estado;
+    }
+
     public boolean verificarDocumentos() {
-        boolean valido = identificacion != null && !identificacion.isBlank()
-                && placa != null && !placa.isBlank()
-                && soatVigente;
-        System.out.println("Verificación documentos motorista " + identificacion + ": " + (valido ? "OK" : "INCOMPLETO"));
-        return valido;
+        Moto motoActiva = obtenerMotoActiva();
+        return motoActiva != null && motoActiva.validarSoat();
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
+    public List<Moto> getMotos() {
+        return motos;
+    }
+
+    public List<Viaje> getViajesAtendidos() {
+        return viajesAtendidos;
     }
 
     @Override
     public String toString() {
-        return "Motorista{identificacion='" + identificacion + "', placa='" + placa + "', soatVigente=" + soatVigente + "}";
+        Moto activa = obtenerMotoActiva();
+        return "Motorista{" +
+                "disponible=" + disponible +
+                ", totalMotos=" + motos.size() +
+                ", motoActiva=" + (activa != null ? activa.getPlaca() : "Ninguna") +
+                ", identificacion='" + identificacion + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", telefono='" + telefono + '\'' +
+                ", correoInstitucional='" + correoInstitucional + '\'' +
+                '}';
     }
 }

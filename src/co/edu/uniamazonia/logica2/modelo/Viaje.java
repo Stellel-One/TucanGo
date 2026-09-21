@@ -1,57 +1,60 @@
 package co.edu.uniamazonia.logica2.modelo;
 
-/**
- * Entidad central que representa un viaje en el sistema TucanGo.
- * <p>
- * Vincula a un {@link Estudiante} y a un {@link Motorista}, y agrega
- * {@link Calificacion} y {@link Pago}. Es la transacción núcleo del sistema.
- * </p>
- *
- * @author Equipo TucanGo
- * @version 1.0
- */
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Viaje {
 
-    /** Código único generado para el viaje. */
     private String codigoViaje;
-
-    /** Punto de origen del viaje. */
     private String origen;
-
-    /** Punto de destino del viaje. */
     private String destino;
-
-    /** Tarifa acordada para el viaje. */
     private double tarifa;
-
-    /** Estudiante que solicita el viaje. */
-    private Estudiante estudiante;
-
-    /** Motorista que atiende el viaje. */
-    private Motorista motorista;
-
-    /** Calificación opcional del viaje (0..1). */
-    private Calificacion calificacion;
-
-    /** Pago asociado al viaje (1..1). */
+    private EstadoViaje estado;
+    private String fechaHora;
     private Pago pago;
+    private List<Calificacion> calificaciones;
 
-    /**
-     * Construye un viaje con sus datos esenciales.
-     *
-     * @param codigoViaje identificador único
-     * @param origen      punto de partida
-     * @param destino     punto de llegada
-     * @param tarifa      valor acordado
-     */
     public Viaje(String codigoViaje, String origen, String destino, double tarifa) {
+        if (tarifa < 0) {
+            throw new IllegalArgumentException("La tarifa no puede ser negativa");
+        }
         this.codigoViaje = codigoViaje;
         this.origen = origen;
         this.destino = destino;
         this.tarifa = tarifa;
+        this.estado = EstadoViaje.SOLICITADO;
+        this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        this.pago = new Pago(tarifa, MetodoPago.EFECTIVO);
+        this.calificaciones = new ArrayList<>();
     }
 
-    // Getters y Setters
+    public double calcularTarifa() {
+        return this.tarifa;
+    }
+
+    public void iniciarViaje() {
+        if (this.estado == EstadoViaje.SOLICITADO || this.estado == EstadoViaje.ACEPTADO) {
+            this.estado = EstadoViaje.EN_CURSO;
+        }
+    }
+
+    public void finalizarViaje() {
+        if (this.estado == EstadoViaje.EN_CURSO || this.estado == EstadoViaje.ACEPTADO) {
+            this.estado = EstadoViaje.FINALIZADO;
+        }
+    }
+
+    public void cancelarViaje() {
+        this.estado = EstadoViaje.CANCELADO;
+    }
+
+    public void agregarCalificacion(Calificacion calificacion) {
+        if (calificacion != null && this.calificaciones.size() < 2) {
+            this.calificaciones.add(calificacion);
+        }
+    }
 
     public String getCodigoViaje() {
         return codigoViaje;
@@ -82,31 +85,29 @@ public class Viaje {
     }
 
     public void setTarifa(double tarifa) {
+        if (tarifa < 0) {
+            throw new IllegalArgumentException("La tarifa no puede ser negativa");
+        }
         this.tarifa = tarifa;
+        if (this.pago != null) {
+            this.pago.setValor(tarifa);
+        }
     }
 
-    public Estudiante getEstudiante() {
-        return estudiante;
+    public EstadoViaje getEstado() {
+        return estado;
     }
 
-    public void setEstudiante(Estudiante estudiante) {
-        this.estudiante = estudiante;
+    public void setEstado(EstadoViaje estado) {
+        this.estado = estado;
     }
 
-    public Motorista getMotorista() {
-        return motorista;
+    public String getFechaHora() {
+        return fechaHora;
     }
 
-    public void setMotorista(Motorista motorista) {
-        this.motorista = motorista;
-    }
-
-    public Calificacion getCalificacion() {
-        return calificacion;
-    }
-
-    public void setCalificacion(Calificacion calificacion) {
-        this.calificacion = calificacion;
+    public void setFechaHora(String fechaHora) {
+        this.fechaHora = fechaHora;
     }
 
     public Pago getPago() {
@@ -117,36 +118,21 @@ public class Viaje {
         this.pago = pago;
     }
 
-    // Responsabilidades
-
-    /**
-     * Calcula la tarifa del viaje (puede aplicar lógica de distancia, hora, etc.).
-     *
-     * @return tarifa calculada
-     */
-    public double calcularTarifa() {
-        // Lógica base: tarifa fija acordada; aquí podría ir cálculo por distancia/tiempo
-        System.out.println("Calculando tarifa para viaje " + codigoViaje + ": $" + tarifa);
-        return tarifa;
-    }
-
-    /**
-     * Marca el inicio del recorrido.
-     */
-    public void iniciarViaje() {
-        System.out.println("Viaje " + codigoViaje + " INICIADO: " + origen + " -> " + destino);
-    }
-
-    /**
-     * Marca la finalización del recorrido.
-     */
-    public void finalizarViaje() {
-        System.out.println("Viaje " + codigoViaje + " FINALIZADO en " + destino);
+    public List<Calificacion> getCalificaciones() {
+        return calificaciones;
     }
 
     @Override
     public String toString() {
-        return "Viaje{codigoViaje='" + codigoViaje + "', origen='" + origen + "', destino='" + destino
-                + "', tarifa=" + tarifa + "}";
+        return "Viaje{" +
+                "codigoViaje='" + codigoViaje + '\'' +
+                ", origen='" + origen + '\'' +
+                ", destino='" + destino + '\'' +
+                ", tarifa=$" + tarifa +
+                ", estado=" + estado +
+                ", fechaHora='" + fechaHora + '\'' +
+                ", pago=" + pago +
+                ", totalCalificaciones=" + calificaciones.size() +
+                '}';
     }
 }

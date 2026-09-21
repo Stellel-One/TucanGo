@@ -1,89 +1,73 @@
 package co.edu.uniamazonia.logica2.modelo;
 
-/**
- * Entidad que representa a un estudiante usuario del sistema TucanGo.
- * <p>
- * Responsable de solicitar viajes y confirmar su llegada segura.
- * </p>
- *
- * @author Equipo TucanGo
- * @version 1.0
- */
-public class Estudiante {
+import java.util.ArrayList;
+import java.util.List;
 
-    /** Código único del estudiante en la universidad. */
-    private String codigo;
+public class Estudiante extends Persona {
 
-    /** Nombre completo del estudiante. */
-    private String nombre;
+    private String codigoEstudiantil;
+    private List<Viaje> viajesSolicitados;
 
-    /** Teléfono de contacto para emergencias. */
-    private String telefono;
-
-    /**
-     * Construye un estudiante con sus datos básicos.
-     *
-     * @param codigo    código universitario
-     * @param nombre    nombre completo
-     * @param telefono  teléfono de contacto
-     */
-    public Estudiante(String codigo, String nombre, String telefono) {
-        this.codigo = codigo;
-        this.nombre = nombre;
-        this.telefono = telefono;
+    public Estudiante(String identificacion, String nombre, String telefono, String correoInstitucional, String codigoEstudiantil) {
+        super(identificacion, nombre, telefono, correoInstitucional);
+        this.codigoEstudiantil = codigoEstudiantil;
+        this.viajesSolicitados = new ArrayList<>();
     }
 
-    // Getters y Setters
-
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    // Responsabilidades
-
-    /**
-     * Solicita un viaje en el sistema.
-     *
-     * @return true si la solicitud se registró correctamente
-     */
-    public boolean solicitarViaje() {
-        System.out.println("Estudiante " + nombre + " (" + codigo + ") solicita un viaje.");
-        // Aquí se delegaría a la capa de servicio para crear el Viaje
+    public boolean solicitarViaje(String origen, String destino) {
+        if (origen == null || origen.isBlank() || destino == null || destino.isBlank()) {
+            return false;
+        }
+        String codigoV = "VIA-" + (this.viajesSolicitados.size() + 1);
+        Viaje nuevoViaje = new Viaje(codigoV, origen, destino, 0.0);
+        this.viajesSolicitados.add(nuevoViaje);
         return true;
     }
 
-    /**
-     * Confirma que el estudiante llegó sano y salvo a su destino.
-     *
-     * @return true si la confirmación se registró
-     */
-    public boolean marcarLlegadaSegura() {
-        System.out.println("Estudiante " + nombre + " confirma llegada segura.");
+    public boolean solicitarViaje(String origen, String destino, double tarifa) {
+        if (origen == null || origen.isBlank() || destino == null || destino.isBlank() || tarifa < 0) {
+            return false;
+        }
+        String codigoV = "VIA-" + (this.viajesSolicitados.size() + 1);
+        Viaje nuevoViaje = new Viaje(codigoV, origen, destino, tarifa);
+        this.viajesSolicitados.add(nuevoViaje);
         return true;
+    }
+
+    public boolean marcarLlegadaSegura(String codigoViaje) {
+        if (codigoViaje == null || codigoViaje.isBlank()) {
+            return false;
+        }
+        for (Viaje v : viajesSolicitados) {
+            if (v.getCodigoViaje().equalsIgnoreCase(codigoViaje)) {
+                v.finalizarViaje();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getCodigoEstudiantil() {
+        return codigoEstudiantil;
+    }
+
+    public void setCodigoEstudiantil(String codigoEstudiantil) {
+        this.codigoEstudiantil = codigoEstudiantil;
+    }
+
+    public List<Viaje> getViajesSolicitados() {
+        return viajesSolicitados;
     }
 
     @Override
     public String toString() {
-        return "Estudiante{codigo='" + codigo + "', nombre='" + nombre + "', telefono='" + telefono + "'}";
+        return "Estudiante{" +
+                "codigoEstudiantil='" + codigoEstudiantil + '\'' +
+                ", identificacion='" + identificacion + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", telefono='" + telefono + '\'' +
+                ", correoInstitucional='" + correoInstitucional + '\'' +
+                ", totalViajes=" + viajesSolicitados.size() +
+                '}';
     }
 }

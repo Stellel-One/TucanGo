@@ -1,0 +1,159 @@
+@startuml TucanGo_v5_0
+skinparam classAttributeIconSize 0
+skinparam style strictuml
+skinparam handwritten false
+skinparam monochrome false
+skinparam packageStyle rectangle
+
+title TucanGo — Diagrama de Clases UML v5.0 (Lógica y Algoritmos II)
+
+' ==========================================
+' ENUMERACIONES
+' ==========================================
+enum EstadoViaje {
+    SOLICITADO
+    ACEPTADO
+    EN_CURSO
+    FINALIZADO
+    CANCELADO
+}
+
+enum MetodoPago {
+    EFECTIVO
+    NEQUI
+}
+
+enum EstadoPago {
+    PENDIENTE
+    PAGADO_REPORTADO
+    CONFIRMADO_RECIBIDO
+}
+
+enum RolAdmin {
+    DESARROLLADOR
+    BIENESTAR_UNIVERSITARIO
+}
+
+' ==========================================
+' JERARQUÍA DE PERSONAS (ENTIDAD BASE ABSTRACTA)
+' ==========================================
+abstract class Persona {
+    # identificacion : String
+    # nombre : String
+    # telefono : String
+    # correoInstitucional : String
+    + obtenerIdentificacion() : String
+    + obtenerNombreCompleto() : String
+}
+
+class Estudiante {
+    - codigoEstudiantil : String
+    + solicitarViaje(origen: String, destino: String) : Boolean
+    + marcarLlegadaSegura(codigoViaje: String) : Boolean
+}
+
+class Motorista {
+    - disponible : Boolean
+    + aceptarViaje(codigoViaje: String) : Boolean
+    + registrarDisponibilidad(estado: Boolean) : Void
+    + registrarMoto(moto: Moto) : Void
+    + seleccionarMotoActiva(placa: String) : Boolean
+    + verificarDocumentos() : Boolean
+}
+
+class Administrador {
+    - rol : RolAdmin
+    + consultarReportesDemanda() : Void
+    + gestionarUsuarios() : Void
+}
+
+' ==========================================
+' MÓDULO VEHÍCULO (SEPARACIÓN SRP Y FLOTA)
+' ==========================================
+class Moto {
+    - placa : String
+    - marca : String
+    - modelo : String
+    - cilindraje : Integer
+    - soatVigente : Boolean
+    - numeroSoat : String
+    - activa : Boolean
+    + validarSoat() : Boolean
+}
+
+' ==========================================
+' SERVICIOS (SEPARACIÓN DE RESPONSABILIDADES)
+' ==========================================
+class ServicioAutenticacion {
+    + registrarse(persona: Persona, clave: String) : Boolean
+    + iniciarSesion(correo: String, clave: String) : Boolean
+    + cerrarSesion(identificacion: String) : Void
+}
+
+class ServicioReportes {
+    + obtenerDestinosMasFrecuentes(limite: Integer) : List
+    + consultarViajesPorDestino(destino: String) : List
+    + calcularPorcentajePorSector(sector: String) : Double
+}
+
+' ==========================================
+' NÚCLEO TRANSACCIONAL (VIAJE)
+' ==========================================
+class Viaje {
+    - codigoViaje : String
+    - origen : String
+    - destino : String
+    - tarifa : Double
+    - estado : EstadoViaje
+    - fechaHora : String
+    + calcularTarifa() : Double
+    + iniciarViaje() : Void
+    + finalizarViaje() : Void
+    + cancelarViaje() : Void
+}
+
+' ==========================================
+' PAGOS (FLUJO MUTUO SIN COMPROBANTE)
+' ==========================================
+class Pago {
+    - valor : Double
+    - metodo : MetodoPago
+    - estado : EstadoPago
+    - pagadoPorEstudiante : Boolean
+    - confirmadoPorMotorista : Boolean
+    - fechaHora : String
+    + reportarPagoEstudiante(metodo: MetodoPago) : Void
+    + confirmarRecepcionMotorista() : Boolean
+}
+
+' ==========================================
+' CALIFICACIÓN BIDIRECCIONAL
+' ==========================================
+class Calificacion {
+    - puntaje : Double
+    - comentario : String
+    - rolEmisor : String
+    - fechaHora : String
+    + registrarCalificacion(puntaje: Double, comentario: String, emisor: String) : Void
+    + obtenerPuntaje() : Double
+}
+
+' ==========================================
+' RELACIONES Y GENERALIZACIÓN
+' ==========================================
+Persona <|-- Estudiante : Generalización (Es-Una)
+Persona <|-- Motorista : Generalización (Es-Una)
+Persona <|-- Administrador : Generalización (Es-Una)
+
+Motorista "1" --> "1..*" Moto : registra / conduce >
+ServicioAutenticacion ..> Persona : gestiona >
+Administrador "1" ..> ServicioReportes : consulta >
+ServicioReportes ..> Viaje : analiza >
+
+Estudiante "1" --> "0..*" Viaje : solicita >
+Motorista  "1" --> "0..*" Viaje : atiende >
+
+Viaje "1" --> "1"    Pago : liquidaCon >
+Viaje "1" --> "0..2" Calificacion : evaluadoEn (bidireccional) >
+
+@enduml

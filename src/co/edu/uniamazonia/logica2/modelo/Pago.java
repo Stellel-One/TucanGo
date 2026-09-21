@@ -1,79 +1,106 @@
 package co.edu.uniamazonia.logica2.modelo;
 
-/**
- * Entidad que representa el pago de un viaje en TucanGo.
- * <p>
- * Registra el valor acordado y el estado (pendiente/confirmado).
- * No procesa pagos electrónicos reales; solo modela el registro.
- * </p>
- *
- * @author Equipo TucanGo
- * @version 1.0
- */
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 public class Pago {
 
-    /** Valor monetario del viaje. */
     private double valor;
+    private MetodoPago metodo;
+    private EstadoPago estado;
+    private boolean pagadoPorEstudiante;
+    private boolean confirmadoPorMotorista;
+    private String fechaHora;
 
-    /** Estado del pago: "pendiente" o "confirmado". */
-    private String estado;
-
-    /**
-     * Construye un pago con su valor inicial en estado pendiente.
-     *
-     * @param valor monto del viaje
-     */
-    public Pago(double valor) {
+    public Pago(double valor, MetodoPago metodo) {
+        if (valor < 0) {
+            throw new IllegalArgumentException("El valor del pago no puede ser negativo");
+        }
         this.valor = valor;
-        this.estado = "pendiente";
+        this.metodo = metodo;
+        this.estado = EstadoPago.PENDIENTE;
+        this.pagadoPorEstudiante = false;
+        this.confirmadoPorMotorista = false;
+        this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
     }
 
-    // Getters y Setters
+    public void reportarPagoEstudiante(MetodoPago metodo) {
+        this.metodo = metodo;
+        this.pagadoPorEstudiante = true;
+        this.estado = EstadoPago.PAGADO_REPORTADO;
+        this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    public boolean confirmarRecepcionMotorista() {
+        if (this.pagadoPorEstudiante || this.estado == EstadoPago.PAGADO_REPORTADO || this.estado == EstadoPago.PENDIENTE) {
+            this.confirmadoPorMotorista = true;
+            this.estado = EstadoPago.CONFIRMADO_RECIBIDO;
+            this.fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            return true;
+        }
+        return false;
+    }
 
     public double getValor() {
         return valor;
     }
 
     public void setValor(double valor) {
+        if (valor < 0) {
+            throw new IllegalArgumentException("El valor del pago no puede ser negativo");
+        }
         this.valor = valor;
     }
 
-    public String getEstado() {
+    public MetodoPago getMetodo() {
+        return metodo;
+    }
+
+    public void setMetodo(MetodoPago metodo) {
+        this.metodo = metodo;
+    }
+
+    public EstadoPago getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
-        if (estado != null && (estado.equalsIgnoreCase("pendiente") || estado.equalsIgnoreCase("confirmado"))) {
-            this.estado = estado.toLowerCase();
-        }
+    public void setEstado(EstadoPago estado) {
+        this.estado = estado;
     }
 
-    // Responsabilidades
-
-    /**
-     * Registra el pago en el sistema.
-     */
-    public void registrarPago() {
-        System.out.println("Pago registrado: $" + valor + " [" + estado + "]");
+    public boolean isPagadoPorEstudiante() {
+        return pagadoPorEstudiante;
     }
 
-    /**
-     * Confirma que el pago se realizó correctamente.
-     *
-     * @return true si el estado cambió a confirmado
-     */
-    public boolean confirmarPago() {
-        if ("pendiente".equalsIgnoreCase(estado)) {
-            this.estado = "confirmado";
-            System.out.println("Pago CONFIRMADO: $" + valor);
-            return true;
-        }
-        System.out.println("Pago ya estaba en estado: " + estado);
-        return false;
+    public void setPagadoPorEstudiante(boolean pagadoPorEstudiante) {
+        this.pagadoPorEstudiante = pagadoPorEstudiante;
+    }
+
+    public boolean isConfirmadoPorMotorista() {
+        return confirmadoPorMotorista;
+    }
+
+    public void setConfirmadoPorMotorista(boolean confirmadoPorMotorista) {
+        this.confirmadoPorMotorista = confirmadoPorMotorista;
+    }
+
+    public String getFechaHora() {
+        return fechaHora;
+    }
+
+    public void setFechaHora(String fechaHora) {
+        this.fechaHora = fechaHora;
     }
 
     @Override
     public String toString() {
-        return "Pago{valor=" + valor + ", estado='" + estado + "'}";
+        return "Pago{" +
+                "valor=$" + valor +
+                ", metodo=" + metodo +
+                ", estado=" + estado +
+                ", pagadoPorEstudiante=" + pagadoPorEstudiante +
+                ", confirmadoPorMotorista=" + confirmadoPorMotorista +
+                ", fechaHora='" + fechaHora + '\'' +
+                '}';
     }
 }
