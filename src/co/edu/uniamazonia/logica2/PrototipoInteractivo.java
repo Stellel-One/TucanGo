@@ -112,8 +112,8 @@ public class PrototipoInteractivo {
     //  1. Registrar estudiante
     // ==================================================================
     private static void registrarEstudiante() {
-        System.out.println(">>> Elegiste: [1] REGISTRAR ESTUDIANTE");
-        System.out.println("    Ahora completa estos datos:\n");
+        System.out.println(">>> Seleccionaste: [1] Registrar ESTUDIANTE");
+        System.out.println("    Escribi los siguientes datos:\n");
 
         String nombre = pedirTexto("Nombre completo", "Juan Perez");
         String identificacion = pedirTexto("Numero de cedula", "1001234567");
@@ -130,8 +130,8 @@ public class PrototipoInteractivo {
     //  2. Registrar motorista (+ moto)
     // ==================================================================
     private static void registrarMotorista() {
-        System.out.println(">>> Elegiste: [2] REGISTRAR MOTORISTA + MOTO");
-        System.out.println("    Primero, los datos del motorista:\n");
+        System.out.println(">>> Seleccionaste: [2] Registrar MOTORISTA + MOTO");
+        System.out.println("    Escribi los datos del MOTORISTA:\n");
 
         String nombre = pedirTexto("Nombre completo", "Jhonatan Saavedra");
         String identificacion = pedirTexto("Numero de cedula", "1009876543");
@@ -140,7 +140,7 @@ public class PrototipoInteractivo {
 
         motorista = new Motorista(identificacion, nombre, telefono, correo);
 
-        System.out.println("\n    Ahora, los datos de la MOTO:\n");
+        System.out.println("\n    Escribi los datos de la MOTO:\n");
         String placa = pedirTexto("Placa de la moto", "ABC-12D");
         String marca = pedirTexto("Marca", "Yamaha");
         String modelo = pedirTexto("Modelo", "FZ 2.0");
@@ -165,7 +165,8 @@ public class PrototipoInteractivo {
     private static void solicitarViaje() {
         if (!hayEstudiante()) return;
 
-        System.out.println(">>> Elegiste: [3] PEDIR UN VIAJE\n");
+        System.out.println(">>> Seleccionaste: [3] Pedir un VIAJE");
+        System.out.println("    Escribi los siguientes datos:\n");
         String origen = pedirTexto("Desde donde salis (origen)", "Campus Universidad");
         String destino = pedirTexto("A donde vas (destino)", "Barrio Centro");
         double tarifa = pedirDecimal("Cuanto pagas (tarifa)", 8000);
@@ -185,7 +186,7 @@ public class PrototipoInteractivo {
     // ==================================================================
     private static void aceptarViaje() {
         if (!hayMotorista()) return;
-        System.out.println(">>> Elegiste: [4] ACEPTAR EL VIAJE");
+        System.out.println(">>> Seleccionaste: [4] ACEPTAR EL VIAJE");
         Viaje v = viajePendiente();
         if (v == null) return;
 
@@ -199,7 +200,7 @@ public class PrototipoInteractivo {
     //  5. Iniciar viaje
     // ==================================================================
     private static void iniciarViaje() {
-        System.out.println(">>> Elegiste: [5] INICIAR EL VIAJE");
+        System.out.println(">>> Seleccionaste: [5] INICIAR EL VIAJE");
         Viaje v = viajeActual();
         if (v == null) return;
         v.iniciarViaje();
@@ -210,7 +211,7 @@ public class PrototipoInteractivo {
     //  6. Finalizar viaje
     // ==================================================================
     private static void finalizarViaje() {
-        System.out.println(">>> Elegiste: [6] FINALIZAR EL VIAJE");
+        System.out.println(">>> Seleccionaste: [6] FINALIZAR EL VIAJE");
         Viaje v = viajeActual();
         if (v == null) return;
         v.finalizarViaje();
@@ -221,7 +222,7 @@ public class PrototipoInteractivo {
     //  7. Reportar pago
     // ==================================================================
     private static void reportarPago() {
-        System.out.println(">>> Elegiste: [7] REPORTAR PAGO");
+        System.out.println(">>> Seleccionaste: [7] REPORTAR PAGO");
         Viaje v = viajeActual();
         if (v == null) return;
 
@@ -240,7 +241,7 @@ public class PrototipoInteractivo {
     //  8. Confirmar pago
     // ==================================================================
     private static void confirmarPago() {
-        System.out.println(">>> Elegiste: [8] CONFIRMAR PAGO");
+        System.out.println(">>> Seleccionaste: [8] CONFIRMAR PAGO");
         Viaje v = viajeActual();
         if (v == null) return;
 
@@ -254,7 +255,7 @@ public class PrototipoInteractivo {
     //  9. Calificar
     // ==================================================================
     private static void calificar() {
-        System.out.println(">>> Elegiste: [9] CALIFICAR EL VIAJE");
+        System.out.println(">>> Seleccionaste: [9] CALIFICAR EL VIAJE");
         Viaje v = viajeActual();
         if (v == null) return;
 
@@ -287,7 +288,7 @@ public class PrototipoInteractivo {
     // 10. Ver estado
     // ==================================================================
     private static void verEstado() {
-        System.out.println(">>> Elegiste: [10] VER EL ESTADO\n");
+        System.out.println(">>> Seleccionaste: [10] VER EL ESTADO\n");
         System.out.println("================ ESTADO ACTUAL ================");
         System.out.println("ESTUDIANTE : " + (estudiante != null ? estudiante : "(sin registrar)"));
         System.out.println("MOTORISTA  : " + (motorista != null ? motorista : "(sin registrar)"));
@@ -353,72 +354,92 @@ public class PrototipoInteractivo {
     }
 
     // ==================================================================
-    //  Helpers de entrada (con EJEMPLO)
+    //  Helpers de entrada: muestran QUÉ escribir, con un renglón propio
     // ==================================================================
     private static String pedirTexto(String etiqueta, String ejemplo) {
         while (true) {
-            System.out.print("  " + etiqueta + "  (ej: " + ejemplo + "):  ");
+            System.out.println("   " + etiqueta);
+            System.out.println("      -> escribe algo como:   " + ejemplo);
+            System.out.print("      > ");
             String linea = sc.nextLine().trim();
+            System.out.println();
             if (!linea.isEmpty()) {
                 return linea;
             }
-            System.out.println("  [!] No puede quedar vacio. Escribi algo, por ejemplo: " + ejemplo);
+            System.out.println("      [!] No puede quedar vacio.");
         }
     }
 
     private static int pedirEntero(String etiqueta, int porDefecto) {
         while (true) {
-            System.out.print("  " + etiqueta + "  (ej: " + porDefecto + ",  si presionas ENTER queda " + porDefecto + "):  ");
+            System.out.println("   " + etiqueta);
+            System.out.println("      -> escribe un numero, ej:   " + porDefecto
+                    + "    (si presionas ENTER queda " + porDefecto + ")");
+            System.out.print("      > ");
             String linea = sc.nextLine().trim();
+            System.out.println();
             if (linea.isEmpty()) {
                 return porDefecto;
             }
             try {
                 return Integer.parseInt(linea);
             } catch (NumberFormatException e) {
-                System.out.println("  [!] Escribi solo numeros, por ejemplo: " + porDefecto);
+                System.out.println("      [!] Escribi solo numeros.");
             }
         }
     }
 
     private static int pedirOpcionNumerica(String etiqueta, int porDefecto) {
         while (true) {
-            System.out.print("  " + etiqueta + "  (si presionas ENTER queda " + porDefecto + "):  ");
+            System.out.println("   " + etiqueta);
+            System.out.println("      -> escribe 1 o 2   (si presionas ENTER queda " + porDefecto + ")");
+            System.out.print("      > ");
             String linea = sc.nextLine().trim();
+            System.out.println();
             if (linea.isEmpty()) {
                 return porDefecto;
             }
             try {
                 return Integer.parseInt(linea);
             } catch (NumberFormatException e) {
-                System.out.println("  [!] Escribi un numero, por ejemplo: " + porDefecto);
+                System.out.println("      [!] Escribi solo numeros.");
             }
         }
     }
 
     private static double pedirDecimal(String etiqueta, double ejemplo) {
         while (true) {
-            System.out.print("  " + etiqueta + "  (ej: " + ejemplo + "):  ");
+            System.out.println("   " + etiqueta);
+            System.out.println("      -> escribe un numero, ej:   " + sinDecimales(ejemplo));
+            System.out.print("      > ");
             String linea = sc.nextLine().trim().replace(",", ".");
+            System.out.println();
             try {
                 return Double.parseDouble(linea);
             } catch (NumberFormatException e) {
-                System.out.println("  [!] Escribi un numero, por ejemplo: " + ejemplo);
+                System.out.println("      [!] Escribi solo numeros.");
             }
         }
     }
 
     private static boolean pedirSiNo(String etiqueta, String ejemplo) {
         while (true) {
-            System.out.print("  " + etiqueta + "  (ej: " + ejemplo + "):  ");
+            System.out.println("   " + etiqueta);
+            System.out.println("      -> escribe:   s  (si)   o   n  (no)");
+            System.out.print("      > ");
             String linea = sc.nextLine().trim().toLowerCase();
+            System.out.println();
             if (linea.equals("s") || linea.equals("si") || linea.equals("y")) {
                 return true;
             }
             if (linea.equals("n") || linea.equals("no")) {
                 return false;
             }
-            System.out.println("  [!] Escribi 's' (si) o 'n' (no).");
+            System.out.println("      [!] Escribi 's' o 'n'.");
         }
+    }
+
+    private static String sinDecimales(double d) {
+        return (d == Math.floor(d)) ? String.valueOf((long) d) : String.valueOf(d);
     }
 }
