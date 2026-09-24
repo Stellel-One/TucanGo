@@ -76,3 +76,39 @@ Ejecutar la demostración del ecosistema:
 ```bash
 java -cp bin co.edu.uniamazonia.logica2.Main
 ```
+
+### 🎮 Prototipo Interactivo
+
+Permite **escribir los datos** (nombre del estudiante, motorista, viaje, pago, calificación)
+y ver cómo responde el modelo en consola, paso a paso:
+
+```bash
+java -cp bin co.edu.uniamazonia.logica2.PrototipoInteractivo
+```
+
+**Menú:**
+1. Registrar estudiante (nombre, cédula, teléfono, correo, código)
+2. Registrar motorista (+ moto: placa, marca, modelo, cilindraje, SOAT)
+3. Solicitar viaje (origen, destino, tarifa)
+4. Aceptar viaje (motorista)
+5. Iniciar viaje
+6. Finalizar viaje
+7. Reportar pago (EFECTIVO / NEQUI)
+8. Confirmar pago (motorista)
+9. Calificar viaje (1.0 – 5.0)
+10. Ver estado del sistema
+0. Salir
+
+**Ejemplo de sesión:**
+```
+  MENU PRINCIPAL
+  Estudiante: Juan Guillermo Ferrer Gasca   |   Motorista: Jhonatan Alexander Saavedra
+  ...
+[OK] Viaje solicitado: VIA-1 (Campus Universidad -> Barrio Centro, $8000.0)
+[OK] El motorista acepto el viaje VIA-1 (estado: ACEPTADO)
+[OK] Viaje VIA-1 INICIADO (estado: EN_CURSO)
+[OK] Viaje VIA-1 FINALIZADO (estado: FINALIZADO)
+[OK] Pago reportado por el estudiante: $8000.0 (NEQUI) estado: PAGADO_REPORTADO
+[OK] El motorista confirmo la recepcion. Estado: CONFIRMADO_RECIBIDO
+[OK] Calificacion registrada: 5.0/5 por ESTUDIANTE "Excelente servicio, moto impecable"
+```
