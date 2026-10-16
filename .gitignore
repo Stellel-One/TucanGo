@@ -3,8 +3,14 @@
 # ============================================================
 
 # Directorios de salida de compilación y distribución
+bin/
 build/
 dist/
+
+# Archivos comprimidos de apoyo
+*.zip
+*.ZIP
+
 
 # Archivos generados por NetBeans (se regeneran al abrir el proyecto)
 nbproject/private/
@@ -13,6 +19,7 @@ nbproject/build-impl.xml
 # Clases compiladas y empaquetados
 *.class
 *.jar
+!lib/*.jar
 *.war
 *.ear
 

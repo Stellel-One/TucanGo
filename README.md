@@ -68,7 +68,13 @@ Compilar todas las clases con JDK 21:
 
 ```bash
 mkdir -p bin
-javac -d bin $(find src -name "*.java")
+javac -cp "lib/*:bin" -d bin $(find src test -name "*.java")
+```
+
+Ejecutar las pruebas unitarias automatizadas (JUnit 5):
+
+```bash
+java -jar lib/junit-platform-console-standalone-1.10.2.jar --class-path bin --scan-class-path
 ```
 
 Ejecutar la demostración del ecosistema:
