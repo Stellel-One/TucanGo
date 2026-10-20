@@ -63,10 +63,10 @@ public class Estudiante extends Persona {
     public String toString() {
         return "Estudiante{" +
                 "codigoEstudiantil='" + codigoEstudiantil + '\'' +
-                ", identificacion='" + identificacion + '\'' +
-                ", nombre='" + nombre + '\'' +
-                ", telefono='" + telefono + '\'' +
-                ", correoInstitucional='" + correoInstitucional + '\'' +
+                ", identificacion='" + getIdentificacion() + '\'' +
+                ", nombre='" + getNombre() + '\'' +
+                ", telefono='" + getTelefono() + '\'' +
+                ", correoInstitucional='" + getCorreoInstitucional() + '\'' +
                 ", totalViajes=" + viajesSolicitados.size() +
                 '}';
     }

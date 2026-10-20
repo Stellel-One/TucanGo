@@ -83,3 +83,4 @@ public class ViajeTest {
         assertEquals(4.5, viaje.getCalificaciones().get(1).getPuntaje(), 0.001);
     }
 }
+

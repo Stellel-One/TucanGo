@@ -57,4 +57,15 @@ public class CalificacionTest {
         assertEquals(4.8, c.getPuntaje(), 0.001);
         assertEquals("Mejorado", c.getComentario());
     }
+
+    @Test
+    @DisplayName("Debe validar rangos de puntaje mediante el método booleano validarPuntaje")
+    void testValidarPuntajeMetodoBooleano() {
+        Calificacion c = new Calificacion(4.0, "Bueno", "ESTUDIANTE");
+        assertTrue(c.validarPuntaje(1.0));
+        assertTrue(c.validarPuntaje(3.5));
+        assertTrue(c.validarPuntaje(5.0));
+        assertFalse(c.validarPuntaje(0.99));
+        assertFalse(c.validarPuntaje(5.01));
+    }
 }

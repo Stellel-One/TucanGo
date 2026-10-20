@@ -2,10 +2,10 @@ package co.edu.uniamazonia.logica2.modelo;
 
 public abstract class Persona {
 
-    protected String identificacion;
-    protected String nombre;
-    protected String telefono;
-    protected String correoInstitucional;
+    private String identificacion;
+    private String nombre;
+    private String telefono;
+    private String correoInstitucional;
 
     public Persona(String identificacion, String nombre, String telefono, String correoInstitucional) {
         this.identificacion = identificacion;

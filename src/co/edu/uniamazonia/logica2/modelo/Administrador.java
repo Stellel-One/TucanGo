@@ -29,10 +29,10 @@ public class Administrador extends Persona {
     public String toString() {
         return "Administrador{" +
                 "rol=" + rol +
-                ", identificacion='" + identificacion + '\'' +
-                ", nombre='" + nombre + '\'' +
-                ", telefono='" + telefono + '\'' +
-                ", correoInstitucional='" + correoInstitucional + '\'' +
+                ", identificacion='" + getIdentificacion() + '\'' +
+                ", nombre='" + getNombre() + '\'' +
+                ", telefono='" + getTelefono() + '\'' +
+                ", correoInstitucional='" + getCorreoInstitucional() + '\'' +
                 '}';
     }
 }

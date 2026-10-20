@@ -111,10 +111,10 @@ public class Motorista extends Persona {
                 "disponible=" + disponible +
                 ", totalMotos=" + motos.size() +
                 ", motoActiva=" + (activa != null ? activa.getPlaca() : "Ninguna") +
-                ", identificacion='" + identificacion + '\'' +
-                ", nombre='" + nombre + '\'' +
-                ", telefono='" + telefono + '\'' +
-                ", correoInstitucional='" + correoInstitucional + '\'' +
+                ", identificacion='" + getIdentificacion() + '\'' +
+                ", nombre='" + getNombre() + '\'' +
+                ", telefono='" + getTelefono() + '\'' +
+                ", correoInstitucional='" + getCorreoInstitucional() + '\'' +
                 '}';
     }
 }

@@ -11,7 +11,7 @@ public class Calificacion {
     private String fechaHora;
 
     public Calificacion(double puntaje, String comentario, String rolEmisor) {
-        validarPuntaje(puntaje);
+        asegurarPuntajeValido(puntaje);
         this.puntaje = puntaje;
         this.comentario = comentario;
         this.rolEmisor = rolEmisor;
@@ -19,21 +19,25 @@ public class Calificacion {
     }
 
     public Calificacion(double puntaje, String comentario, String rolEmisor, String fechaHora) {
-        validarPuntaje(puntaje);
+        asegurarPuntajeValido(puntaje);
         this.puntaje = puntaje;
         this.comentario = comentario;
         this.rolEmisor = rolEmisor;
         this.fechaHora = fechaHora;
     }
 
-    private void validarPuntaje(double puntaje) {
-        if (puntaje < 1.0 || puntaje > 5.0) {
+    public boolean validarPuntaje(double puntaje) {
+        return puntaje >= 1.0 && puntaje <= 5.0;
+    }
+
+    private void asegurarPuntajeValido(double puntaje) {
+        if (!validarPuntaje(puntaje)) {
             throw new IllegalArgumentException("El puntaje debe estar estrictamente en el rango [1.0, 5.0]");
         }
     }
 
     public void registrarCalificacion(double puntaje, String comentario, String emisor) {
-        validarPuntaje(puntaje);
+        asegurarPuntajeValido(puntaje);
         this.puntaje = puntaje;
         this.comentario = comentario;
         this.rolEmisor = emisor;
@@ -49,7 +53,7 @@ public class Calificacion {
     }
 
     public void setPuntaje(double puntaje) {
-        validarPuntaje(puntaje);
+        asegurarPuntajeValido(puntaje);
         this.puntaje = puntaje;
     }
 

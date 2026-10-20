@@ -47,3 +47,4 @@ public class MotoTest {
         assertFalse(motoNumeroNulo.validarSoat());
     }
 }
+
