@@ -51,13 +51,13 @@ El transporte informal en motocicleta (mototaxis) es una práctica común entre 
 
 ## 📂 Documentación y Entregables
 
-- **Modelo Conceptual:** [`Docs/modelo-conceptual.md`](Docs/modelo-conceptual.md)
-- **Presentación del Proyecto:** [`Docs/Presentacion Proyecto.pptx`](Docs/Presentacion%20Proyecto.pptx) y [`Docs/presentacion-proyecto.md`](Docs/presentacion-proyecto.md)
-- **Diagrama UML v5.0 (Definitivo):** [`Docs/diagrama-uml-v5.0.md`](Docs/diagrama-uml-v5.0.md) | [Ver PNG](Docs/diagrama-uml-v5.0.png)
+- **Modelo Conceptual:** [`Docs/PROY_DOC_ModeloConceptual_v1.0.md`](Docs/PROY_DOC_ModeloConceptual_v1.0.md)
+- **Presentación del Proyecto:** [`Docs/PROY_SLIDES_Sustentacion_Entregable1.pptx`](Docs/Presentacion%20Proyecto.pptx) y [`Docs/PROY_SLIDES_Sustentacion_Entregable1.md`](Docs/PROY_SLIDES_Sustentacion_Entregable1.md)
+- **Diagrama UML v5.0 (Definitivo):** [`Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.md`](Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.md) | [Ver PNG](Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.png)
 - **Historial de Versiones UML:**
-  - [UML v1.0](Docs/diagrama-uml-v1.0.md)
-  - [UML v2.0](Docs/diagrama-uml-v2.0.md)
-  - [UML v3.0](Docs/diagrama-uml-v3.0.md)
+  - [UML v1.0](Docs/PROY_UML_v1.0_Abstraccion_4Clases.md)
+  - [UML v2.0](Docs/PROY_UML_v2.0_Encapsulamiento_Invariantes.md)
+  - [UML v3.0](Docs/PROY_UML_v3.0_FlotaDinamica_ArrayList.md)
 - **Especificaciones SDD:** [`openspec/`](openspec/)
 
 ---
