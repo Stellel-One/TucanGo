@@ -46,3 +46,11 @@ estructuraci-n-inicial-del-sdd-para-proyecto-java.json
 # - lib/                     (librerías standalone)
 # - openspec/                (especificación del proyecto)
 # - README.md                (documentación principal)
+/versiones/v0.1-sem01-clase-aislada/nbproject/private/
+/versiones/v1.0-sem02-abstraccion-4clases/nbproject/private/
+/versiones/v2.0-sem03-encapsulamiento-pagos/nbproject/private/
+/versiones/v2.5-sem04-entregable1-oficial/nbproject/private/
+/versiones/v3.0-sem05-colecciones-arraylist/nbproject/private/
+/versiones/v3.5-sem07-fachada-tucangosistema/nbproject/private/
+/versiones/v4.0-sem09-herencia-persona/nbproject/private/
+/versiones/v5.0-sem10-arquitectura-consolidada/nbproject/private/
