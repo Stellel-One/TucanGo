@@ -41,6 +41,6 @@ public class Viaje {
 
     @Override
     public String toString() {
-        return "Viaje [" + codigoViaje + ": " + origen + " -> " + destino + ", Tarifa: $" + tarifa + ", Estado: " + estado + "]";
+        return "Viaje [" + codigoViaje + ": " + origen + " -> " + destino + ", Tarifa: " + tarifa + " COP, Estado: " + estado + "]";
     }
 }

@@ -13,8 +13,8 @@ import java.util.Scanner;
 /**
  * Prototipo INTERACTIVO de TucanGo.
  * <p>
- * Guía paso a paso: cada vez que el sistema pide un dato, indica un EJEMPLO de
- * lo que hay que escribir. Ideal para la demostración en clase.
+ * Guia paso a paso: cada vez que el sistema pide un dato, indica un EJEMPLO de
+ * lo que hay que escribir. Ideal para la demostracion en clase.
  * </p>
  *
  * <p>Ejecutar con: {@code java co.edu.uniamazonia.logica2.PrototipoInteractivo}</p>
@@ -26,7 +26,7 @@ public class PrototipoInteractivo {
 
     private static final Scanner sc = new Scanner(System.in);
 
-    // Estado de la sesión
+    // Estado de la sesion
     private static Estudiante estudiante;
     private static Motorista motorista;
 
@@ -91,7 +91,7 @@ public class PrototipoInteractivo {
         System.out.println("---------------------------------------------------------");
     }
 
-    /** Lee la opción del menú, insistiendo si no es un número válido. */
+    /** Lee la opcion del menu, insistiendo si no es un numero valido. */
     private static int leerOpcion() {
         System.out.print("  >>> Escribi el numero y presiona ENTER  (ej: 1): ");
         while (true) {
@@ -175,7 +175,7 @@ public class PrototipoInteractivo {
         if (ok) {
             Viaje v = ultimoViaje();
             System.out.println("\n[OK] Viaje pedido: " + v.getCodigoViaje()
-                    + "  (" + origen + "  ->  " + destino + ",  $" + tarifa + ")\n");
+                    + "  (" + origen + "  ->  " + destino + ",  " + tarifa + " COP)\n");
         } else {
             System.out.println("\n[X] No se pudo pedir el viaje.\n");
         }
@@ -233,7 +233,7 @@ public class PrototipoInteractivo {
         MetodoPago metodo = (m == 2) ? MetodoPago.NEQUI : MetodoPago.EFECTIVO;
 
         v.getPago().reportarPagoEstudiante(metodo);
-        System.out.println("\n[OK] Pago reportado: $" + v.getPago().getValor()
+        System.out.println("\n[OK] Pago reportado: " + v.getPago().getValor() + " COP"
                 + "  (" + metodo + ")   estado: " + v.getPago().getEstado() + "\n");
     }
 
@@ -298,7 +298,7 @@ public class PrototipoInteractivo {
             for (Viaje v : estudiante.getViajesSolicitados()) {
                 System.out.println("  - " + v.getCodigoViaje()
                         + " | " + v.getOrigen() + " -> " + v.getDestino()
-                        + " | $" + v.getTarifa()
+                        + " | " + v.getTarifa() + " COP"
                         + " | estado=" + v.getEstado()
                         + " | pago=" + v.getPago().getEstado()
                         + " | calificaciones=" + v.getCalificaciones().size());
@@ -310,7 +310,7 @@ public class PrototipoInteractivo {
     }
 
     // ==================================================================
-    //  Helpers de navegación / estado
+    //  Helpers de navegacion / estado
     // ==================================================================
     private static boolean hayEstudiante() {
         if (estudiante == null) {
@@ -354,7 +354,7 @@ public class PrototipoInteractivo {
     }
 
     // ==================================================================
-    //  Helpers de entrada: muestran QUÉ escribir, con un renglón propio
+    //  Helpers de entrada: muestran QUE escribir, con un renglon propio
     // ==================================================================
     private static String pedirTexto(String etiqueta, String ejemplo) {
         while (true) {

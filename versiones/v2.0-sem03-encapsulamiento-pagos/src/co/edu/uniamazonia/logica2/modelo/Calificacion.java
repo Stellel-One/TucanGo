@@ -20,6 +20,6 @@ public class Calificacion {
 
     @Override
     public String toString() {
-        return puntaje + "/5.0 ★ (" + rolEmisor + "): \"" + comentario + "\"";
+        return puntaje + "/5.0 * (" + rolEmisor + "): \"" + comentario + "\"";
     }
 }

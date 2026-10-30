@@ -33,6 +33,6 @@ public class Moto {
 
     @Override
     public String toString() {
-        return "Moto [" + placa + " " + marca + " " + modelo + " (" + cilindraje + "cc) SOAT: " + (validarSoat() ? numeroSoat : "INVÁLIDO") + "]";
+        return "Moto [" + placa + " " + marca + " " + modelo + " (" + cilindraje + "cc) SOAT: " + (validarSoat() ? numeroSoat : "INVALIDO") + "]";
     }
 }

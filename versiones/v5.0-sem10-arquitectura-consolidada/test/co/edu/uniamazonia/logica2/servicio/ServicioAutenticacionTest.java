@@ -16,7 +16,7 @@ public class ServicioAutenticacionTest {
     @BeforeEach
     void setUp() {
         auth = new ServicioAutenticacion();
-        estudiante = new Estudiante("100200300", "Ana Pérez", "3112223344", "a.perez@uniamazonia.edu.co", "EST-2026-99");
+        estudiante = new Estudiante("100200300", "Ana Perez", "3112223344", "a.perez@uniamazonia.edu.co", "EST-2026-99");
     }
 
     @Test
@@ -31,7 +31,7 @@ public class ServicioAutenticacionTest {
     }
 
     @Test
-    @DisplayName("Debe rechazar registros con datos nulos o vacíos")
+    @DisplayName("Debe rechazar registros con datos nulos o vacios")
     void testRegistroInvalido() {
         assertFalse(auth.registrarse(null, "clave123"));
         assertFalse(auth.registrarse(estudiante, "   "));
@@ -41,7 +41,7 @@ public class ServicioAutenticacionTest {
     }
 
     @Test
-    @DisplayName("Flujo de login, verificación de sesión y cierre de sesión")
+    @DisplayName("Flujo de login, verificacion de sesion y cierre de sesion")
     void testFlujoSesion() {
         auth.registrarse(estudiante, "secreto");
 
@@ -53,7 +53,7 @@ public class ServicioAutenticacionTest {
         assertTrue(auth.iniciarSesion("A.PEREZ@UNIAMAZONIA.EDU.CO", "secreto"));
         assertTrue(auth.estaAutenticado(estudiante.getIdentificacion()));
 
-        // Cierre de sesión
+        // Cierre de sesion
         auth.cerrarSesion(estudiante.getIdentificacion());
         assertFalse(auth.estaAutenticado(estudiante.getIdentificacion()));
     }

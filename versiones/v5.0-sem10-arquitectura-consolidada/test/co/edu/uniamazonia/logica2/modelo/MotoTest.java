@@ -27,7 +27,7 @@ public class MotoTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -125})
-    @DisplayName("Debe lanzar excepción si el cilindraje es menor o igual a cero")
+    @DisplayName("Debe lanzar excepcion si el cilindraje es menor o igual a cero")
     void testCilindrajeInvalidoLanzaExcepcion(int cilindrajeInvalido) {
         assertThrows(IllegalArgumentException.class, () -> {
             new Moto("XYZ-12C", "Yamaha", "FZ", cilindrajeInvalido, true, "SOAT-123");
@@ -35,7 +35,7 @@ public class MotoTest {
     }
 
     @Test
-    @DisplayName("Debe invalidar SOAT si soatVigente es false o número está vacío/nulo")
+    @DisplayName("Debe invalidar SOAT si soatVigente es false o numero esta vacio/nulo")
     void testValidacionSoatInvalido() {
         Moto motoSoatVencido = new Moto("ABC-01A", "Bajaj", "Pulsar", 180, false, "SOAT-111");
         assertFalse(motoSoatVencido.validarSoat());

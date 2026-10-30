@@ -5,24 +5,24 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("Pruebas Unitarias - Jerarquía Persona y Actores")
+@DisplayName("Pruebas Unitarias - Jerarquia Persona y Actores")
 public class PersonaTest {
 
     @Test
     @DisplayName("Estudiante: debe solicitar viaje y marcar llegada segura")
     void testEstudianteFlujoViaje() {
-        Estudiante est = new Estudiante("111222333", "Laura Gómez", "3101234567", "l.gomez@uniamazonia.edu.co", "EST-2026-01");
+        Estudiante est = new Estudiante("111222333", "Laura Gomez", "3101234567", "l.gomez@uniamazonia.edu.co", "EST-2026-01");
 
         assertEquals("111222333", est.getIdentificacion());
-        assertEquals("Laura Gómez", est.getNombre());
+        assertEquals("Laura Gomez", est.getNombre());
         assertEquals("EST-2026-01", est.getCodigoEstudiantil());
 
-        // Solicitud válida
+        // Solicitud valida
         boolean solicitada = est.solicitarViaje("Campus Porvenir", "Barrio Centro", 5000.0);
         assertTrue(solicitada);
         assertEquals(1, est.getViajesSolicitados().size());
 
-        // Solicitud inválida (origen vacío o tarifa negativa)
+        // Solicitud invalida (origen vacio o tarifa negativa)
         assertFalse(est.solicitarViaje("", "Barrio Centro", 5000.0));
         assertFalse(est.solicitarViaje("Campus", "Barrio Centro", -100.0));
 
@@ -35,7 +35,7 @@ public class PersonaTest {
     }
 
     @Test
-    @DisplayName("Motorista: gestión de múltiples motos y selección de moto activa")
+    @DisplayName("Motorista: gestion de multiples motos y seleccion de moto activa")
     void testMotoristaMultiMotos() {
         Motorista motoquero = new Motorista("99887766", "Carlos Rojas", "3209876543", "c.rojas@uniamazonia.edu.co");
 
@@ -48,7 +48,7 @@ public class PersonaTest {
         motoquero.registrarMoto(moto1);
         motoquero.registrarMoto(moto2);
 
-        // La primera moto registrada debe quedar activa automáticamente
+        // La primera moto registrada debe quedar activa automaticamente
         assertEquals(2, motoquero.getMotos().size());
         assertNotNull(motoquero.obtenerMotoActiva());
         assertEquals("AAA-01A", motoquero.obtenerMotoActiva().getPlaca());
@@ -65,7 +65,7 @@ public class PersonaTest {
     }
 
     @Test
-    @DisplayName("Administrador: creación y asignación de rol")
+    @DisplayName("Administrador: creacion y asignacion de rol")
     void testAdministradorRol() {
         Administrador admin = new Administrador("445566", "Coordinador Bienestar", "3150001122", "bienestar@uniamazonia.edu.co", RolAdmin.BIENESTAR_UNIVERSITARIO);
 

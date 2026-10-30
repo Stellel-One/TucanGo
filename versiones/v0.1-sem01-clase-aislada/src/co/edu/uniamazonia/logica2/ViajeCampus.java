@@ -1,28 +1,28 @@
 package co.edu.uniamazonia.logica2;
 
 /**
- * Entidad elemental del "Mundo del Problema" identificada tras la Bitácora de Empatía
+ * Entidad elemental del "Mundo del Problema" identificada tras la Bitacora de Empatia
  * de la Semana 1: Transporte informal en motocicleta en el campus de la Uniamazonia.
  * <p>
- * Representa una única clase aislada con atributos privados y métodos con responsabilidades
+ * Representa una unica clase aislada con atributos privados y metodos con responsabilidades
  * claras para modelar un traslado seguro en el campus.
  * </p>
  *
- * @author Equipo TucanGo · Universidad de la Amazonia
+ * @author Equipo TucanGo - Universidad de la Amazonia
  * @version 0.1 (Semana 1 - El Salto a los Objetos)
  */
 public class ViajeCampus {
 
-    // 4 Atributos privados que modelan la señal del problema
+    // 4 Atributos privados que modelan la senal del problema
     private String codigoViaje;
     private String destino;
     private double tarifaPactada;
     private boolean completado;
 
     /**
-     * Constructor con parámetros. Inicializa el viaje en estado pendiente.
+     * Constructor con parametros. Inicializa el viaje en estado pendiente.
      *
-     * @param codigoViaje   identificador único del viaje
+     * @param codigoViaje   identificador unico del viaje
      * @param destino       lugar de llegada en Florencia
      * @param tarifaPactada valor acordado del viaje
      */
@@ -58,14 +58,14 @@ public class ViajeCampus {
     /**
      * Marca el viaje como completado cuando el estudiante llega seguro.
      *
-     * @return true si se confirmó la llegada
+     * @return true si se confirmo la llegada
      */
     public boolean marcarLlegadaSegura() {
         this.completado = true;
         return this.completado;
     }
 
-    // Métodos consultores (Getters)
+    // Metodos consultores (Getters)
     public String getCodigoViaje() {
         return codigoViaje;
     }
@@ -85,6 +85,6 @@ public class ViajeCampus {
     @Override
     public String toString() {
         return "ViajeCampus [codigo=" + codigoViaje + ", destino=" + destino
-                + ", tarifa=$" + tarifaPactada + ", completado=" + (completado ? "SI" : "NO") + "]";
+                + ", tarifa=" + tarifaPactada + " COP, completado=" + (completado ? "SI" : "NO") + "]";
     }
 }

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CalificacionTest {
 
     @Test
-    @DisplayName("Debe instanciar correctamente con valores válidos dentro del rango [1.0, 5.0]")
+    @DisplayName("Debe instanciar correctamente con valores validos dentro del rango [1.0, 5.0]")
     void testCrearCalificacionValida() {
         Calificacion c = new Calificacion(4.5, "Excelente servicio", "ESTUDIANTE");
 
@@ -22,7 +22,7 @@ public class CalificacionTest {
     }
 
     @Test
-    @DisplayName("Debe aceptar límites exactos 1.0 y 5.0")
+    @DisplayName("Debe aceptar limites exactos 1.0 y 5.0")
     void testLimitesExactos() {
         Calificacion cMin = new Calificacion(1.0, "Servicio deficiente", "ESTUDIANTE");
         Calificacion cMax = new Calificacion(5.0, "Servicio perfecto", "MOTORISTA");
@@ -41,7 +41,7 @@ public class CalificacionTest {
     }
 
     @Test
-    @DisplayName("Debe lanzar excepción al actualizar puntaje con valor inválido vía setter")
+    @DisplayName("Debe lanzar excepcion al actualizar puntaje con valor invalido via setter")
     void testSetPuntajeInvalido() {
         Calificacion c = new Calificacion(3.0, "Regular", "MOTORISTA");
         assertThrows(IllegalArgumentException.class, () -> c.setPuntaje(5.5));
@@ -49,7 +49,7 @@ public class CalificacionTest {
     }
 
     @Test
-    @DisplayName("Debe permitir registrar nueva calificación actualizando sus datos")
+    @DisplayName("Debe permitir registrar nueva calificacion actualizando sus datos")
     void testRegistrarCalificacion() {
         Calificacion c = new Calificacion(3.0, "Inicial", "ESTUDIANTE");
         c.registrarCalificacion(4.8, "Mejorado", "ESTUDIANTE");
@@ -59,7 +59,7 @@ public class CalificacionTest {
     }
 
     @Test
-    @DisplayName("Debe validar rangos de puntaje mediante el método booleano validarPuntaje")
+    @DisplayName("Debe validar rangos de puntaje mediante el metodo booleano validarPuntaje")
     void testValidarPuntajeMetodoBooleano() {
         Calificacion c = new Calificacion(4.0, "Bueno", "ESTUDIANTE");
         assertTrue(c.validarPuntaje(1.0));

@@ -95,7 +95,7 @@ public class Pago {
     @Override
     public String toString() {
         return "Pago{" +
-                "valor=$" + valor +
+                "valor=" + valor + " COP" +
                 ", metodo=" + metodo +
                 ", estado=" + estado +
                 ", pagadoPorEstudiante=" + pagadoPorEstudiante +

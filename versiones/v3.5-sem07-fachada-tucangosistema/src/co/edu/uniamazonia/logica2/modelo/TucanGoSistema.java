@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase Controladora de Fachada (Root Class) del Patrón Arquitectónico de Jorge Villalobos.
+ * Clase Controladora de Fachada (Root Class) del Patron Arquitectonico de Jorge Villalobos.
  * <p>
- * Centraliza la administración de usuarios, la flota de motoristas y el registro histórico
- * de viajes, actuando como punto de entrada transaccional único del dominio TucanGo.
+ * Centraliza la administracion de usuarios, la flota de motoristas y el registro historico
+ * de viajes, actuando como punto de entrada transaccional unico del dominio TucanGo.
  * </p>
  *
- * @author Equipo TucanGo · Universidad de la Amazonia
- * @version 3.5 (Semanas 7–8 / Entregable 2)
+ * @author Equipo TucanGo - Universidad de la Amazonia
+ * @version 3.5 (Semanas 7-8 / Entregable 2)
  */
 public class TucanGoSistema {
 

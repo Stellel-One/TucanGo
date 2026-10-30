@@ -24,7 +24,7 @@ public class ServicioReportesTest {
     }
 
     @Test
-    @DisplayName("Debe listar destinos más frecuentes ordenados por concurrencia")
+    @DisplayName("Debe listar destinos mas frecuentes ordenados por concurrencia")
     void testDestinosMasFrecuentes() {
         List<String> topDestinos = reportes.obtenerDestinosMasFrecuentes(2);
 
@@ -35,7 +35,7 @@ public class ServicioReportesTest {
     }
 
     @Test
-    @DisplayName("Debe filtrar viajes por término en el destino de forma insensible a mayúsculas")
+    @DisplayName("Debe filtrar viajes por termino en el destino de forma insensible a mayusculas")
     void testConsultarViajesPorDestino() {
         List<Viaje> centro = reportes.consultarViajesPorDestino("centro");
         assertEquals(2, centro.size());
@@ -48,7 +48,7 @@ public class ServicioReportesTest {
     }
 
     @Test
-    @DisplayName("Debe calcular correctamente el porcentaje de viajes hacia un sector específico")
+    @DisplayName("Debe calcular correctamente el porcentaje de viajes hacia un sector especifico")
     void testCalcularPorcentajePorSector() {
         // Total 4 viajes: 2 con destino Centro y 1 con origen Centro -> 3/4 = 75%
         double porcentajeCentro = reportes.calcularPorcentajePorSector("Centro");

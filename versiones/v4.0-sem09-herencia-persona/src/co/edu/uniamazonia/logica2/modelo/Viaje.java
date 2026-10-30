@@ -128,7 +128,7 @@ public class Viaje {
                 "codigoViaje='" + codigoViaje + '\'' +
                 ", origen='" + origen + '\'' +
                 ", destino='" + destino + '\'' +
-                ", tarifa=$" + tarifa +
+                ", tarifa=" + tarifa + " COP" +
                 ", estado=" + estado +
                 ", fechaHora='" + fechaHora + '\'' +
                 ", pago=" + pago +

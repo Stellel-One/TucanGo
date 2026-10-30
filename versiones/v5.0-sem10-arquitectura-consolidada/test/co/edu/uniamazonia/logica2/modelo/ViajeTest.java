@@ -25,7 +25,7 @@ public class ViajeTest {
     }
 
     @Test
-    @DisplayName("Debe lanzar excepción si la tarifa inicial es negativa")
+    @DisplayName("Debe lanzar excepcion si la tarifa inicial es negativa")
     void testTarifaNegativaLanzaExcepcion() {
         assertThrows(IllegalArgumentException.class, () -> {
             new Viaje("VIA-101", "Campus", "Centro", -500.0);
@@ -33,7 +33,7 @@ public class ViajeTest {
     }
 
     @Test
-    @DisplayName("Actualizar tarifa actualiza también el valor del objeto Pago asociado")
+    @DisplayName("Actualizar tarifa actualiza tambien el valor del objeto Pago asociado")
     void testSetTarifaActualizaPago() {
         Viaje viaje = new Viaje("VIA-102", "Campus", "Terminal", 5000.0);
         viaje.setTarifa(7500.0);
@@ -65,7 +65,7 @@ public class ViajeTest {
     }
 
     @Test
-    @DisplayName("Debe restringir el límite de calificaciones a máximo 2 (estudiante y motorista)")
+    @DisplayName("Debe restringir el limite de calificaciones a maximo 2 (estudiante y motorista)")
     void testLimiteCalificaciones() {
         Viaje viaje = new Viaje("VIA-105", "Campus", "Centro", 6000.0);
 
@@ -75,7 +75,7 @@ public class ViajeTest {
 
         viaje.agregarCalificacion(c1);
         viaje.agregarCalificacion(c2);
-        viaje.agregarCalificacion(c3); // No debe agregarse por límite de 2
+        viaje.agregarCalificacion(c3); // No debe agregarse por limite de 2
         viaje.agregarCalificacion(null); // No debe fallar con nulo
 
         assertEquals(2, viaje.getCalificaciones().size());

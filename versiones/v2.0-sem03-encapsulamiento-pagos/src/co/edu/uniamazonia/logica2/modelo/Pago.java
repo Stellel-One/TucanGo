@@ -40,6 +40,6 @@ public class Pago {
 
     @Override
     public String toString() {
-        return "$" + valor + " COP (" + metodo + ") - Estado: " + estado;
+        return valor + " COP (" + metodo + ") - Estado: " + estado;
     }
 }

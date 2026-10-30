@@ -19,11 +19,11 @@ import java.util.Scanner;
 /**
  * Simulador de Movilidad Estudiantil en Terminal (Estilo Uber / DiDi).
  * <p>
- * Diseñado para visualizarse y ejecutarse interactivamente desde la consola de Apache NetBeans
+ * Disenado para visualizarse y ejecutarse interactivamente desde la consola de Apache NetBeans
  * o terminal de comandos. Utiliza el modelo de dominio POO v5.0 de TucanGo.
  * </p>
  *
- * @author Equipo TucanGo · Universidad de la Amazonia
+ * @author Equipo TucanGo - Universidad de la Amazonia
  * @version 5.0
  */
 public class SimuladorUberCampus {
@@ -39,10 +39,10 @@ public class SimuladorUberCampus {
     private static final List<Estudiante> estudiantesRegistrados = new ArrayList<>();
     private static Administrador adminBienestar;
 
-    // Sesión activa actual
+    // Sesion activa actual
     private static Estudiante estudianteActivo;
 
-    // Destinos frecuentes preconfigurados en Florencia, Caquetá
+    // Destinos frecuentes preconfigurados en Florencia, Caqueta
     private static final String[] PUNTOS_CAMPUS = {
             "Campus Porvenir (Entrada Principal)",
             "Campus Porvenir (Edificio de Aulas)",
@@ -72,7 +72,7 @@ public class SimuladorUberCampus {
                 case 6 -> cambiarEstudianteActivo();
                 case 0 -> {
                     System.out.println("===============================================================");
-                    System.out.println("  Gracias por utilizar TucanGo. ¡Movilidad segura en el campus!");
+                    System.out.println("  Gracias por utilizar TucanGo. Movilidad segura en el campus!");
                     System.out.println("===============================================================\n");
                     salir = true;
                 }
@@ -81,7 +81,7 @@ public class SimuladorUberCampus {
     }
 
     // ==================================================================
-    // 1. INICIALIZACIÓN DE DATOS PRECARGADOS (FLOTA Y SERVICIOS)
+    // 1. INICIALIZACION DE DATOS PRECARGADOS (FLOTA Y SERVICIOS)
     // ==================================================================
     private static void inicializarEcosistema() {
         // Motorista 1: Jhonatan Saavedra
@@ -111,8 +111,8 @@ public class SimuladorUberCampus {
         authService.registrarse(m3, "moto789");
 
         // Estudiantes iniciales
-        Estudiante e1 = new Estudiante("1117540201", "Gian Marco Castañeda", "3101234567", "g.castaneda@udla.edu.co", "EST-2026-001");
-        Estudiante e2 = new Estudiante("1117540202", "Andrés David Pinilla", "3119876543", "a.pinilla@udla.edu.co", "EST-2026-002");
+        Estudiante e1 = new Estudiante("1117540201", "Gian Marco Castaneda", "3101234567", "g.castaneda@udla.edu.co", "EST-2026-001");
+        Estudiante e2 = new Estudiante("1117540202", "Andres David Pinilla", "3119876543", "a.pinilla@udla.edu.co", "EST-2026-002");
         Estudiante e3 = new Estudiante("1117540203", "Juan Guillermo Ferrer", "3145556677", "j.ferrer@udla.edu.co", "EST-2026-003");
         estudiantesRegistrados.add(e1);
         estudiantesRegistrados.add(e2);
@@ -127,7 +127,7 @@ public class SimuladorUberCampus {
         adminBienestar = new Administrador("1117540301", "Dra. Maria Elena Perez", "3184445566", "bienestar@udla.edu.co", RolAdmin.BIENESTAR_UNIVERSITARIO);
         authService.registrarse(adminBienestar, "admin123");
 
-        // Precargar viajes históricos para el Servicio de Reportes
+        // Precargar viajes historicos para el Servicio de Reportes
         precargarHistoricoViajes();
     }
 
@@ -159,7 +159,7 @@ public class SimuladorUberCampus {
     }
 
     // ==================================================================
-    // 2. INTERFAZ GRÁFICA DE TERMINAL
+    // 2. INTERFAZ GRAFICA DE TERMINAL
     // ==================================================================
     private static void mostrarBanner() {
         System.out.println("===============================================================");
@@ -168,7 +168,7 @@ public class SimuladorUberCampus {
         System.out.println("   | | | | | | |     / _ \\ |  \\| | |  _| | | |             ");
         System.out.println("   | | | |_| | |___ / ___ \\| |\\  | |_| | |_| |             ");
         System.out.println("   |_|  \\___/ \\____/_/   \\_\\_| \\_|\\____|\\___/              ");
-        System.out.println("  MOVILIDAD ESTUDIANTIL SEGURA · UNIVERSIDAD DE LA AMAZONIA   ");
+        System.out.println("  MOVILIDAD ESTUDIANTIL SEGURA - UNIVERSIDAD DE LA AMAZONIA   ");
         System.out.println("===============================================================");
     }
 
@@ -178,13 +178,13 @@ public class SimuladorUberCampus {
         System.out.println("+-------------------------------------------------------------+");
         System.out.println("|  1. [MODO PASAJERO] Pedir viaje estilo Uber / DiDi          |");
         System.out.println("|  2. [MODO CONDUCTOR] Panel de motorista (Aceptar viajes)    |");
-        System.out.println("|  3. [DEMO EN VIVO] Simulación completa automática (1-Clic)  |");
-        System.out.println("|  4. [BIENESTAR UNIV.] Métricas y demanda de movilidad       |");
-        System.out.println("|  5. [FLOTA & VEHÍCULOS] Ver motos y validación SOAT         |");
+        System.out.println("|  3. [DEMO EN VIVO] Simulacion completa automatica (1-Clic)  |");
+        System.out.println("|  4. [BIENESTAR UNIV.] Metricas y demanda de movilidad       |");
+        System.out.println("|  5. [FLOTA & VEHICULOS] Ver motos y validacion SOAT         |");
         System.out.println("|  6. [CAMBIAR USUARIO] Alternar o registrar estudiante       |");
         System.out.println("|  0. Salir                                                   |");
         System.out.println("+-------------------------------------------------------------+");
-        System.out.print(">>> Ingrese una opción [0 - 6]: ");
+        System.out.print(">>> Ingrese una opcion [0 - 6]: ");
     }
 
     // ==================================================================
@@ -203,10 +203,10 @@ public class SimuladorUberCampus {
         System.out.println("  9. Escribir otro origen personalizado");
         System.out.print(">>> Elige tu origen [1 - 9]: ");
         int opOrigen = leerEntero(1, 9);
-        String origen = (opOrigen == 9) ? pedirTexto("Escribe tu ubicación exacta") : PUNTOS_CAMPUS[opOrigen - 1];
+        String origen = (opOrigen == 9) ? pedirTexto("Escribe tu ubicacion exacta") : PUNTOS_CAMPUS[opOrigen - 1];
 
         // Paso B: Destino
-        System.out.println("\n--- [Paso 2/5] ¿Hacia dónde te diriges? (Destino) ---");
+        System.out.println("\n--- [Paso 2/5] Hacia donde te diriges? (Destino) ---");
         for (int i = 0; i < PUNTOS_CAMPUS.length; i++) {
             System.out.println("  " + (i + 1) + ". " + PUNTOS_CAMPUS[i]);
         }
@@ -215,12 +215,12 @@ public class SimuladorUberCampus {
         int opDestino = leerEntero(1, 9);
         String destino = (opDestino == 9) ? pedirTexto("Escribe tu destino exacto") : PUNTOS_CAMPUS[opDestino - 1];
 
-        // Paso C: Cálculo de Tarifa Estimada
+        // Paso C: Calculo de Tarifa Estimada
         double tarifaBase = calcularTarifaEstimada(origen, destino);
-        System.out.println("\n--- [Paso 3/5] Estimación de Tarifa Inteligente ---");
+        System.out.println("\n--- [Paso 3/5] Estimacion de Tarifa Inteligente ---");
         System.out.println("  Ruta calculada: " + origen + "  -->  " + destino);
-        System.out.println("  Tarifa sugerida por TucanGo: $" + String.format("%,.0f", tarifaBase) + " COP");
-        System.out.println("  1. Aceptar tarifa sugerida ($" + String.format("%,.0f", tarifaBase) + ")");
+        System.out.println("  Tarifa sugerida por TucanGo: " + String.format("%,.0f", tarifaBase) + " COP");
+        System.out.println("  1. Aceptar tarifa sugerida (" + String.format("%,.0f", tarifaBase) + " COP)");
         System.out.println("  2. Proponer contraoferta (Estilo DiDi / InDrive)");
         System.out.print(">>> Elige [1 o 2]: ");
         int opTarifa = leerEntero(1, 2);
@@ -237,7 +237,7 @@ public class SimuladorUberCampus {
 
         // Paso D: Radar de Motoristas Cercanos (Matching)
         System.out.println("\n--- [Paso 4/5] Conectando con Motoristas del Campus ---");
-        System.out.println("  [📡] Buscando motoristas activos con SOAT vigente en el perímetro...");
+        System.out.println("  [[TUCANGO]] Buscando motoristas activos con SOAT vigente en el perimetro...");
         pausaAnimada(1200);
 
         List<Motorista> disponibles = obtenerMotoristasDisponibles();
@@ -246,20 +246,20 @@ public class SimuladorUberCampus {
             return;
         }
 
-        System.out.println("\n  ¡" + disponibles.size() + " motoristas encontrados cerca de ti!");
+        System.out.println("\n  " + disponibles.size() + " motoristas encontrados cerca de ti!");
         for (int i = 0; i < disponibles.size(); i++) {
             Motorista m = disponibles.get(i);
             Moto moto = m.obtenerMotoActiva();
             System.out.println("    (" + (i + 1) + ") " + padRight(m.getNombre(), 20)
                     + " | Moto: " + moto.getMarca() + " " + moto.getModelo() + " [" + moto.getPlaca() + "]"
-                    + " | SOAT: VIGENTE (✓)");
+                    + " | SOAT: VIGENTE ([OK])");
         }
 
-        // Selección o asignación automática
+        // Seleccion o asignacion automatica
         Motorista motoristaAsignado = disponibles.get(0);
         motoristaAsignado.aceptarViaje(viaje);
-        System.out.println("\n  ✅ ¡Servicio Aceptado por " + motoristaAsignado.getNombre() + "!");
-        System.out.println("  Vehículo asignado: " + motoristaAsignado.obtenerMotoActiva().getMarca()
+        System.out.println("\n  [OK] Servicio Aceptado por " + motoristaAsignado.getNombre() + "!");
+        System.out.println("  Vehiculo asignado: " + motoristaAsignado.obtenerMotoActiva().getMarca()
                 + " " + motoristaAsignado.obtenerMotoActiva().getModelo()
                 + " | Placa: " + motoristaAsignado.obtenerMotoActiva().getPlaca());
         System.out.println("  Estado del Viaje: " + viaje.getEstado());
@@ -271,26 +271,26 @@ public class SimuladorUberCampus {
 
         // Llegada segura
         estudianteActivo.marcarLlegadaSegura(viaje.getCodigoViaje());
-        System.out.println("\n  [✓] Estudiante confirmó: ¡LLEGADA SEGURA AL DESTINO!");
+        System.out.println("\n  [[OK]] Estudiante confirmo: LLEGADA SEGURA AL DESTINO!");
         System.out.println("  Estado del Viaje: " + viaje.getEstado());
 
-        // Liquidación del Pago
+        // Liquidacion del Pago
         procesarPagoInteractivo(viaje, motoristaAsignado);
 
-        // Calificación Mutua
+        // Calificacion Mutua
         procesarCalificacionMutua(viaje, motoristaAsignado);
     }
 
     // ==================================================================
-    // 4. ANIMACIÓN DE RUTA EN CONSOLA (TRACKING GPS)
+    // 4. ANIMACION DE RUTA EN CONSOLA (TRACKING GPS)
     // ==================================================================
     private static void simularRutaGPS(String origen, String destino) {
         System.out.println("\n  ================ SEGUIMIENTO EN VIVO ================");
         String[] etapas = {
                 "[Campus]   >---o-------------------< [Destino]  (Iniciando recorrido)",
                 "[Campus]   >-------o---------------< [Destino]  (En ruta - velocidad moderada)",
-                "[Campus]   >---------------o-------< [Destino]  (Próximo al punto de llegada)",
-                "[Campus]   >-----------------------o [Destino]  (¡Has llegado a tu destino!)"
+                "[Campus]   >---------------o-------< [Destino]  (Proximo al punto de llegada)",
+                "[Campus]   >-----------------------o [Destino]  (Has llegado a tu destino!)"
         };
 
         for (String etapa : etapas) {
@@ -307,20 +307,20 @@ public class SimuladorUberCampus {
         System.out.println("\n---------------------------------------------------------------");
         System.out.println("                       PASARELA DE PAGO                        ");
         System.out.println("---------------------------------------------------------------");
-        System.out.println("  Total a liquidar: $" + String.format("%,.0f", viaje.getTarifa()) + " COP");
+        System.out.println("  Total a liquidar: " + String.format("%,.0f", viaje.getTarifa()) + " COP");
         System.out.println("  1. Pago en EFECTIVO (Contraentrega)");
-        System.out.println("  2. Transferencia NEQUI (Transacción Digital Inmediata)");
-        System.out.print(">>> Seleccione el método de pago [1 o 2]: ");
+        System.out.println("  2. Transferencia NEQUI (Transaccion Digital Inmediata)");
+        System.out.print(">>> Seleccione el metodo de pago [1 o 2]: ");
         int metodoOp = leerEntero(1, 2);
 
         MetodoPago metodo = (metodoOp == 2) ? MetodoPago.NEQUI : MetodoPago.EFECTIVO;
         viaje.getPago().reportarPagoEstudiante(metodo);
 
         if (metodo == MetodoPago.NEQUI) {
-            System.out.println("\n  [NEQUI] Enviar $" + String.format("%,.0f", viaje.getTarifa()) + " al número: " + motorista.getTelefono());
+            System.out.println("\n  [NEQUI] Enviar " + String.format("%,.0f", viaje.getTarifa()) + " COP al numero: " + motorista.getTelefono());
             System.out.println("  Generando comprobante digital...");
             pausaAnimada(600);
-            System.out.println("  Transacción NEQ-2026-" + ((int) (Math.random() * 9000) + 1000) + " enviada exitosamente.");
+            System.out.println("  Transaccion NEQ-2026-" + ((int) (Math.random() * 9000) + 1000) + " enviada exitosamente.");
         } else {
             System.out.println("\n  [EFECTIVO] Entrega el importe exacto al motorista verificado.");
         }
@@ -328,20 +328,20 @@ public class SimuladorUberCampus {
         System.out.println("  Estado actual del pago: " + viaje.getPago().getEstado());
         pausaAnimada(600);
 
-        // El conductor confirma la recepción
+        // El conductor confirma la recepcion
         boolean confirmado = viaje.getPago().confirmarRecepcionMotorista();
         if (confirmado) {
-            System.out.println("  [✓] Motorista " + motorista.getNombre() + " confirmó la recepción del dinero.");
+            System.out.println("  [[OK]] Motorista " + motorista.getNombre() + " confirmo la recepcion del dinero.");
             System.out.println("  Estado final del pago: " + viaje.getPago().getEstado());
         }
     }
 
     // ==================================================================
-    // 6. CALIFICACIÓN BIDIRECCIONAL
+    // 6. CALIFICACION BIDIRECCIONAL
     // ==================================================================
     private static void procesarCalificacionMutua(Viaje viaje, Motorista motorista) {
         System.out.println("\n---------------------------------------------------------------");
-        System.out.println("              SISTEMA DE CALIFICACIÓN Y REPUTACIÓN             ");
+        System.out.println("              SISTEMA DE CALIFICACION Y REPUTACION             ");
         System.out.println("---------------------------------------------------------------");
 
         // 1. Estudiante califica a Motorista
@@ -352,23 +352,23 @@ public class SimuladorUberCampus {
         Calificacion calEst = new Calificacion(puntajeEst, comentarioEst, "ESTUDIANTE");
         viaje.agregarCalificacion(calEst);
 
-        // 2. Motorista califica a Estudiante (Simulación automática o personalizada)
+        // 2. Motorista califica a Estudiante (Simulacion automatica o personalizada)
         System.out.println("\n  [Motorista -> Estudiante]");
-        System.out.println("  El motorista " + motorista.getNombre() + " te ha calificado con 5.0 ★");
+        System.out.println("  El motorista " + motorista.getNombre() + " te ha calificado con 5.0 *");
         Calificacion calMot = new Calificacion(5.0, "Excelente pasajero, puntual y respetuoso.", "MOTORISTA");
         viaje.agregarCalificacion(calMot);
 
-        System.out.println("\n  [✓] Calificaciones registradas en el historial del viaje (" + viaje.getCalificaciones().size() + "/2).");
+        System.out.println("\n  [[OK]] Calificaciones registradas en el historial del viaje (" + viaje.getCalificaciones().size() + "/2).");
     }
 
     // ==================================================================
-    // 7. DEMOSTRACIÓN AUTOMÁTICA EN VIVO (1-CLIC)
+    // 7. DEMOSTRACION AUTOMATICA EN VIVO (1-CLIC)
     // ==================================================================
     private static void ejecutarDemoAutomatizadaEnVivo() {
         System.out.println("\n===============================================================");
-        System.out.println("         DEMO AUTOMÁTICA EN VIVO - RECORRIDO TUCANGO           ");
+        System.out.println("         DEMO AUTOMATICA EN VIVO - RECORRIDO TUCANGO           ");
         System.out.println("===============================================================");
-        System.out.println("  Iniciando simulación interactiva completa...");
+        System.out.println("  Iniciando simulacion interactiva completa...");
         pausaAnimada(800);
 
         Estudiante estudiante = estudiantesRegistrados.get(0);
@@ -378,7 +378,7 @@ public class SimuladorUberCampus {
         double tarifa = 5000.0;
 
         System.out.println("  1. Estudiante: " + estudiante.getNombre() + " solicita moto.");
-        System.out.println("     Ruta: " + origen + " --> " + destino + " | Tarifa: $" + tarifa);
+        System.out.println("     Ruta: " + origen + " --> " + destino + " | Tarifa: " + tarifa + " COP");
         Viaje viaje = new Viaje("DEMO-LIVE-99", origen, destino, tarifa);
         estudiante.getViajesSolicitados().add(viaje);
         reportesService.registrarViaje(viaje);
@@ -399,16 +399,16 @@ public class SimuladorUberCampus {
         pausaAnimada(500);
         viaje.getPago().reportarPagoEstudiante(MetodoPago.NEQUI);
         viaje.getPago().confirmarRecepcionMotorista();
-        System.out.println("  5. Pago confirmado vía Nequi -> Estado: " + viaje.getPago().getEstado());
+        System.out.println("  5. Pago confirmado via Nequi -> Estado: " + viaje.getPago().getEstado());
 
         pausaAnimada(500);
         viaje.agregarCalificacion(new Calificacion(5.0, "Manejo impecable y casco reglamentario.", "ESTUDIANTE"));
         viaje.agregarCalificacion(new Calificacion(5.0, "Pasajero puntual.", "MOTORISTA"));
-        System.out.println("  6. Reputación mutua consolidada: 5.0 ★");
+        System.out.println("  6. Reputacion mutua consolidada: 5.0 *");
 
         System.out.println("\n  ===========================================================");
-        System.out.println("   ¡DEMOSTRACIÓN FINALIZADA CON ÉXITO! Todos los objetos POO ");
-        System.out.println("   colaboraron según el diseño arquitectónico de TucanGo.    ");
+        System.out.println("   DEMOSTRACION FINALIZADA CON EXITO! Todos los objetos POO ");
+        System.out.println("   colaboraron segun el diseno arquitectonico de TucanGo.    ");
         System.out.println("  ===========================================================");
     }
 
@@ -418,21 +418,21 @@ public class SimuladorUberCampus {
     private static void panelBienestarUniversitario() {
         System.out.println("\n===============================================================");
         System.out.println("          PANEL DE BIENESTAR UNIVERSITARIO Y REPORTES          ");
-        System.out.println("          Auditoría de Demanda y Trazabilidad del Campus       ");
+        System.out.println("          Auditoria de Demanda y Trazabilidad del Campus       ");
         System.out.println("===============================================================");
         adminBienestar.consultarReportesDemanda();
 
         List<String> destinosFrecuentes = reportesService.obtenerDestinosMasFrecuentes(5);
-        System.out.println("\n  [Top Destinos Más Concurridos desde el Campus]");
+        System.out.println("\n  [Top Destinos Mas Concurridos desde el Campus]");
         if (destinosFrecuentes.isEmpty()) {
-            System.out.println("    No hay registros de viajes aún.");
+            System.out.println("    No hay registros de viajes aun.");
         } else {
             for (int i = 0; i < destinosFrecuentes.size(); i++) {
                 System.out.println("    " + (i + 1) + ". " + destinosFrecuentes.get(i));
             }
         }
 
-        System.out.println("\n  [Distribución Porcentual por Zonas del Municipio]");
+        System.out.println("\n  [Distribucion Porcentual por Zonas del Municipio]");
         mostrarBarraPorcentual("Centro", reportesService.calcularPorcentajePorSector("Centro"));
         mostrarBarraPorcentual("Juan XXIII", reportesService.calcularPorcentajePorSector("Juan XXIII"));
         mostrarBarraPorcentual("Porvenir", reportesService.calcularPorcentajePorSector("Porvenir"));
@@ -450,7 +450,7 @@ public class SimuladorUberCampus {
     }
 
     // ==================================================================
-    // 9. PANEL DE CONDUCTOR Y GESTIÓN DE FLOTA
+    // 9. PANEL DE CONDUCTOR Y GESTION DE FLOTA
     // ==================================================================
     private static void panelConductor() {
         System.out.println("\n===============================================================");
@@ -465,14 +465,14 @@ public class SimuladorUberCampus {
         Motorista m = flotaMotoristas.get(op - 1);
 
         System.out.println("\n  Motorista: " + m.getNombre());
-        System.out.println("  Teléfono: " + m.getTelefono());
+        System.out.println("  Telefono: " + m.getTelefono());
         System.out.println("  Moto activa: " + (m.obtenerMotoActiva() != null ? m.obtenerMotoActiva().getPlaca() : "Ninguna"));
-        System.out.println("  Documentos verificados (SOAT): " + (m.verificarDocumentos() ? "VÁLIDOS (✓)" : "INVÁLIDOS (X)"));
+        System.out.println("  Documentos verificados (SOAT): " + (m.verificarDocumentos() ? "VALIDOS ([OK])" : "INVALIDOS (X)"));
 
         System.out.println("\n  1. Cambiar estado de disponibilidad");
         System.out.println("  2. Seleccionar otra moto de su flota");
-        System.out.println("  3. Volver al menú principal");
-        System.out.print(">>> Ingrese opción [1 - 3]: ");
+        System.out.println("  3. Volver al menu principal");
+        System.out.print(">>> Ingrese opcion [1 - 3]: ");
         int accion = leerEntero(1, 3);
         if (accion == 1) {
             m.registrarDisponibilidad(!m.isDisponible());
@@ -493,7 +493,7 @@ public class SimuladorUberCampus {
 
     private static void gestionarMotosFlota() {
         System.out.println("\n===============================================================");
-        System.out.println("             INSPECCIÓN DE FLOTA Y SEGUROS SOAT               ");
+        System.out.println("             INSPECCION DE FLOTA Y SEGUROS SOAT               ");
         System.out.println("===============================================================");
         for (Motorista m : flotaMotoristas) {
             System.out.println("\n  Conductor: " + m.getNombre());
@@ -501,7 +501,7 @@ public class SimuladorUberCampus {
                 System.out.println("    * Placa: " + padRight(moto.getPlaca(), 9)
                         + " | Marca: " + padRight(moto.getMarca() + " " + moto.getModelo(), 18)
                         + " | Cilindraje: " + moto.getCilindraje() + "cc"
-                        + " | SOAT: " + (moto.validarSoat() ? "VIGENTE (" + moto.getNumeroSoat() + ")" : "VENCIDO/INVÁLIDO")
+                        + " | SOAT: " + (moto.validarSoat() ? "VIGENTE (" + moto.getNumeroSoat() + ")" : "VENCIDO/INVALIDO")
                         + " | Activa: " + (moto.isActiva() ? "SI" : "NO"));
             }
         }
@@ -521,24 +521,24 @@ public class SimuladorUberCampus {
 
         if (op <= estudiantesRegistrados.size()) {
             estudianteActivo = estudiantesRegistrados.get(op - 1);
-            System.out.println("  [OK] Sesión cambiada a: " + estudianteActivo.getNombre());
+            System.out.println("  [OK] Sesion cambiada a: " + estudianteActivo.getNombre());
         } else {
             String nombre = pedirTexto("Nombre completo del estudiante");
-            String cedula = pedirTexto("Cédula de ciudadanía");
-            String telefono = pedirTexto("Teléfono móvil");
+            String cedula = pedirTexto("Cedula de ciudadania");
+            String telefono = pedirTexto("Telefono movil");
             String correo = pedirTexto("Correo institucional (@udla.edu.co)");
-            String codigo = pedirTexto("Código estudiantil");
+            String codigo = pedirTexto("Codigo estudiantil");
 
             Estudiante nuevo = new Estudiante(cedula, nombre, telefono, correo, codigo);
             estudiantesRegistrados.add(nuevo);
             authService.registrarse(nuevo, "pass123");
             estudianteActivo = nuevo;
-            System.out.println("  [OK] Estudiante registrado e ingresado como sesión activa.");
+            System.out.println("  [OK] Estudiante registrado e ingresado como sesion activa.");
         }
     }
 
     // ==================================================================
-    // 10. MÉTODOS AUXILIARES Y VALIDACIONES
+    // 10. METODOS AUXILIARES Y VALIDACIONES
     // ==================================================================
     private static double calcularTarifaEstimada(String origen, String destino) {
         if (origen.equalsIgnoreCase(destino)) {
@@ -588,7 +588,7 @@ public class SimuladorUberCampus {
                     return val;
                 }
             } catch (NumberFormatException ignored) {}
-            System.out.print("  [!] Ingrese un valor válido entre " + min + " y " + max + ": ");
+            System.out.print("  [!] Ingrese un valor valido entre " + min + " y " + max + ": ");
         }
     }
 
@@ -601,7 +601,7 @@ public class SimuladorUberCampus {
                     return val;
                 }
             } catch (NumberFormatException ignored) {}
-            System.out.print("  [!] Ingrese un número entre " + min + " y " + max + ": ");
+            System.out.print("  [!] Ingrese un numero entre " + min + " y " + max + ": ");
         }
     }
 
@@ -627,7 +627,7 @@ public class SimuladorUberCampus {
             if (!line.isEmpty()) {
                 return line;
             }
-            System.out.print("  [!] No puede ser vacío. " + etiqueta + ": ");
+            System.out.print("  [!] No puede ser vacio. " + etiqueta + ": ");
         }
     }
 }
