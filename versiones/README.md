@@ -1,36 +1,28 @@
-# 📁 Directorio de Versiones Aisladas — TucanGo
+# 🗂️ Versiones Pedagógicas Incrementales de TucanGo (Semanas 1 a 10+)
 
-Cada versión histórica del proyecto se encuentra completamente aislada y autocontenida como un **proyecto nativo de Apache NetBeans con Apache Ant**, compatible con JDK 17 y JDK 21.
-
----
-
-## 🗂️ Versiones Disponibles
-
-| Carpeta | Nombre del Proyecto | Descripción | Clase Principal / Target |
-| :--- | :--- | :--- | :--- |
-| [`v1.0-conceptual/`](v1.0-conceptual/) | `TucanGo-v1.0-Conceptual` | Modelo conceptual inicial y análisis lingüístico (Guía 1 y 2). | `co.edu.uniamazonia.logica2.Main` |
-| [`v2.0-dominio-base/`](v2.0-dominio-base/) | `TucanGo-v2.0-DominioBase` | Primer modelo POO en Java con las 5 clases centrales. | `co.edu.uniamazonia.logica2.DemoTucanGo` |
-| [`v5.0-dominio-estable/`](v5.0-dominio-estable/) | `TucanGo-v5.0-DominioEstable` | Arquitectura consolidada con servicios y 36 tests JUnit 5. | `co.edu.uniamazonia.logica2.PrototipoInteractivo` |
-| [`v5.1-simulador-uber/`](v5.1-simulador-uber/) | `TucanGo-v5.1-SimuladorUber` | Simulador interactivo en terminal estilo Uber/DiDi. | `co.edu.uniamazonia.logica2.SimuladorUberCampus` |
+Este directorio contiene la **evolución progresiva de TucanGo** a lo largo del semestre de **Lógica & Algoritmos II** en la Universidad de la Amazonia. Cada carpeta es un **proyecto nativo e independiente de Apache NetBeans con Apache Ant**, listo para abrir, compilar y ejecutar en consola.
 
 ---
 
-## 🚀 Cómo Abrir y Ejecutar en Apache NetBeans
+## 🚀 Matriz de Versiones y Progresión Temática
 
-1. En NetBeans, ve a **File** $\rightarrow$ **Open Project...** (Ctrl + Shift + O).
-2. Navega a `c:\Dev-Stellel\TucanGo\versiones\` y selecciona la versión deseada (o todas a la vez).
-3. Presiona **F6** (*Run Project*) para ejecutar el programa en la consola de NetBeans.
-4. Presiona **Alt + F6** (*Test Project*) en las versiones con suite JUnit 5 para correr las pruebas.
+| Carpeta | Proyecto NetBeans | Hito Pedagógico | Resumen de Dominio en TucanGo | Comando Ant |
+| :--- | :--- | :---: | :--- | :---: |
+| [`v0.1-sem01-clase-aislada/`](v0.1-sem01-clase-aislada/) | `TucanGo-v0.1-Sem01-ClaseAislada` | **Semana 1** | **El Salto a los Objetos:** 1 clase aislada (`ViajeCampus`) modelando el dolor real del campus con atributos privados y métodos esenciales. | `ant run` |
+| [`v1.0-sem02-abstraccion-4clases/`](v1.0-sem02-abstraccion-4clases/) | `TucanGo-v1.0-Sem02-Abstraccion4Clases` | **Semana 2** | **Mundo del Problema (4 clases):** Separación señal/ruido. Colaboración entre `Estudiante`, `Motorista`, `Moto` y `Viaje`. | `ant run` |
+| [`v2.0-sem03-encapsulamiento-pagos/`](v2.0-sem03-encapsulamiento-pagos/) | `TucanGo-v2.0-Sem03-EncapsulamientoPagos` | **Semana 3** | **Encapsulamiento & Regla de Oro:** Validaciones Fail-Fast en constructores, `Pago` de confianza mutua (Efectivo/Nequi) y `Calificacion` (1.0–5.0). | `ant run` |
+| [`v2.5-sem04-entregable1-oficial/`](v2.5-sem04-entregable1-oficial/) | `TucanGo-v2.5-Sem04-Entregable1Oficial` | **Semana 4** | **Primer Entregable Oficial (APA 7ma):** Paquetes `modelo` y `servicio` (`ServicioAutenticacion`, `ServicioReportes`) correspondientes al documento radicado. | `ant run` |
+| [`v3.0-sem05-colecciones-arraylist/`](v3.0-sem05-colecciones-arraylist/) | `TucanGo-v3.0-Sem05-ColeccionesArrayList` | **Semanas 5–6** | **Colecciones Dinámicas:** `ArrayList<Moto>` multi-moto en `Motorista`, historial de viajes y algoritmos de búsqueda y métricas. | `ant run` |
+| [`v3.5-sem07-fachada-tucangosistema/`](v3.5-sem07-fachada-tucangosistema/) | `TucanGo-v3.5-Sem07-FachadaTucanGoSistema` | **Semanas 7–8** | **Clase Controladora de Fachada (Patrón Villalobos):** `TucanGoSistema` centraliza la orquestación del negocio y cálculo de ingresos. | `ant run` |
+| [`v4.0-sem09-herencia-persona/`](v4.0-sem09-herencia-persona/) | `TucanGo-v4.0-Sem09-HerenciaPersona` | **Semana 9** | **Herencia y Generalización:** Superclase abstracta `Persona` extendida por `Estudiante`, `Motorista` y `Administrador` (`RolAdmin`). | `ant run` |
+| [`v5.0-sem10-arquitectura-consolidada/`](v5.0-sem10-arquitectura-consolidada/) | `TucanGo-v5.0-Sem10-ArquitecturaConsolidada` | **Semana 10+** | **Arquitectura Consolidada & Testing:** Excepciones de negocio, métricas analíticas, **36 tests JUnit 5** y simulador interactivo estilo Uber/DiDi. | `ant test`<br>`ant run` |
 
 ---
 
-## ⚙️ Ejecución por Terminal con Apache Ant
+## 🛠️ Cómo Abrir en Apache NetBeans
 
-```bash
-# Ejemplo: compilar y ejecutar v5.1
-cd versiones/v5.1-simulador-uber
-ant run
-
-# Ejecutar pruebas unitarias
-ant test
-```
+1. En NetBeans, ve al menú superior: **File** $\rightarrow$ **Open Project...** (o presiona `Ctrl + Shift + O`).
+2. Entra a la carpeta `c:\Dev-Stellel\TucanGo\versiones\`.
+3. Selecciona la versión que deseas inspeccionar o sustentar (puedes seleccionarlas todas a la vez).
+4. Presiona **F6** (*Run Project*) o **Shift + F6** (*Run File*) para ejecutar el programa en la consola de NetBeans.
+5. En `v5.0`, presiona **Alt + F6** (*Test Project*) para ejecutar los 36 tests unitarios automatizados.

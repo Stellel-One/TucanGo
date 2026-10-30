@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="TucanGo-v2.0-Sem03-EncapsulamientoPagos" default="default" basedir=".">
+    <description>Builds, tests, and runs the project TucanGo-v2.0-Sem03-EncapsulamientoPagos.</description>
+    <import file="nbproject/build-impl.xml"/>
+</project>

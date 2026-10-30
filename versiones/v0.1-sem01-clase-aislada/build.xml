@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="TucanGo-v0.1-Sem01-ClaseAislada" default="default" basedir=".">
+    <description>Builds, tests, and runs the project TucanGo-v0.1-Sem01-ClaseAislada.</description>
+    <import file="nbproject/build-impl.xml"/>
+</project>

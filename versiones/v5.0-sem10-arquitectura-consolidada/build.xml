@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="TucanGo-v5.0-Sem10-ArquitecturaConsolidada" default="default" basedir=".">
+    <description>Builds, tests, and runs the project TucanGo-v5.0-Sem10-ArquitecturaConsolidada.</description>
+    <import file="nbproject/build-impl.xml"/>
+
+    <!-- Sobrescritura de la meta test para ejecutar el runner de JUnit 5 moderno -->
+    <target name="test" depends="compile-test" description="Ejecuta la suite de pruebas JUnit 5">
+        <path id="test.scan.path">
+            <pathelement location="${build.classes.dir}"/>
+            <pathelement location="${build.test.classes.dir}"/>
+        </path>
+        <pathconvert property="test.scan.path.converted" refid="test.scan.path" pathsep="${path.separator}"/>
+        <java jar="${file.reference.junit-platform-console-standalone-1.10.2.jar}" fork="true" failonerror="true">
+            <arg value="--class-path"/>
+            <arg value="${test.scan.path.converted}"/>
+            <arg value="--scan-class-path"/>
+        </java>
+    </target>
+</project>
