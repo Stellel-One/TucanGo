@@ -1,0 +1,41 @@
+# ============================================================
+# Ignorados
+# ============================================================
+
+# Directorios de salida de compilación y distribución
+build/
+dist/
+
+# Archivos generados por NetBeans (se regeneran al abrir el proyecto)
+nbproject/private/
+nbproject/build-impl.xml
+
+# Clases compiladas y empaquetados
+*.class
+*.jar
+*.war
+*.ear
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos temporales y de respaldo
+*.tmp
+*.log
+*.swp
+*.bak
+*~
+
+# Tooling local específico de máquina (no aporta al repo)
+.atl/
+estructuraci-n-inicial-del-sdd-para-proyecto-java.json
+
+# ============================================================
+# NO ignorar (deben quedar bajo control de versiones)
+# ============================================================
+# - src/                     (código fuente)
+# - openspec/                (especificación del proyecto)
+# - README.md                (documentación principal)
+# - nbproject/project.xml    (definición del proyecto NetBeans)
+# - nbproject/project.properties (configuración del proyecto NetBeans)

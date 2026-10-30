@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Course: Lógica & Algoritmos II (Universidad de la Amazonia, Ingeniería de Sistemas)
+  Stack: Java (intended, OOP) — no build tool configured yet (Maven/Gradle decision pending)
+  Toolchain: JDK 21 (Microsoft OpenJDK 21.0.12)
+  Architecture: not established (empty repo, no source tree)
+  Testing: none detected (no test runner configured)
+  Style: assignment coding standards (see conventions below)
+
+strict_tdd: false
+
+projects: []
+
+testing:
+  strict_tdd: false
+  detected: 2026-09-01
+  projects: []
+
+conventions:
+  classes:
+    - Singular noun, UpperCamelCase (e.g. Guardabosques, SensorAmbiental)
+  attributes:
+    - private visibility, lowerCamelCase
+  methods:
+    - public visibility, infinitive verb, lowerCamelCase
+  data_types:
+    - String, double, int, boolean
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
