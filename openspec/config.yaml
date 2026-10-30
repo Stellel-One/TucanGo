@@ -2,30 +2,48 @@ schema: spec-driven
 
 context: |
   Course: Lógica & Algoritmos II (Universidad de la Amazonia, Ingeniería de Sistemas)
-  Stack: Java (intended, OOP) — no build tool configured yet (Maven/Gradle decision pending)
+  Docente: Ing. Yuber Arley Castro Grillo
+  Stack: Java (OOP), Apache Ant (NetBeans Standard Project System)
   Toolchain: JDK 21 (Microsoft OpenJDK 21.0.12)
-  Architecture: not established (empty repo, no source tree)
-  Testing: none detected (no test runner configured)
+  Architecture: Jorge Villalobos Pattern (Fachada de Sistema + Paquetes modelo/servicio)
+  Testing: JUnit 5 (JUnit Jupiter 5.10.2 / junit-platform-console-standalone-1.10.2)
   Style: assignment coding standards (see conventions below)
 
-strict_tdd: false
+strict_tdd: true
 
-projects: []
+projects:
+  - name: TucanGo-v0.1-ClaseAislada
+    path: versiones/v0.1-sem01-clase-aislada
+  - name: TucanGo-v1.0-Abstraccion4Clases
+    path: versiones/v1.0-sem02-abstraccion-4clases
+  - name: TucanGo-v2.0-EncapsulamientoPagos
+    path: versiones/v2.0-sem03-encapsulamiento-pagos
+  - name: TucanGo-v2.5-Entregable1Oficial
+    path: versiones/v2.5-sem04-entregable1-oficial
+  - name: TucanGo-v3.0-ColeccionesArrayList
+    path: versiones/v3.0-sem05-colecciones-arraylist
+  - name: TucanGo-v3.5-FachadaTucanGoSistema
+    path: versiones/v3.5-sem07-fachada-tucangosistema
+  - name: TucanGo-v4.0-HerenciaPersona
+    path: versiones/v4.0-sem09-herencia-persona
+  - name: TucanGo-v5.0-ArquitecturaConsolidada
+    path: versiones/v5.0-sem10-arquitectura-consolidada
 
 testing:
-  strict_tdd: false
-  detected: 2026-09-01
-  projects: []
+  strict_tdd: true
+  detected: 2026-10-30
+  runner: junit5
+  build_tool: ant
 
 conventions:
   classes:
-    - Singular noun, UpperCamelCase (e.g. Guardabosques, SensorAmbiental)
+    - Singular noun, UpperCamelCase (e.g. Guardabosques, SensorAmbiental, Estudiante, Motorista)
   attributes:
     - private visibility, lowerCamelCase
   methods:
     - public visibility, infinitive verb, lowerCamelCase
   data_types:
-    - String, double, int, boolean
+    - String, double, int, boolean, List, Map
 
 rules:
   proposal:
@@ -42,11 +60,11 @@ rules:
   apply:
     guidelines:
       - Follow existing code patterns
-    tdd: false
-    test_command: ""
+    tdd: true
+    test_command: "ant test"
   verify:
-    test_command: ""
-    build_command: ""
+    test_command: "ant test"
+    build_command: "ant compile"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
