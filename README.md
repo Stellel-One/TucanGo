@@ -83,13 +83,27 @@ Ejecutar la demostración del ecosistema:
 java -cp bin co.edu.uniamazonia.logica2.Main
 ```
 
-### 🎮 Prototipo Interactivo
+### 📱 Simulador de Movilidad Campus estilo Uber / DiDi (NetBeans Terminal)
+
+Simulador interactivo con cálculo automático de tarifas por sectores del campus, radar de motoristas verificados con SOAT, tracking en tiempo real de ruta en consola, pagos (Efectivo / Nequi), reputación mutua y métricas de Bienestar Universitario:
+
+```bash
+# En NetBeans: Abrir el proyecto y presionar F6 (Run Project)
+# Con Apache Ant:
+ant run
+
+# Con Java directamente:
+ant compile
+java -cp "build/classes;lib/*" co.edu.uniamazonia.logica2.SimuladorUberCampus
+```
+
+### 🎮 Prototipo Interactivo Manual
 
 Permite **escribir los datos** (nombre del estudiante, motorista, viaje, pago, calificación)
 y ver cómo responde el modelo en consola, paso a paso:
 
 ```bash
-java -cp bin co.edu.uniamazonia.logica2.PrototipoInteractivo
+java -cp "build/classes;lib/*" co.edu.uniamazonia.logica2.PrototipoInteractivo
 ```
 
 **Menú:**
