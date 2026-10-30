@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="Docs/Gemini_Generated_Image_bawbewbawbewbawb.jpg" alt="Ilustración TucanGo" width="70%" />
+  <img src="Docs/tucango-animado.gif" alt="Animación TucanGo" width="70%" />
 </p>
 
 <p align="center">
@@ -62,7 +62,48 @@ El transporte informal en motocicleta (mototaxis) es una práctica común entre 
 
 ---
 
-## ⚙️ Compilación y Ejecución
+## 🚀 Cómo Abrir y Ejecutar en Apache NetBeans (Recomendado para Estudiantes)
+
+Para correr el proyecto o cualquiera de sus versiones semanales, no necesitas compilar por consola ni configurar librerías externas manualmente. Todo está listo en Apache NetBeans:
+
+1. **Descargar o clonar el repositorio:**
+   ```bash
+   git clone https://github.com/Stellel-One/TucanGo.git
+   ```
+   *(O descargar el ZIP desde el botón verde `<> Code > Download ZIP` en GitHub y descomprimirlo).*
+
+2. **Abrir en Apache NetBeans:**
+   - Abre Apache NetBeans (versión 17, 21 o superior).
+   - Ve al menú superior: **`File` > `Open Project...`** (o presiona `Ctrl + Shift + O`).
+   - Navega hasta la carpeta **`versiones/`** dentro del repositorio.
+   - Selecciona la versión que deseas probar. Para ver el sistema completo definitivo, selecciona:
+     📁 **`v5.0-sem10-arquitectura-consolidada`**
+   - Haz clic en **Open Project**.
+
+3. **Ejecutar el Simulador:**
+   - Haz clic derecho sobre el proyecto en la pestaña *Projects* y selecciona **`Run`** (o presiona **`F6`**).
+   - En la consola integrada de NetBeans podrás interactuar de inmediato con el radar de motoristas, tracking de ruta y simulación de viajes en el campus.
+
+---
+
+### 📚 Versiones Didácticas Disponibles en `versiones/`
+
+Cada carpeta en `versiones/` es un proyecto autónomo de NetBeans alineado al plan de estudios semanal:
+
+| Carpeta en `versiones/` | Semana / Hito | Concepto Clave de POO |
+|-------------------------|---------------|-----------------------|
+| `v0.1-sem01-clase-aislada` | Sem 01 | Clase aislada, atributos y métodos primitivos |
+| `v1.0-sem02-abstraccion-4clases` | Sem 02 | Abstracción inicial y relaciones entre clases |
+| `v2.0-sem03-encapsulamiento-pagos` | Sem 03 | Modificadores `private`, getters/setters e invariantes |
+| `v2.5-sem04-entregable1-oficial` | Sem 04 | Entregable 1: Modelo consolidado con validaciones |
+| `v3.0-sem05-colecciones-arraylist` | Sem 05 | Manejo dinámico de listas con `ArrayList<T>` |
+| `v3.5-sem07-fachada-tucangosistema` | Sem 07 | Patrón Fachada (`TucanGoSistema`) para orquestación |
+| `v4.0-sem09-herencia-persona` | Sem 09 | Jerarquía de clases (`Persona` base, polimorfismo) |
+| **`v5.0-sem10-arquitectura-consolidada`** | **Sem 10** | **Versión definitiva:** Arquitectura en capas y simulador interactivo |
+
+---
+
+## 🛠️ Ejecución Alternativa por Consola (Terminal Cruda)
 
 Compilar todas las clases con JDK 21:
 
