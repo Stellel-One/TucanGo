@@ -59,6 +59,20 @@ El transporte informal en motocicleta (mototaxis) es una práctica común entre 
   - [UML v2.0](Docs/PROY_UML_v2.0_Encapsulamiento_Invariantes.md)
   - [UML v3.0](Docs/PROY_UML_v3.0_FlotaDinamica_ArrayList.md)
 - **Especificaciones SDD:** [`openspec/`](openspec/)
+- **Taller de Git & GitHub (Transferencia Académica):** [Ver Diapositivas en PDF](Docs/taller-git-github/Git_and_GitHub_Architecture.pdf) | [Guía y Galería Completa](Docs/taller-git-github/README.md)
+
+---
+
+## 🌟 Otros Plus del Proyecto: Transferencia Académica y Comunidad
+
+Como valor agregado y demostración de liderazgo formativo, el equipo de **TucanGo** preparó y dictó una **clase magistral y taller práctico de Git y GitHub** para los estudiantes del programa de **Ingeniería de Sistemas de la Universidad de la Amazonia**:
+
+- 🎓 **Propósito Pedagógico:** Compartir la experiencia real de desarrollo de este repositorio, enseñando los fundamentos conceptuales de Git (blobs, trees, commits atómicos, punteros) y dinámicas profesionales en GitHub (convenciones de ramas, resolución de conflictos y *code reviews*).
+- 📊 **Material y Diapositivas Disponibles:**
+  - 📄 **[Visualizar Diapositivas en PDF (Visor directo de GitHub)](Docs/taller-git-github/Git_and_GitHub_Architecture.pdf)**
+  - 🖼️ **[Ver Galería de Diapositivas y Documentación del Taller](Docs/taller-git-github/README.md)**
+  - 📥 **[Descargar Presentación Editable (.pptx)](Docs/taller-git-github/Git_and_GitHub_Architecture.pptx)**
+- 🏆 **Resultado:** Exposición realizada con éxito, acercando a los estudiantes a un entorno de desarrollo profesional con buenas prácticas de versionado y arquitectura modular.
 
 ---
 
