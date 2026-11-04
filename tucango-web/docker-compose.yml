@@ -1,0 +1,23 @@
+services:
+  tucango-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tucango-web
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/estado"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
