@@ -1,0 +1,22 @@
+{
+  "name": "tucango-web",
+  "version": "1.0.0",
+  "description": "TucanGo Web Platform - Clean Architecture and Object-Oriented Programming (OOP) in TypeScript",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "start": "node src/server.ts",
+    "dev": "node --watch src/server.ts"
+  },
+  "keywords": [
+    "tucango",
+    "oop",
+    "clean-architecture",
+    "typescript",
+    "patterns",
+    "state-pattern",
+    "strategy-pattern"
+  ],
+  "author": "Equipo TucanGo",
+  "license": "MIT"
+}

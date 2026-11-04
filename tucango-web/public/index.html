@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TucanGo Web — Plataforma de Movilidad Universitaria (POO & Clean Architecture)</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header Principal -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="logo-badge">🦜</div>
+      <div>
+        <h1>TucanGo <span class="badge-tag">Web Edition (TypeScript POO)</span></h1>
+        <p class="subtitle">Movilidad Universitaria Sostenible — Universidad de la Amazonia</p>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="metric-pill">
+        <span class="label">Total Viajes</span>
+        <strong id="metric-total">0</strong>
+      </div>
+      <div class="metric-pill">
+        <span class="label">Finalizados</span>
+        <strong id="metric-completados">0</strong>
+      </div>
+      <div class="metric-pill highlight">
+        <span class="label">Ingresos Recaudados</span>
+        <strong id="metric-ingresos">$0 COP</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenedor Principal: 2 Vistas Operativas -->
+  <main class="dashboard-grid">
+    <!-- Panel 1: Modo Pasajero (Estudiante) -->
+    <section class="card panel-passenger">
+      <div class="card-header">
+        <div class="icon-circle student-icon">🎓</div>
+        <div>
+          <h2>Vista Pasajero (Estudiante)</h2>
+          <p>Solicitá tu viaje en moto por el campus o la ciudad</p>
+        </div>
+      </div>
+
+      <form id="form-solicitar" class="app-form">
+        <div class="form-group">
+          <label for="select-estudiante">Estudiante Activo:</label>
+          <select id="select-estudiante" required></select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="input-origen">Origen:</label>
+            <input type="text" id="input-origen" value="Campus Porvenir" required>
+          </div>
+          <div class="form-group">
+            <label for="input-destino">Destino:</label>
+            <input type="text" id="input-destino" value="Campus Centro" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="input-distancia">Distancia Estimada (km):</label>
+            <input type="number" id="input-distancia" step="0.1" min="0.5" value="3.5" required>
+          </div>
+          <div class="form-group">
+            <label for="select-pago">Método de Pago:</label>
+            <select id="select-pago">
+              <option value="EFECTIVO">💵 Efectivo</option>
+              <option value="NEQUI">📱 Nequi</option>
+              <option value="DAVIPLATA">🔴 Daviplata</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Strategy Pattern Selector -->
+        <div class="form-group">
+          <label>Estrategia de Tarifa (Strategy Pattern):</label>
+          <div class="strategy-options">
+            <label class="strategy-radio">
+              <input type="radio" name="tarifa" value="estudiantil" checked>
+              <div class="strategy-box">
+                <span class="title">Tarifa Estudiantil</span>
+                <span class="desc">$2.500 COP fija (Subsidio Campus)</span>
+              </div>
+            </label>
+            <label class="strategy-radio">
+              <input type="radio" name="tarifa" value="distancia">
+              <div class="strategy-box">
+                <span class="title">Estándar x Distancia</span>
+                <span class="desc">Base $3.000 + $1.200/km</span>
+              </div>
+            </label>
+            <label class="strategy-radio">
+              <input type="radio" name="tarifa" value="lluvia">
+              <div class="strategy-box">
+                <span class="title">Dinámica Lluvia 🌧️</span>
+                <span class="desc">Recargo +40% clima adverso</span>
+              </div>
+            </label>
+            <label class="strategy-radio">
+              <input type="radio" name="tarifa" value="nocturna">
+              <div class="strategy-box">
+                <span class="title">Tarifa Nocturna 🌙</span>
+                <span class="desc">Recargo +25% nocturno</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-solicitar">
+          🛵 Solicitar Tucán Ahora
+        </button>
+      </form>
+
+      <!-- Estado del Viaje del Pasajero -->
+      <div id="pasajero-viaje-activo" class="active-trip-box hidden">
+        <div class="trip-badge" id="badge-estado">SOLICITADO</div>
+        <h3 id="trip-code">TUC-101</h3>
+        <p id="trip-route">Campus Porvenir ➔ Campus Centro</p>
+        <p class="trip-fare" id="trip-fare">$2.500 COP</p>
+        <div id="trip-driver-info" class="driver-info-box">
+          <p>⏳ Esperando a que un motorista disponible acepte el viaje...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Panel 2: Modo Conductor (Motorista Tucán) -->
+    <section class="card panel-driver">
+      <div class="card-header">
+        <div class="icon-circle driver-icon">🏍️</div>
+        <div>
+          <h2>Vista Conductor (Motorista)</h2>
+          <p>Radar de solicitudes y ejecución de servicio en ruta</p>
+        </div>
+      </div>
+
+      <div class="driver-profile-bar">
+        <div class="form-group flex-1">
+          <label for="select-motorista">Motorista en Servicio:</label>
+          <select id="select-motorista"></select>
+        </div>
+        <div class="driver-moto-info" id="driver-moto-info">
+          <span class="moto-label">Moto Asignada:</span>
+          <strong id="moto-activa-label">Cargando...</strong>
+        </div>
+      </div>
+
+      <!-- Radar de Solicitudes Pendientes -->
+      <div class="radar-container">
+        <h3>📍 Solicitudes Entrantes en Radar</h3>
+        <div id="lista-solicitudes" class="requests-list">
+          <p class="empty-state">No hay solicitudes pendientes en este momento.</p>
+        </div>
+      </div>
+
+      <!-- Viaje que está atendiendo este conductor -->
+      <div id="conductor-viaje-en-curso" class="active-trip-driver hidden">
+        <h3>⚡ Viaje en Atención</h3>
+        <div class="driver-action-card">
+          <div class="trip-meta">
+            <span class="code" id="driver-trip-code">TUC-101</span>
+            <span class="state" id="driver-trip-state">ACEPTADO</span>
+          </div>
+          <p id="driver-trip-pax"><strong>Pasajero:</strong> Carlos Rivera</p>
+          <p id="driver-trip-route"><strong>Ruta:</strong> Porvenir ➔ Centro</p>
+          <p id="driver-trip-price"><strong>Tarifa a cobrar:</strong> $2.500 COP (Nequi)</p>
+
+          <div class="driver-buttons-row">
+            <button id="btn-iniciar-viaje" class="btn btn-warning">🏁 Iniciar Recorrido</button>
+            <button id="btn-finalizar-viaje" class="btn btn-success" disabled>💰 Finalizar y Cobrar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Panel Inferior: Inspector de Arquitectura & Patrones POO -->
+  <footer class="architecture-footer">
+    <div class="architecture-card">
+      <h3>🏛️ Arquitectura & Patrones de Diseño Aplicados</h3>
+      <div class="patterns-grid">
+        <div class="pattern-item">
+          <strong>State Pattern</strong>
+          <p>Transiciones formales sin condicionales: <code>Solicitado ➔ Aceptado ➔ EnCurso ➔ Finalizado</code>. Validaciones fail-fast en cada estado.</p>
+        </div>
+        <div class="pattern-item">
+          <strong>Strategy Pattern</strong>
+          <p>Cálculo de tarifas intercambiable en tiempo de ejecución (Plana Estudiantil, Por Kilómetro, Clima Lluvioso, Nocturna).</p>
+        </div>
+        <div class="pattern-item">
+          <strong>Clean Architecture</strong>
+          <p>Separación estricta entre Dominio puro (cero librerías), Casos de Uso (Fachada) e Infraestructura Web.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal para Calificar -->
+  <div id="modal-calificar" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h3>⭐ Calificá tu experiencia TucanGo</h3>
+      <p id="modal-calificar-sub">¿Cómo estuvo tu trayecto con el motorista?</p>
+      
+      <div class="star-rating">
+        <button type="button" class="star" data-value="1">★</button>
+        <button type="button" class="star" data-value="2">★</button>
+        <button type="button" class="star" data-value="3">★</button>
+        <button type="button" class="star" data-value="4">★</button>
+        <button type="button" class="star active" data-value="5">★</button>
+      </div>
+      <input type="hidden" id="puntuacion-seleccionada" value="5">
+
+      <textarea id="comentario-calificacion" placeholder="Dejá un comentario para el conductor (opcional)..." rows="3"></textarea>
+
+      <div class="modal-actions">
+        <button id="btn-enviar-calificacion" class="btn btn-primary">Enviar Calificación</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
