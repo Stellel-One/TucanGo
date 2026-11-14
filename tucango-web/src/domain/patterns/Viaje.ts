@@ -1,8 +1,15 @@
 import { Estudiante } from "../model/Estudiante.ts";
 import { Motorista } from "../model/Motorista.ts";
-import { Pago, MetodoPago } from "../model/Pago.ts";
+import { Pago, MetodoPago, type EstadoPago } from "../model/Pago.ts";
 import { Calificacion } from "../model/Calificacion.ts";
-import { type EstadoViaje, EstadoSolicitado } from "./EstadoViaje.ts";
+import {
+  type EstadoViaje,
+  EstadoSolicitado,
+  EstadoAceptado,
+  EstadoEnCurso,
+  EstadoFinalizado,
+  EstadoCancelado
+} from "./EstadoViaje.ts";
 import { type EstrategiaTarifa, TarifaEstudiantilFija } from "./EstrategiaTarifa.ts";
 
 export class Viaje {
@@ -19,6 +26,8 @@ export class Viaje {
   private _calificaciones: Calificacion[];
   private _motivoCancelacion?: string;
   private _fechaCreacion: Date;
+  private _llegadaSeguraConfirmada: boolean = false;
+  private _fechaLlegadaSegura?: Date;
 
   constructor(
     codigoViaje: string,
@@ -111,6 +120,14 @@ export class Viaje {
     return this._fechaCreacion;
   }
 
+  public get llegadaSeguraConfirmada(): boolean {
+    return this._llegadaSeguraConfirmada;
+  }
+
+  public get fechaLlegadaSegura(): Date | undefined {
+    return this._fechaLlegadaSegura;
+  }
+
   // --- Delegación a la Máquina de Estados (State Pattern) ---
   public aceptar(motorista: Motorista): void {
     this._estado.aceptar(this, motorista);
@@ -126,6 +143,17 @@ export class Viaje {
 
   public cancelar(motivo: string): void {
     this._estado.cancelar(this, motivo);
+  }
+
+  public confirmarLlegadaSegura(): void {
+    if (this._estado.nombre !== "FINALIZADO") {
+      throw new Error("Solo se puede confirmar llegada segura cuando el viaje está finalizado.");
+    }
+    if (this._llegadaSeguraConfirmada) {
+      throw new Error("La llegada segura ya fue confirmada para este viaje.");
+    }
+    this._llegadaSeguraConfirmada = true;
+    this._fechaLlegadaSegura = new Date();
   }
 
   // --- Métodos de Transición Interna ---
@@ -152,5 +180,64 @@ export class Viaje {
       throw new Error("El viaje ya cuenta con las calificaciones del estudiante y del motorista.");
     }
     this._calificaciones.push(calificacion);
+  }
+
+  public static reconstruir(params: {
+    codigoViaje: string;
+    origen: string;
+    destino: string;
+    distanciaKm: number;
+    estudiante: Estudiante;
+    motorista?: Motorista;
+    estrategiaTarifa: EstrategiaTarifa;
+    tarifa: number;
+    pago: Pago;
+    estadoNombre: string;
+    motivoCancelacion?: string;
+    fechaCreacion: string;
+    llegadaSeguraConfirmada: boolean;
+    fechaLlegadaSegura?: string;
+    calificaciones: Calificacion[];
+  }): Viaje {
+    const viaje = new Viaje(
+      params.codigoViaje,
+      params.origen,
+      params.destino,
+      params.distanciaKm,
+      params.estudiante,
+      params.estrategiaTarifa,
+      params.pago.metodo
+    );
+
+    viaje._tarifa = params.tarifa;
+    viaje._pago = params.pago;
+    viaje._motorista = params.motorista;
+    viaje._motivoCancelacion = params.motivoCancelacion;
+    viaje._fechaCreacion = new Date(params.fechaCreacion);
+    viaje._llegadaSeguraConfirmada = params.llegadaSeguraConfirmada;
+    viaje._fechaLlegadaSegura = params.fechaLlegadaSegura
+      ? new Date(params.fechaLlegadaSegura)
+      : undefined;
+    viaje._calificaciones = [...params.calificaciones];
+
+    switch (params.estadoNombre) {
+      case "ACEPTADO":
+        viaje._estado = new EstadoAceptado();
+        break;
+      case "EN_CURSO":
+        viaje._estado = new EstadoEnCurso();
+        break;
+      case "FINALIZADO":
+        viaje._estado = new EstadoFinalizado();
+        break;
+      case "CANCELADO":
+        viaje._estado = new EstadoCancelado();
+        break;
+      default:
+        viaje._estado = new EstadoSolicitado();
+        break;
+    }
+
+    return viaje;
   }
 }

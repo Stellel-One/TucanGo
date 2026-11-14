@@ -56,4 +56,18 @@ export class Pago {
   public cancelar(): void {
     this._estado = EstadoPago.CANCELADO;
   }
+
+  public static reconstruir(
+    monto: number,
+    metodo: MetodoPago,
+    estado: EstadoPago,
+    fechaPago?: string
+  ): Pago {
+    const pago = new Pago(monto, metodo);
+    pago._estado = estado;
+    if (fechaPago) {
+      pago._fechaPago = new Date(fechaPago);
+    }
+    return pago;
+  }
 }

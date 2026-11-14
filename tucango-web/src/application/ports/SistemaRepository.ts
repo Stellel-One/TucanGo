@@ -1,0 +1,70 @@
+import type { MetodoPago, EstadoPago } from "../../domain/model/Pago.ts";
+
+export interface EstudianteSnapshot {
+  identificacion: string;
+  nombre: string;
+  telefono: string;
+  correoInstitucional: string;
+  codigoEstudiantil: string;
+  carrera: string;
+}
+
+export interface MotoSnapshot {
+  placa: string;
+  marca: string;
+  modelo: string;
+  cilindraje: number;
+  activa: boolean;
+  soatVigente: boolean;
+  numeroSoat: string;
+}
+
+export interface MotoristaSnapshot {
+  identificacion: string;
+  nombre: string;
+  telefono: string;
+  correoInstitucional: string;
+  disponible: boolean;
+  motos: MotoSnapshot[];
+}
+
+export interface CalificacionSnapshot {
+  puntuacion: number;
+  comentario: string;
+  autorIdentificacion: string;
+}
+
+export interface ViajeSnapshot {
+  codigoViaje: string;
+  estudianteId: string;
+  motoristaId?: string;
+  origen: string;
+  destino: string;
+  distanciaKm: number;
+  estrategiaNombre: string;
+  tarifa: number;
+  estadoNombre: string;
+  motivoCancelacion?: string;
+  fechaCreacion: string;
+  llegadaSeguraConfirmada: boolean;
+  fechaLlegadaSegura?: string;
+  pago: {
+    monto: number;
+    metodo: MetodoPago;
+    estado: EstadoPago;
+    fechaPago?: string;
+  };
+  calificaciones: CalificacionSnapshot[];
+}
+
+export interface EstadoSistemaSnapshot {
+  contadorViajes: number;
+  estudiantes: EstudianteSnapshot[];
+  motoristas: MotoristaSnapshot[];
+  viajes: ViajeSnapshot[];
+}
+
+export interface SistemaRepository {
+  cargar(): EstadoSistemaSnapshot | null;
+  guardar(snapshot: EstadoSistemaSnapshot): void;
+}
