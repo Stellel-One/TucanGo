@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TucanGo · Movilidad Universitaria · Uniamazonia Florencia</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config verbatum -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed-dim": "#85d998",
+            "on-primary-fixed-variant": "#005226",
+            "tertiary": "#643c00",
+            "tertiary-fixed": "#ffddba",
+            "error-container": "#ffdad6",
+            "on-surface-variant": "#3f4940",
+            "secondary-fixed-dim": "#ffb4a8",
+            "outline-variant": "#bfc9bd",
+            "canopy-tint": "#EDF2EE",
+            "on-primary-fixed": "#00210c",
+            "on-secondary": "#ffffff",
+            "tertiary-fixed-dim": "#ffb964",
+            "surface-dim": "#d9dad7",
+            "on-error": "#ffffff",
+            "on-secondary-fixed-variant": "#900e07",
+            "surface-tint": "#126d37",
+            "on-surface": "#191c1b",
+            "on-tertiary-container": "#ffcd97",
+            "crimson-wash": "#FCEEEA",
+            "primary": "#005125",
+            "surface-bright": "#f9faf7",
+            "pure-cloud": "#FFFFFF",
+            "surface-container-high": "#e7e8e6",
+            "canopy-institutional": "#0F6B36",
+            "primary-container": "#0f6b36",
+            "on-secondary-container": "#650000",
+            "verified-leaf": "#1D7A52",
+            "error": "#ba1a1a",
+            "on-tertiary-fixed": "#2b1700",
+            "tertiary-container": "#855100",
+            "surface": "#f9faf7",
+            "background": "#f9faf7",
+            "piedmont-ochre": "#C47E1A",
+            "inverse-on-surface": "#f0f1ee",
+            "surface-container": "#edeeeb",
+            "on-secondary-fixed": "#410000",
+            "verified-wash": "#E8F4EC",
+            "inverse-surface": "#2e312f",
+            "surface-container-low": "#f3f4f1",
+            "whisper-stone": "#D8E0D9",
+            "surface-container-highest": "#e2e3e0",
+            "on-primary": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary": "#ffffff",
+            "tucan-crimson": "#C93B2B",
+            "inverse-primary": "#85d998",
+            "secondary-container": "#ff614d",
+            "on-error-container": "#93000a",
+            "slate-moss": "#4B5B53",
+            "institutional-charcoal": "#222222",
+            "piedmont-mist": "#F6F7F4",
+            "secondary": "#b22a1d",
+            "outline": "#6f7a6f",
+            "on-tertiary-fixed-variant": "#663e00",
+            "deep-canopy-hover": "#0B5229",
+            "on-primary-container": "#94e9a6",
+            "secondary-fixed": "#ffdad4",
+            "on-background": "#191c1b",
+            "surface-variant": "#e2e3e0",
+            "primary-fixed": "#a0f6b2"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "2rem",
+            "space-xl": "2.5rem",
+            "space-xs": "0.25rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Open Sans"],
+            "label-md": ["Open Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-lg": ["Open Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Open Sans"],
+            "telemetry-mono": ["JetBrains Mono"],
+            "body-sm": ["Open Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+            "label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+            "telemetry-mono": ["13px", { "lineHeight": "18px", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-piedmont-mist text-on-surface antialiased min-h-screen flex flex-col font-body-md text-body-md selection:bg-canopy-tint selection:text-canopy-institutional">
+<!-- TOP INSTITUTIONAL BAR (Shared TopNavBar Integration) -->
+<header class="bg-pure-cloud border-b border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] sticky top-0 z-50">
+<div class="w-full max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
+<!-- Brand & Emblem SVG -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-canopy-tint border border-whisper-stone flex items-center justify-center p-1.5 shadow-sm">
+<!-- Geometric Toucan + Route Curvature Vector Emblem -->
+<svg class="w-full h-full" fill="none" viewbox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+<!-- Interlinked campus road ring path -->
+<path d="M6 31C8 20 18 10 32 10" stroke="#0F6B36" stroke-dasharray="0.5 3" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Stylized Toucan Head & Body (Right Facing) -->
+<path d="M12 28C12 22.5 16.5 18 22 18H25V24C25 28.5 20.5 31 16 31H12V28Z" fill="#0F6B36"></path>
+<!-- Eye accent -->
+<circle cx="21" cy="21" fill="#FFFFFF" r="1.5"></circle>
+<!-- Angular aerodynamic bill / beak -->
+<path d="M25 18C28 18 34 19 35 22.5C33 24 29 24.5 25 24V18Z" fill="#C93B2B"></path>
+<path d="M25 21H29" stroke="#FFFFFF" stroke-linecap="round" stroke-width="1"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md tracking-tight font-bold text-canopy-institutional">TucanGo</span>
+<span class="px-1.5 py-0.5 rounded bg-canopy-tint text-canopy-institutional font-telemetry-mono text-[10px] font-bold uppercase tracking-wider border border-whisper-stone">Beta v1</span>
+</div>
+<p class="font-body-sm text-body-sm text-slate-moss leading-none">Movilidad Universitaria · Uniamazonia</p>
+</div>
+</div>
+<!-- Campus Quick Links (Desktop Navigation) -->
+<nav class="hidden xl:flex items-center space-x-6 text-label-md font-label-md">
+<a class="text-canopy-institutional border-b-2 border-canopy-institutional font-semibold pb-1" href="#mapa">Campus Porvenir</a>
+<a class="text-slate-moss hover:text-canopy-institutional transition-colors font-medium" href="#mapa">Sede Centro</a>
+<a class="text-slate-moss hover:text-canopy-institutional transition-colors font-medium" href="#mapa">Granja Balcanes</a>
+<a class="text-slate-moss hover:text-canopy-institutional transition-colors font-medium" href="#telemetria">Telemetría</a>
+</nav>
+<!-- Center-Right Operational Controls -->
+<div class="flex items-center gap-3 md:gap-4">
+<!-- Live Connection Telemetry Pill -->
+<div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-verified-wash border border-whisper-stone text-verified-leaf font-telemetry-mono text-label-sm">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-verified-leaf opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-verified-leaf"></span>
+</span>
+<span class="font-bold tracking-tight">En vivo</span>
+</div>
+<!-- Segmented Role Selector -->
+<div class="bg-piedmont-mist p-1 rounded-xl border border-whisper-stone flex items-center shadow-inner">
+<button class="px-3 py-1.5 rounded-lg bg-pure-cloud text-canopy-institutional font-label-sm text-label-sm font-semibold shadow-sm transition-all flex items-center gap-1.5" id="btn-vista-pasajero" onclick="setRole('pasajero')">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span>Vista Pasajero</span>
+</button>
+<button class="px-3 py-1.5 rounded-lg text-slate-moss hover:text-canopy-institutional font-label-sm text-label-sm font-medium transition-all flex items-center gap-1.5" id="btn-vista-motorista" onclick="setRole('motorista')">
+<span class="material-symbols-outlined text-[16px]">two_wheeler</span>
+<span>Vista Motorista</span>
+</button>
+</div>
+<!-- Secondary Action: Registrar Usuario -->
+<button class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-pure-cloud hover:bg-canopy-tint text-slate-moss hover:text-canopy-institutional border border-whisper-stone font-label-md text-label-md transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>Registrar Usuario</span>
+</button>
+<!-- Profile & Tethering Icons from Shared Anchors -->
+<div class="flex items-center gap-1 border-l border-whisper-stone pl-3">
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-moss hover:text-canopy-institutional hover:bg-canopy-tint transition-all" title="Telemetría de Red">
+<span class="material-symbols-outlined text-[20px]">wifi_tethering</span>
+</button>
+<button class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-moss hover:text-canopy-institutional hover:bg-canopy-tint transition-all relative" title="Notificaciones">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-tucan-crimson"></span>
+</button>
+<div class="w-9 h-9 rounded-xl bg-canopy-tint border border-whisper-stone overflow-hidden flex items-center justify-center text-canopy-institutional font-bold text-label-md">
+<span>UA</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN OPERATIONAL WORKSPACE (Desktop Asymmetric Grid) -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-6 py-5">
+<!-- Top Context Header Banner -->
+<div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-pure-cloud p-3.5 rounded-xl border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)]">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-canopy-tint text-canopy-institutional flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">near_me</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-institutional-charcoal font-bold">Despacho y Monitoreo Florencia</h1>
+<p class="font-body-sm text-body-sm text-slate-moss">Corredor Académico: Campus Porvenir · Av. Circunvalar · Sede Centro · Km 17 Granja Balcanes</p>
+</div>
+</div>
+<div class="flex items-center gap-2 self-end sm:self-center">
+<span class="px-2.5 py-1 rounded bg-piedmont-mist border border-whisper-stone text-slate-moss font-telemetry-mono text-[11px]">CLIMA: 28°C NUBLADO</span>
+<span class="px-2.5 py-1 rounded bg-verified-wash border border-whisper-stone text-verified-leaf font-telemetry-mono text-[11px]">VIA SEGURA ACTIVADA</span>
+</div>
+</div>
+<!-- Asymmetric Layout: 60% Left (Map + Telemetry) / 40% Right (Trip Actions & Feed) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+<!-- LEFT COLUMN (60% ~ 7 cols in 12-grid) -->
+<section class="lg:col-span-7 flex flex-col gap-4">
+<!-- Cartographic Map Container -->
+<div class="bg-pure-cloud rounded-xl border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] overflow-hidden relative flex flex-col" id="mapa">
+<!-- Map Toolbar / Header -->
+<div class="px-4 py-2.5 border-b border-whisper-stone flex items-center justify-between bg-pure-cloud/90 backdrop-blur z-20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-canopy-institutional text-[18px]">map</span>
+<span class="font-label-md text-label-md text-institutional-charcoal font-bold">Mapa Satelital de Movilidad Florencia</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2 py-1 rounded bg-piedmont-mist hover:bg-canopy-tint text-slate-moss text-label-sm font-label-sm border border-whisper-stone flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">layers</span> Capas Campus
+              </button>
+<button class="w-7 h-7 rounded bg-piedmont-mist hover:bg-canopy-tint text-slate-moss flex items-center justify-center border border-whisper-stone">
+<span class="material-symbols-outlined text-[16px]">my_location</span>
+</button>
+<button class="w-7 h-7 rounded bg-piedmont-mist hover:bg-canopy-tint text-slate-moss flex items-center justify-center border border-whisper-stone">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- Stylized Cartography Canvas (SVG Minimalist Institutional Representation) -->
+<div class="relative w-full h-[460px] bg-[#EBF0EC] overflow-hidden select-none">
+<!-- Map background topographic vector grid & river contours (Río Hacha) -->
+<svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="40" id="grid" patternunits="userSpaceOnUse" width="40">
+<path d="M 40 0 L 0 0 0 40" fill="none" stroke="#D8E2D9" stroke-dasharray="1 3" stroke-width="0.75"></path>
+</pattern>
+<lineargradient id="riverGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#CBE3D5" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#B8DAC6" stop-opacity="0.9"></stop>
+</lineargradient>
+</defs>
+<!-- Grid -->
+<rect fill="url(#grid)" height="100%" width="100%"></rect>
+<!-- Río Hacha organic curvature through Florencia -->
+<path d="M-20 40 Q 120 180, 240 140 T 480 300 T 800 420" fill="none" stroke="url(#riverGrad)" stroke-linecap="round" stroke-width="26"></path>
+<path d="M-20 40 Q 120 180, 240 140 T 480 300 T 800 420" fill="none" stroke="#A7CFB8" stroke-linecap="round" stroke-width="3"></path>
+<!-- Secondary street network -->
+<path d="M 50 480 L 180 320 L 320 280 L 460 380 L 680 430" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="6"></path>
+<path d="M 180 50 L 180 320 L 260 460" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="5"></path>
+<path d="M 280 20 L 360 160 L 520 220 L 750 200" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="5"></path>
+<path d="M 320 280 L 420 110 L 620 90" fill="none" stroke="#FFFFFF" stroke-dasharray="4 2" stroke-width="4"></path>
+<!-- ACTIVE ROUTE POLYLINE (Campus Porvenir -> Sede Centro) -->
+<!-- Outer Glow/Pulsing casing -->
+<path d="M 120 130 Q 210 160, 280 240 T 440 230" fill="none" opacity="0.6" stroke="#A0F6B2" stroke-linecap="round" stroke-linejoin="round" stroke-width="10"></path>
+<!-- Core Sharp Route in #0F6B36 -->
+<path d="M 120 130 Q 210 160, 280 240 T 440 230" fill="none" stroke="#0F6B36" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5"></path>
+<!-- Animated directional dashes -->
+<path d="M 120 130 Q 210 160, 280 240 T 440 230" fill="none" stroke="#FFFFFF" stroke-dasharray="6 8" stroke-linecap="round" stroke-width="1.5"></path>
+</svg>
+<!-- Map Interactive Nodes / Campus Pins -->
+<!-- 1. Campus Porvenir (Origen / Pin Verde Institucional) -->
+<div class="absolute left-[90px] top-[95px] flex flex-col items-center group cursor-pointer">
+<div class="flex items-center gap-1.5 bg-canopy-institutional text-white px-2.5 py-1 rounded-md shadow-md border border-white/40">
+<span class="material-symbols-outlined text-[15px]">school</span>
+<span class="font-headline-sm text-xs font-bold whitespace-nowrap">Campus Porvenir</span>
+</div>
+<div class="w-3 h-3 bg-canopy-institutional rotate-45 -mt-1.5 border-r border-b border-white/40"></div>
+<div class="w-4 h-4 rounded-full bg-verified-leaf/30 flex items-center justify-center -mt-1">
+<div class="w-2 h-2 rounded-full bg-canopy-institutional ring-2 ring-white"></div>
+</div>
+</div>
+<!-- 2. Sede Centro (Destino / Pin Tucán Carmesí) -->
+<div class="absolute left-[400px] top-[200px] flex flex-col items-center group cursor-pointer">
+<div class="flex items-center gap-1.5 bg-tucan-crimson text-white px-2.5 py-1 rounded-md shadow-md border border-white/40">
+<span class="material-symbols-outlined text-[15px]">account_balance</span>
+<span class="font-headline-sm text-xs font-bold whitespace-nowrap">Sede Centro</span>
+</div>
+<div class="w-3 h-3 bg-tucan-crimson rotate-45 -mt-1.5 border-r border-b border-white/40"></div>
+<div class="w-4 h-4 rounded-full bg-tucan-crimson/30 flex items-center justify-center -mt-1">
+<div class="w-2 h-2 rounded-full bg-tucan-crimson ring-2 ring-white"></div>
+</div>
+</div>
+<!-- 3. Granja Balcanes (Pin Rústico Noreste) -->
+<div class="absolute right-[40px] top-[60px] flex flex-col items-center group cursor-pointer opacity-90 hover:opacity-100">
+<div class="flex items-center gap-1.5 bg-pure-cloud text-institutional-charcoal px-2 py-0.5 rounded-md shadow border border-whisper-stone">
+<span class="material-symbols-outlined text-slate-moss text-[14px]">agriculture</span>
+<span class="font-label-sm text-[11px] font-semibold">Granja Balcanes (Km 17)</span>
+</div>
+<div class="w-2.5 h-2.5 bg-pure-cloud rotate-45 -mt-1 border-r border-b border-whisper-stone"></div>
+<div class="w-2 h-2 rounded-full bg-slate-moss mt-0.5"></div>
+</div>
+<!-- 4. Barrio La Vega (Hito Intermedio) -->
+<div class="absolute left-[240px] top-[240px] flex flex-col items-center group cursor-pointer">
+<div class="flex items-center gap-1 bg-pure-cloud/95 backdrop-blur text-slate-moss px-2 py-0.5 rounded shadow-sm border border-whisper-stone">
+<span class="w-1.5 h-1.5 rounded-full bg-piedmont-ochre"></span>
+<span class="font-body-sm text-[11px] font-medium">Barrio La Vega</span>
+</div>
+</div>
+<!-- 5. Terminal de Florencia (Hito Conectividad) -->
+<div class="absolute left-[280px] top-[340px] flex flex-col items-center group cursor-pointer opacity-80 hover:opacity-100">
+<div class="flex items-center gap-1 bg-pure-cloud text-slate-moss px-2 py-0.5 rounded shadow-sm border border-whisper-stone">
+<span class="material-symbols-outlined text-[13px] text-slate-moss">directions_bus</span>
+<span class="font-body-sm text-[11px] font-medium">Terminal de Florencia</span>
+</div>
+</div>
+<!-- Simulated Moving Vehicle Marker on Active Route -->
+<div class="absolute left-[260px] top-[195px] -translate-x-1/2 -translate-y-1/2 z-10">
+<div class="w-8 h-8 rounded-full bg-institutional-charcoal text-white flex items-center justify-center shadow-lg ring-2 ring-canopy-tint">
+<span class="material-symbols-outlined text-[18px] text-primary-fixed">two_wheeler</span>
+</div>
+<div class="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-institutional-charcoal text-white px-1.5 py-0.2 rounded font-telemetry-mono text-[9px] whitespace-nowrap">
+                GNX-45F
+              </div>
+</div>
+<!-- Floating Route Summary Card (Mandatory Specification) -->
+<div class="absolute bottom-4 left-4 right-4 sm:right-auto sm:max-w-sm bg-pure-cloud/95 backdrop-blur rounded-xl border border-whisper-stone p-3 shadow-lg z-20">
+<div class="flex items-start justify-between gap-3 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-canopy-institutional"></span>
+<span class="font-headline-sm text-xs font-bold text-institutional-charcoal">3.4 km · Ruta verificada</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-canopy-tint text-canopy-institutional font-telemetry-mono text-xs font-bold">
+                  8 min
+                </span>
+</div>
+<div class="flex items-center gap-1.5 text-verified-leaf font-body-sm text-xs">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Tráfico fluido vía La Vega · Corredor institucional</span>
+</div>
+</div>
+<!-- Map Scale & Watermark -->
+<div class="absolute bottom-3 right-3 text-right pointer-events-none hidden sm:block">
+<span class="font-telemetry-mono text-[10px] text-slate-moss font-semibold uppercase bg-pure-cloud/80 px-2 py-0.5 rounded border border-whisper-stone">FLORENCIA, CAQUETÁ · GPS REALTIME</span>
+</div>
+</div>
+<!-- River Contours Footer Micro-Banner -->
+<div class="px-4 py-2 bg-piedmont-mist/60 border-t border-whisper-stone flex items-center justify-between text-xs text-slate-moss">
+<span class="flex items-center gap-1 font-body-sm">
+<span class="material-symbols-outlined text-[15px] text-canopy-institutional">water</span>
+              Cuenca Río Hacha · Monitoreo continuo de vías por lluvias tropicales
+            </span>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">Lat: 1.6144° N · Lon: 75.6062° W</span>
+</div>
+</div>
+<!-- Institutional Telemetry Bar (4 Clean Modular Cards) -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="telemetria">
+<!-- Card 1: Total Viajes -->
+<div class="bg-pure-cloud rounded-xl p-3.5 border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-moss mb-1">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-[11px]">Total Viajes</span>
+<span class="material-symbols-outlined text-[16px]">swap_calls</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<span class="font-telemetry-mono text-2xl font-bold text-institutional-charcoal">148</span>
+<span class="text-[11px] font-telemetry-mono text-verified-leaf font-medium">+14% hoy</span>
+</div>
+</div>
+<!-- Card 2: Finalizados -->
+<div class="bg-pure-cloud rounded-xl p-3.5 border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-moss mb-1">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-[11px]">Finalizados</span>
+<span class="material-symbols-outlined text-[16px] text-canopy-institutional">task_alt</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<span class="font-telemetry-mono text-2xl font-bold text-canopy-institutional">132</span>
+<span class="text-[11px] font-telemetry-mono text-slate-moss">89.1% éxito</span>
+</div>
+</div>
+<!-- Card 3: Solicitados -->
+<div class="bg-pure-cloud rounded-xl p-3.5 border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-moss mb-1">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-[11px]">Solicitados</span>
+<span class="material-symbols-outlined text-[16px] text-piedmont-ochre">pending_actions</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<span class="font-telemetry-mono text-2xl font-bold text-piedmont-ochre">12</span>
+<span class="text-[11px] font-telemetry-mono text-piedmont-ochre">En cola</span>
+</div>
+</div>
+<!-- Card 4: Ingresos COP -->
+<div class="bg-pure-cloud rounded-xl p-3.5 border border-whisper-stone shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] flex flex-col justify-between">
+<div class="flex items-center justify-between text-slate-moss mb-1">
+<span class="font-label-sm text-label-sm uppercase font-semibold text-[11px]">Ingresos COP</span>
+<span class="material-symbols-outlined text-[16px] text-canopy-institutional">payments</span>
+</div>
+<div class="flex items-baseline justify-between mt-1">
+<span class="font-telemetry-mono text-[17px] font-bold text-institutional-charcoal tracking-tight">$345.000</span>
+<span class="text-[10px] font-telemetry-mono text-slate-moss">COP</span>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN (40% ~ 5 cols in 12-grid) -->
+<section class="lg:col-span-5 flex flex-col gap-5">
+<!-- CARD A: SOLICITAR VIAJE · PASAJERO -->
+<div class="bg-pure-cloud rounded-xl border border-whisper-stone p-5 shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)]">
+<!-- Card Header -->
+<div class="flex items-center justify-between pb-3.5 border-b border-whisper-stone mb-4">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-canopy-tint text-canopy-institutional flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-[20px]">hail</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-institutional-charcoal font-bold">Solicitar Viaje · Pasajero</h2>
+<p class="font-body-sm text-body-sm text-slate-moss">Tarifa institucional solidaria Uniamazonia</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-canopy-tint text-canopy-institutional font-telemetry-mono text-[11px] font-semibold border border-whisper-stone">ACTIVO</span>
+</div>
+<!-- Trip Origin / Destination Inputs -->
+<div class="space-y-3 mb-4">
+<!-- Origen Input -->
+<div>
+<label class="block font-label-sm text-label-sm text-slate-moss mb-1">Origen Institucional</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-canopy-institutional">
+<span class="material-symbols-outlined text-[18px]">trip_origin</span>
+</div>
+<select class="w-full pl-9 pr-3 py-2 bg-piedmont-mist hover:bg-pure-cloud focus:bg-pure-cloud border border-whisper-stone focus:border-canopy-institutional focus:ring-1 focus:ring-canopy-institutional rounded-lg font-body-md text-body-md text-institutional-charcoal transition-all">
+<option selected="">Campus Porvenir - Portería Principal</option>
+<option>Sede Centro - Edificio Administrativo</option>
+<option>Granja Balcanes - Bloque Pecuario</option>
+<option>Barrio La Vega - Puerta Peatonal</option>
+<option>Terminal de Florencia - Muelle 1</option>
+</select>
+</div>
+</div>
+<!-- Inter-stops indicator icon separator -->
+<div class="flex items-center justify-center -my-1">
+<div class="w-6 h-6 rounded-full bg-pure-cloud border border-whisper-stone flex items-center justify-center text-slate-moss hover:text-canopy-institutional cursor-pointer">
+<span class="material-symbols-outlined text-[14px]">swap_vert</span>
+</div>
+</div>
+<!-- Destino Input -->
+<div>
+<label class="block font-label-sm text-label-sm text-slate-moss mb-1">Destino Campus / Sede</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-tucan-crimson">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+</div>
+<select class="w-full pl-9 pr-3 py-2 bg-piedmont-mist hover:bg-pure-cloud focus:bg-pure-cloud border border-whisper-stone focus:border-canopy-institutional focus:ring-1 focus:ring-canopy-institutional rounded-lg font-body-md text-body-md text-institutional-charcoal transition-all">
+<option>Campus Porvenir - Portería Principal</option>
+<option selected="">Sede Centro - Edificio Administrativo</option>
+<option>Granja Balcanes - Bloque Pecuario</option>
+<option>Barrio La Vega - Puerta Peatonal</option>
+<option>Terminal de Florencia - Muelle 1</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Selector de Estrategia Tarifaria (4 opciones) -->
+<div class="mb-4">
+<label class="block font-label-sm text-label-sm text-slate-moss mb-1.5">Estrategia Tarifaria Regulada</label>
+<div class="grid grid-cols-2 gap-2" id="tariff-options">
+<!-- Opción 1: Estudiantil Fija (Default Activa) -->
+<button class="tariff-btn text-left p-2.5 rounded-lg border border-canopy-institutional bg-canopy-tint text-canopy-institutional transition-all" onclick="selectTariff(this, '2500')" type="button">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-bold">Estudiantil Fija</span>
+<span class="material-symbols-outlined text-[16px]">school</span>
+</div>
+<span class="font-telemetry-mono text-[12px] block font-semibold">$2.500 COP</span>
+</button>
+<!-- Opción 2: Por Kilómetro -->
+<button class="tariff-btn text-left p-2.5 rounded-lg border border-whisper-stone bg-pure-cloud hover:bg-piedmont-mist text-institutional-charcoal transition-all" onclick="selectTariff(this, '2800')" type="button">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-semibold">Por Kilómetro</span>
+<span class="material-symbols-outlined text-slate-moss text-[16px]">speed</span>
+</div>
+<span class="font-telemetry-mono text-[12px] text-slate-moss block font-medium">$800/km</span>
+</button>
+<!-- Opción 3: Dinámica Lluvia -->
+<button class="tariff-btn text-left p-2.5 rounded-lg border border-whisper-stone bg-pure-cloud hover:bg-piedmont-mist text-institutional-charcoal transition-all" onclick="selectTariff(this, '3200')" type="button">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-semibold">Dinámica Lluvia</span>
+<span class="material-symbols-outlined text-slate-moss text-[16px]">rainy</span>
+</div>
+<span class="font-telemetry-mono text-[12px] text-slate-moss block font-medium">+20% Recargo</span>
+</button>
+<!-- Opción 4: Nocturna -->
+<button class="tariff-btn text-left p-2.5 rounded-lg border border-whisper-stone bg-pure-cloud hover:bg-piedmont-mist text-institutional-charcoal transition-all" onclick="selectTariff(this, '3000')" type="button">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-sm text-label-sm font-semibold">Nocturna</span>
+<span class="material-symbols-outlined text-slate-moss text-[16px]">nightlight</span>
+</div>
+<span class="font-telemetry-mono text-[12px] text-slate-moss block font-medium">&gt; 8:00 PM</span>
+</button>
+</div>
+</div>
+<!-- Selector de Método de Pago -->
+<div class="mb-4">
+<label class="block font-label-sm text-label-sm text-slate-moss mb-1.5">Método de Pago</label>
+<div class="grid grid-cols-3 gap-2">
+<label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-whisper-stone hover:border-canopy-institutional cursor-pointer bg-piedmont-mist/50 has-[:checked]:bg-canopy-tint has-[:checked]:border-canopy-institutional transition-all">
+<input checked="" class="hidden" name="payment_method" type="radio" value="efectivo"/>
+<span class="material-symbols-outlined text-[16px] text-canopy-institutional">payments</span>
+<span class="font-label-sm text-label-sm">Efectivo</span>
+</label>
+<label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-whisper-stone hover:border-canopy-institutional cursor-pointer bg-piedmont-mist/50 has-[:checked]:bg-canopy-tint has-[:checked]:border-canopy-institutional transition-all">
+<input class="hidden" name="payment_method" type="radio" value="nequi"/>
+<span class="font-telemetry-mono text-[11px] font-bold text-[#6B2C91]">Nequi</span>
+</label>
+<label class="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-whisper-stone hover:border-canopy-institutional cursor-pointer bg-piedmont-mist/50 has-[:checked]:bg-canopy-tint has-[:checked]:border-canopy-institutional transition-all">
+<input class="hidden" name="payment_method" type="radio" value="daviplata"/>
+<span class="font-telemetry-mono text-[11px] font-bold text-[#ED1C24]">Daviplata</span>
+</label>
+</div>
+</div>
+<!-- Desglose de Tarifa Estimada -->
+<div class="bg-piedmont-mist rounded-xl p-3 border border-whisper-stone mb-4 flex items-center justify-between">
+<div>
+<span class="font-body-sm text-body-sm text-slate-moss block">Subtotal trayecto seguro</span>
+<span class="font-headline-sm text-headline-sm text-institutional-charcoal font-bold">Tarifa estimada:</span>
+</div>
+<div class="text-right">
+<span class="font-telemetry-mono text-xl font-bold text-canopy-institutional block" id="price-display">$2.500 COP</span>
+<span class="font-body-sm text-[11px] text-slate-moss">Incluye auxilio solidario</span>
+</div>
+</div>
+<!-- Botón Primario de Solicitud de Viaje -->
+<button class="w-full h-11 bg-canopy-institutional hover:bg-deep-canopy-hover text-pure-cloud rounded-xl font-label-md text-label-md font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">two_wheeler</span>
+<span>Solicitar Viaje en Campus</span>
+</button>
+</div>
+<!-- CARD B: FEED DE VIAJES ACTIVOS Y TRAZABILIDAD -->
+<div class="bg-pure-cloud rounded-xl border border-whisper-stone p-5 shadow-[0_4px_16px_-2px_rgba(34,34,34,0.06)] flex flex-col">
+<!-- Feed Header -->
+<div class="flex items-center justify-between pb-3 border-b border-whisper-stone mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-canopy-institutional text-[20px]">history_edu</span>
+<h2 class="font-headline-sm text-headline-sm text-institutional-charcoal font-bold">Viajes Activos y Trazabilidad</h2>
+</div>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">3 REGISTROS</span>
+</div>
+<!-- Trip Items Structured List -->
+<div class="space-y-3">
+<!-- Trip Item 1: TUC-101 (EN_CURSO) -->
+<div class="p-3 rounded-xl border border-whisper-stone bg-piedmont-mist/40 hover:bg-piedmont-mist transition-colors">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="font-telemetry-mono text-label-sm font-bold text-canopy-institutional">TUC-101</span>
+<!-- Pill Badge JetBrains Mono -->
+<span class="px-2 py-0.5 rounded-full bg-verified-wash text-verified-leaf font-telemetry-mono text-[10px] font-bold tracking-wider border border-whisper-stone">EN_CURSO</span>
+</div>
+<span class="font-telemetry-mono text-xs font-bold text-institutional-charcoal">$2.500 COP</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-institutional-charcoal font-medium mb-2">
+<span>Campus Porvenir</span>
+<span class="material-symbols-outlined text-[13px] text-slate-moss">arrow_forward</span>
+<span>Sede Centro</span>
+</div>
+<!-- Driver details and motorcycle plate -->
+<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-whisper-stone">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-canopy-tint text-canopy-institutional flex items-center justify-center text-[11px] font-bold">
+                    JP
+                  </div>
+<div>
+<span class="text-xs font-semibold text-institutional-charcoal block leading-none">Juan Pablo Ruiz</span>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">Placa: GNX-45F</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded bg-verified-wash text-verified-leaf font-telemetry-mono text-[10px] font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+                    SOAT Vigente
+                  </span>
+<button class="px-2.5 py-1 rounded-lg bg-canopy-institutional text-pure-cloud font-label-sm text-xs font-semibold hover:bg-deep-canopy-hover transition-all active:scale-[0.98]">
+                    Confirmar Llegada Segura
+                  </button>
+</div>
+</div>
+</div>
+<!-- Trip Item 2: TUC-102 (SOLICITADO) -->
+<div class="p-3 rounded-xl border border-whisper-stone bg-pure-cloud hover:bg-piedmont-mist transition-colors">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="font-telemetry-mono text-label-sm font-bold text-slate-moss">TUC-102</span>
+<span class="px-2 py-0.5 rounded-full bg-piedmont-mist text-piedmont-ochre font-telemetry-mono text-[10px] font-bold tracking-wider border border-whisper-stone">SOLICITADO</span>
+</div>
+<span class="font-telemetry-mono text-xs font-bold text-institutional-charcoal">$3.200 COP</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-institutional-charcoal font-medium mb-2">
+<span>Granja Balcanes</span>
+<span class="material-symbols-outlined text-[13px] text-slate-moss">arrow_forward</span>
+<span>Campus Porvenir</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-whisper-stone">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-piedmont-mist text-slate-moss flex items-center justify-center text-[11px] font-bold">
+                    LM
+                  </div>
+<div>
+<span class="text-xs font-semibold text-institutional-charcoal block leading-none">Laura Medina S.</span>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">Pasajera Uniamazonia</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-piedmont-mist hover:bg-canopy-tint text-canopy-institutional border border-whisper-stone font-label-sm text-xs font-semibold transition-all">
+                    Aceptar Viaje
+                  </button>
+</div>
+</div>
+</div>
+<!-- Trip Item 3: TUC-103 (FINALIZADO) -->
+<div class="p-3 rounded-xl border border-whisper-stone bg-pure-cloud opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-2">
+<span class="font-telemetry-mono text-label-sm font-bold text-slate-moss">TUC-103</span>
+<span class="px-2 py-0.5 rounded-full bg-piedmont-mist text-slate-moss font-telemetry-mono text-[10px] font-bold tracking-wider border border-whisper-stone">FINALIZADO</span>
+</div>
+<span class="font-telemetry-mono text-xs font-bold text-institutional-charcoal">$2.500 COP</span>
+</div>
+<div class="flex items-center gap-1.5 text-xs text-slate-moss font-medium mb-2">
+<span>Sede Centro</span>
+<span class="material-symbols-outlined text-[13px] text-slate-moss">arrow_forward</span>
+<span>Barrio La Vega</span>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-whisper-stone">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-piedmont-mist text-slate-moss flex items-center justify-center text-[11px] font-bold">
+                    CC
+                  </div>
+<div>
+<span class="text-xs font-semibold text-institutional-charcoal block leading-none">Carlos Cardona</span>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">Placa: KRT-12E</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-pure-cloud hover:bg-piedmont-mist text-slate-moss border border-whisper-stone font-label-sm text-xs font-medium transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">grade</span>
+<span>Calificar</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Safety Callout / Botón SOS Institucional -->
+<div class="mt-4 pt-3 border-t border-whisper-stone flex items-center justify-between">
+<span class="text-xs text-slate-moss font-body-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-verified-leaf">health_and_safety</span>
+              Póliza estudiantil activa
+            </span>
+<button class="text-tucan-crimson hover:underline text-xs font-label-sm flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+              Reporte de Seguridad Vial
+            </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- WEB FOOTER (Shared Footer Integration) -->
+<footer class="bg-pure-cloud border-t border-whisper-stone mt-auto">
+<div class="w-full max-w-[1440px] mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 font-body-sm text-body-sm">
+<!-- Brand & Copyright -->
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-headline-sm font-bold text-canopy-institutional">TucanGo</span>
+<span class="text-slate-moss">·</span>
+<span class="text-slate-moss">© 2025 TucanGo · Universidad de la Amazonia · Florencia, Caquetá</span>
+</div>
+<!-- Institutional Links -->
+<div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-slate-moss">
+<a class="hover:text-canopy-institutional transition-colors" href="#">Términos de Movilidad Institucional</a>
+<a class="hover:text-canopy-institutional transition-colors" href="#">Protocolo de Seguridad Vial</a>
+<a class="hover:text-canopy-institutional transition-colors" href="#">Soporte Campus Balcanes</a>
+<a class="hover:text-canopy-institutional transition-colors" href="#">Verificación SOAT</a>
+</div>
+<!-- Regional Server Status -->
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-verified-leaf"></span>
+<span class="font-telemetry-mono text-[11px] text-slate-moss">Nodo Florencia · v1.0.4</span>
+</div>
+</div>
+</footer>
+<!-- Light Vanilla Interactions for Tariff & View Role Switching -->
+<script>
+    // Segmented Role Switcher
+    function setRole(role) {
+      const btnPasajero = document.getElementById('btn-vista-pasajero');
+      const btnMotorista = document.getElementById('btn-vista-motorista');
+      
+      if (role === 'pasajero') {
+        btnPasajero.className = "px-3 py-1.5 rounded-lg bg-pure-cloud text-canopy-institutional font-label-sm text-label-sm font-semibold shadow-sm transition-all flex items-center gap-1.5";
+        btnMotorista.className = "px-3 py-1.5 rounded-lg text-slate-moss hover:text-canopy-institutional font-label-sm text-label-sm font-medium transition-all flex items-center gap-1.5";
+      } else {
+        btnMotorista.className = "px-3 py-1.5 rounded-lg bg-pure-cloud text-canopy-institutional font-label-sm text-label-sm font-semibold shadow-sm transition-all flex items-center gap-1.5";
+        btnPasajero.className = "px-3 py-1.5 rounded-lg text-slate-moss hover:text-canopy-institutional font-label-sm text-label-sm font-medium transition-all flex items-center gap-1.5";
+      }
+    }
+
+    // Tariff Strategy Selector
+    function selectTariff(button, price) {
+      const buttons = document.querySelectorAll('.tariff-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('border-canopy-institutional', 'bg-canopy-tint', 'text-canopy-institutional');
+        btn.classList.add('border-whisper-stone', 'bg-pure-cloud', 'text-institutional-charcoal');
+      });
+
+      button.classList.add('border-canopy-institutional', 'bg-canopy-tint', 'text-canopy-institutional');
+      button.classList.remove('border-whisper-stone', 'bg-pure-cloud');
+
+      // Update estimated fare in real time
+      const display = document.getElementById('price-display');
+      if (display) {
+        display.textContent = `$${Number(price).toLocaleString('es-CO')} COP`;
+      }
+    }
+  </script>
+</body></html>
