@@ -10,7 +10,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=2.6" />
+  <link rel="stylesheet" href="/login.css?v=2.7" />
 </head>
 <body>
   <!-- Canvas invisible para preservar contrato de pruebas automatizadas -->
@@ -23,7 +23,7 @@
       <header class="ios-brand-header">
         <div class="brand-avatar-box">
           <img
-            src="/assets/portal/tucan-portal-badge.png?v=2.6"
+            src="/assets/portal/tucan-portal-badge.png?v=2.7"
             alt="Emblema TucanGo"
             width="44"
             height="52"
@@ -44,10 +44,10 @@
       <!-- SESIÓN ACTIVA (SI YA TIENE COOKIE HTTPONLY) -->
       <section id="portal-active-session" class="session-active-card hidden" aria-label="Sesión activa">
         <div class="account-card active-card-static">
-          <div class="account-avatar-circle avatar-forest" id="active-user-initials">CR</div>
+          <div class="account-avatar-circle avatar-forest" id="active-user-initials">TA</div>
           <div class="account-info">
-            <span class="account-name" id="active-user-name">Carlos Rivera</span>
-            <span class="account-role-tag" id="active-user-detail">Pasajero · EST-2024-001</span>
+            <span class="account-name" id="active-user-name">Usuario TucanGo</span>
+            <span class="account-role-tag" id="active-user-detail">Sesión verificada</span>
           </div>
         </div>
         <div class="auth-btn-stack">
@@ -87,79 +87,15 @@
           </button>
         </nav>
 
-        <!-- ==================== VISTA 1: INICIAR SESIÓN ==================== -->
+        <!-- ==================== VISTA 1: INICIAR SESIÓN GENERAL ==================== -->
         <div id="view-login" class="auth-view-tab">
-          <h2 class="view-heading">Elige tu cuenta</h2>
+          <h2 class="view-heading">Ingresa con tu cuenta</h2>
 
-          <!-- CUENTAS RÁPIDAS ESTILO FIGMA DUOLINGO -->
-          <div class="account-cards-list" id="account-cards-list">
-            <button
-              type="button"
-              class="account-card"
-              data-account-id="1001"
-              data-account-role="pasajero"
-              title="Ingresar como Carlos Rivera"
-            >
-              <span class="account-avatar-circle avatar-forest">CR</span>
-              <span class="account-info">
-                <span class="account-name">Carlos Rivera</span>
-                <span class="account-role-tag">Pasajero · Ing. Sistemas</span>
-              </span>
-              <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-            </button>
-
-            <button
-              type="button"
-              class="account-card"
-              data-account-id="2001"
-              data-account-role="motorista"
-              title="Ingresar como Jhonatan Silva"
-            >
-              <span class="account-avatar-circle avatar-tomato">JS</span>
-              <span class="account-info">
-                <span class="account-name">Jhonatan Silva</span>
-                <span class="account-role-tag">Motorista · GNX-45F SOAT OK</span>
-              </span>
-              <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-            </button>
-
-            <button
-              type="button"
-              class="account-card"
-              data-account-id="1002"
-              data-account-role="pasajero"
-              title="Ingresar como Laura Gómez"
-            >
-              <span class="account-avatar-circle avatar-forest-light">LG</span>
-              <span class="account-info">
-                <span class="account-name">Laura Gómez</span>
-                <span class="account-role-tag">Pasajera · Med. Veterinaria</span>
-              </span>
-              <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-            </button>
-          </div>
-
-          <!-- DIVISOR SUTIL -->
-          <div class="ios-hairline-divider">
-            <span>o con tu documento</span>
-          </div>
-
-          <!-- SELECTOR DE ROL MANUAL -->
-          <div class="role-segmented-pills" role="radiogroup" aria-label="Rol para ingreso manual">
-            <button type="button" class="role-pill-btn active" data-login-role="pasajero">
-              Pasajero
-            </button>
-            <button type="button" class="role-pill-btn" data-login-role="motorista">
-              Motorista
-            </button>
-          </div>
-
-          <!-- FORMULARIO MANUAL AGRUPADO -->
           <form id="form-login-manual" class="ios-form">
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
-                <label for="input-login-id" class="ios-input-label" id="label-login-id">
-                  Cédula, código o placa
+                <label for="input-login-id" class="ios-input-label">
+                  Usuario, cédula, correo o placa
                 </label>
                 <input
                   id="input-login-id"
@@ -167,8 +103,35 @@
                   class="ios-input-field"
                   autocomplete="username"
                   required
-                  placeholder="Ej. 1001 o GNX-45F"
+                  placeholder="Ej. tucangoadmin, estudiante o motorista"
                 />
+              </div>
+
+              <div class="ios-input-row ios-input-row-password">
+                <label for="input-login-password" class="ios-input-label">
+                  Contraseña
+                </label>
+                <div class="password-input-wrap">
+                  <input
+                    id="input-login-password"
+                    type="password"
+                    class="ios-input-field"
+                    autocomplete="current-password"
+                    required
+                    placeholder="Ingresa tu contraseña"
+                  />
+                  <button
+                    type="button"
+                    id="btn-toggle-login-pass"
+                    class="btn-eye-toggle"
+                    aria-label="Mostrar u ocultar contraseña"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -176,6 +139,61 @@
               <span>Ingresar</span>
             </button>
           </form>
+
+          <!-- CUENTAS POR DEFECTO (ADMIN / ESTUDIANTE / MOTORISTA) -->
+          <details class="default-accounts-details" id="default-accounts-details">
+            <summary class="default-accounts-summary">
+              <span>Cuentas por defecto</span>
+              <span class="summary-chevron" aria-hidden="true">&#9662;</span>
+            </summary>
+
+            <div class="account-cards-list" id="account-cards-list">
+              <button
+                type="button"
+                class="account-card"
+                data-default-user="tucangoadmin"
+                data-default-pass="TucanAdmin2026"
+                title="Cargar credenciales de Administrador"
+              >
+                <span class="account-avatar-circle avatar-forest">TA</span>
+                <span class="account-info">
+                  <span class="account-name">tucangoadmin</span>
+                  <span class="account-role-tag">Admin · Clave: <code>TucanAdmin2026</code></span>
+                </span>
+                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
+              </button>
+
+              <button
+                type="button"
+                class="account-card"
+                data-default-user="estudiante"
+                data-default-pass="Estudiante2026"
+                title="Cargar credenciales de Estudiante"
+              >
+                <span class="account-avatar-circle avatar-forest-light">ES</span>
+                <span class="account-info">
+                  <span class="account-name">estudiante</span>
+                  <span class="account-role-tag">Pasajero · Clave: <code>Estudiante2026</code></span>
+                </span>
+                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
+              </button>
+
+              <button
+                type="button"
+                class="account-card"
+                data-default-user="motorista"
+                data-default-pass="Motorista2026"
+                title="Cargar credenciales de Motorista"
+              >
+                <span class="account-avatar-circle avatar-tomato">MO</span>
+                <span class="account-info">
+                  <span class="account-name">motorista</span>
+                  <span class="account-role-tag">Motorista GNX-45F · Clave: <code>Motorista2026</code></span>
+                </span>
+                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
+              </button>
+            </div>
+          </details>
 
           <footer class="view-switch-footer">
             <button type="button" class="footer-link-btn" id="link-go-register">
@@ -237,6 +255,18 @@
                   placeholder="Ej. Ingeniería de Sistemas"
                 />
               </div>
+              <div class="ios-input-row">
+                <label for="reg-est-password" class="ios-input-label">Contraseña</label>
+                <input
+                  id="reg-est-password"
+                  type="password"
+                  minlength="4"
+                  class="ios-input-field"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Mínimo 4 caracteres"
+                />
+              </div>
             </div>
 
             <button type="submit" class="btn-tactile btn-tactile-forest">
@@ -268,6 +298,18 @@
                   class="ios-input-field"
                   required
                   placeholder="Ej. a.rojas@udla.edu.co"
+                />
+              </div>
+              <div class="ios-input-row">
+                <label for="reg-mot-password" class="ios-input-label">Contraseña</label>
+                <input
+                  id="reg-mot-password"
+                  type="password"
+                  minlength="4"
+                  class="ios-input-field"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Mínimo 4 caracteres"
                 />
               </div>
             </div>
@@ -320,7 +362,7 @@
 
       <!-- PIE DE PÁGINA LIMPIO -->
       <footer class="ios-app-footer">
-        <span>TucanGo v2.6 · Florencia, Caquetá</span>
+        <span>TucanGo v2.7 · Florencia, Caquetá</span>
       </footer>
 
     </div>
@@ -328,6 +370,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=2.6"></script>
+  <script src="/login.js?v=2.7"></script>
 </body>
 </html>

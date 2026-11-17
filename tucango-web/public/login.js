@@ -1,8 +1,7 @@
-// TucanGo · Lógica de Autenticación y Registro Móvil (Duolingo & iOS Style)
+// TucanGo · Lógica de Autenticación General y Registro de Roles (Duolingo & iOS Style)
 (function () {
   "use strict";
 
-  // Elementos DOM
   const els = {
     activeSessionBox: document.getElementById("portal-active-session"),
     activeUserName: document.getElementById("active-user-name"),
@@ -19,10 +18,12 @@
     linkGoRegister: document.getElementById("link-go-register"),
     linkGoLogin: document.getElementById("link-go-login"),
 
-    // Login rápido y manual
+    // Login general y cuentas por defecto
     accountCardsList: document.getElementById("account-cards-list"),
     formLoginManual: document.getElementById("form-login-manual"),
     inputLoginId: document.getElementById("input-login-id"),
+    inputLoginPassword: document.getElementById("input-login-password"),
+    btnToggleLoginPass: document.getElementById("btn-toggle-login-pass"),
     btnLoginSubmit: document.getElementById("btn-login-submit"),
 
     // Registro
@@ -33,8 +34,6 @@
     toast: document.getElementById("portal-toast")
   };
 
-  let loginRoleSeleccionado = "pasajero";
-  let regRoleSeleccionado = "estudiante";
   let toastTimer = null;
 
   function mostrarToast(mensaje, tipo = "info") {
@@ -71,7 +70,6 @@
   }
 
   function cambiarRolRegistro(rol) {
-    regRoleSeleccionado = rol;
     const btns = document.querySelectorAll("[data-reg-role]");
     btns.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.regRole === rol);
@@ -86,33 +84,33 @@
     }
   }
 
-  async function ejecutarLogin(identificador, rol) {
+  async function ejecutarLogin(identificador, password, rol) {
     try {
-      mostrarToast("Iniciando sesión segura...", "info");
+      mostrarToast("Verificando credenciales...", "info");
+
+      const payload = { identificador, password };
+      if (rol) payload.rol = rol;
 
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador, rol })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "No se pudo iniciar sesión");
+        throw new Error(data.error || "Credenciales inválidas");
       }
 
-      mostrarToast(`¡Bienvenido, ${data.nombre}! Redirigiendo...`, "success");
-
-      // Redirigir inmediatamente a la app con la sesión activa
+      mostrarToast(`¡Bienvenido, ${data.nombre}!`, "success");
       setTimeout(() => {
         window.location.href = "/app";
-      }, 400);
+      }, 350);
     } catch (err) {
       mostrarToast(err.message, "error");
     }
   }
 
-  // Inicializar estado de sesión
   async function verificarSesionActual() {
     try {
       const res = await fetch("/api/auth/me", { cache: "no-store" });
@@ -136,14 +134,11 @@
         if (els.authViews) els.authViews.classList.remove("hidden");
       }
     } catch {
-      // Si falla la verificación, mostrar formulario normalmente
       if (els.authViews) els.authViews.classList.remove("hidden");
     }
   }
 
-  // Event Listeners
   function inicializarEventos() {
-    // Switch de modo (Login vs Registro)
     if (els.tabBtnLogin) {
       els.tabBtnLogin.addEventListener("click", () => cambiarModoAuth("login"));
     }
@@ -157,43 +152,41 @@
       els.linkGoLogin.addEventListener("click", () => cambiarModoAuth("login"));
     }
 
-    // Cuentas rápidas estilo Duolingo
+    // Mostrar / ocultar contraseña
+    if (els.btnToggleLoginPass && els.inputLoginPassword) {
+      els.btnToggleLoginPass.addEventListener("click", () => {
+        const esPass = els.inputLoginPassword.type === "password";
+        els.inputLoginPassword.type = esPass ? "text" : "password";
+      });
+    }
+
+    // Autocompletar credenciales desde Cuentas por Defecto
     if (els.accountCardsList) {
       els.accountCardsList.addEventListener("click", (e) => {
         const card = e.target.closest(".account-card");
         if (!card) return;
-        const id = card.dataset.accountId;
-        const rol = card.dataset.accountRole;
-        if (id && rol) {
-          ejecutarLogin(id, rol);
+        const user = card.dataset.defaultUser;
+        const pass = card.dataset.defaultPass;
+        if (user && pass && els.inputLoginId && els.inputLoginPassword) {
+          els.inputLoginId.value = user;
+          els.inputLoginPassword.value = pass;
+          mostrarToast(`Credenciales de ${user} cargadas`, "info");
+          els.btnLoginSubmit?.focus();
         }
       });
     }
 
-    // Selector de rol para login manual
-    const loginRoleBtns = document.querySelectorAll("[data-login-role]");
-    loginRoleBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        loginRoleBtns.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        loginRoleSeleccionado = btn.dataset.loginRole;
-        if (els.inputLoginId) {
-          els.inputLoginId.placeholder =
-            loginRoleSeleccionado === "motorista" ? "Ej. 2001 o GNX-45F" : "Ej. 1001 o c.rivera@uniamazonia.edu.co";
-        }
-      });
-    });
-
-    // Formulario de login manual
+    // Formulario general de login con usuario + contraseña
     if (els.formLoginManual) {
       els.formLoginManual.addEventListener("submit", (e) => {
         e.preventDefault();
         const id = els.inputLoginId ? els.inputLoginId.value.trim() : "";
-        if (!id) {
-          mostrarToast("Ingresa tu cédula, código o placa", "error");
+        const pass = els.inputLoginPassword ? els.inputLoginPassword.value : "";
+        if (!id || !pass) {
+          mostrarToast("Ingresa tu usuario y contraseña", "error");
           return;
         }
-        ejecutarLogin(id, loginRoleSeleccionado);
+        ejecutarLogin(id, pass);
       });
     }
 
@@ -205,7 +198,7 @@
       });
     });
 
-    // Formulario de registro de estudiante
+    // Registro Estudiante
     if (els.formRegEstudiante) {
       els.formRegEstudiante.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -215,7 +208,8 @@
           nombre: document.getElementById("reg-est-nombre")?.value.trim(),
           telefono: document.getElementById("reg-est-tel")?.value.trim(),
           correoInstitucional: document.getElementById("reg-est-correo")?.value.trim(),
-          carrera: document.getElementById("reg-est-carrera")?.value.trim()
+          carrera: document.getElementById("reg-est-carrera")?.value.trim(),
+          password: document.getElementById("reg-est-password")?.value || ""
         };
 
         try {
@@ -230,16 +224,15 @@
             throw new Error(data.error || "No se pudo registrar el estudiante");
           }
 
-          mostrarToast("¡Registro exitoso! Iniciando sesión...", "success");
-          // Iniciar sesión automáticamente
-          await ejecutarLogin(payload.identificacion, "pasajero");
+          mostrarToast("¡Cuenta creada! Iniciando sesión...", "success");
+          await ejecutarLogin(payload.identificacion, payload.password, "pasajero");
         } catch (err) {
           mostrarToast(err.message, "error");
         }
       });
     }
 
-    // Formulario de registro de motorista + moto
+    // Registro Motorista + Moto
     if (els.formRegMotorista) {
       els.formRegMotorista.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -255,6 +248,7 @@
           nombre: document.getElementById("reg-mot-nombre")?.value.trim(),
           telefono: document.getElementById("reg-mot-tel")?.value.trim(),
           correoInstitucional: document.getElementById("reg-mot-correo")?.value.trim(),
+          password: document.getElementById("reg-mot-password")?.value || "",
           placa: document.getElementById("reg-mot-placa")?.value.trim().toUpperCase(),
           marca: document.getElementById("reg-mot-marca")?.value.trim(),
           modelo: document.getElementById("reg-mot-modelo")?.value.trim(),
@@ -275,9 +269,8 @@
             throw new Error(data.error || "No se pudo registrar el motorista");
           }
 
-          mostrarToast("¡Registro exitoso! Iniciando sesión...", "success");
-          // Iniciar sesión automáticamente
-          await ejecutarLogin(payload.identificacion, "motorista");
+          mostrarToast("¡Motorista registrado! Iniciando sesión...", "success");
+          await ejecutarLogin(payload.identificacion, payload.password, "motorista");
         } catch (err) {
           mostrarToast(err.message, "error");
         }
@@ -299,7 +292,6 @@
     }
   }
 
-  // Arranque
   verificarSesionActual();
   inicializarEventos();
 })();

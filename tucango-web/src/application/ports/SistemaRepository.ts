@@ -7,6 +7,7 @@ export interface EstudianteSnapshot {
   correoInstitucional: string;
   codigoEstudiantil: string;
   carrera: string;
+  passwordHash?: string;
 }
 
 export interface MotoSnapshot {
@@ -28,6 +29,7 @@ export interface MotoristaSnapshot {
   latitud?: number;
   longitud?: number;
   direccionGrados?: number;
+  passwordHash?: string;
   motos: MotoSnapshot[];
 }
 

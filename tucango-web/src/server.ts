@@ -44,7 +44,7 @@ function parseCookies(req: http.IncomingMessage): Record<string, string> {
 }
 
 function firmarSesionCookie(payload: {
-  rol: "pasajero" | "motorista";
+  rol: "pasajero" | "motorista" | "admin";
   identificacion: string;
   exp: number;
 }): string {
@@ -55,7 +55,7 @@ function firmarSesionCookie(payload: {
 
 function verificarSesionCookie(
   token: string
-): { rol: "pasajero" | "motorista"; identificacion: string; exp: number } | null {
+): { rol: "pasajero" | "motorista" | "admin"; identificacion: string; exp: number } | null {
   if (!token || !token.includes(".")) return null;
   const [encoded, sig] = token.split(".", 2);
   if (!encoded || !sig) return null;
@@ -171,7 +171,7 @@ function exigirRolSiAutenticado(
   rolRequerido: "pasajero" | "motorista"
 ): { permitido: boolean; sesion: ReturnType<typeof obtenerSesionRequest> } {
   const sesion = obtenerSesionRequest(req, facade);
-  if (sesion && sesion.rol !== rolRequerido) {
+  if (sesion && sesion.rol !== "admin" && sesion.rol !== rolRequerido) {
     sendJson(res, 403, { error: `Operación restringida al rol ${rolRequerido}` });
     return { permitido: false, sesion };
   }
@@ -434,17 +434,28 @@ export function crearServidor(
       if (pathname === "/api/auth/login" && req.method === "POST") {
         const body = await parseJsonBody<{
           identificador: string;
-          rol?: "pasajero" | "motorista";
+          password?: string;
+          rol?: "pasajero" | "motorista" | "admin";
         }>(req);
-        const sesion = facade.autenticarUsuario(body.identificador, body.rol);
-        const token = firmarSesionCookie({
-          rol: sesion.rol,
-          identificacion: sesion.identificacion,
-          exp: Date.now() + 86400 * 1000
-        });
-        sendJson(res, 200, sesion, {
-          "Set-Cookie": construirSetCookie(req, token, 86400)
-        });
+        if (!body.password || body.password.trim().length === 0) {
+          sendJson(res, 401, { error: "Ingresa tu contraseña." });
+          return;
+        }
+        try {
+          const sesion = facade.autenticarUsuario(body.identificador, body.rol, body.password);
+          const token = firmarSesionCookie({
+            rol: sesion.rol,
+            identificacion: sesion.identificacion,
+            exp: Date.now() + 86400 * 1000
+          });
+          sendJson(res, 200, sesion, {
+            "Set-Cookie": construirSetCookie(req, token, 86400)
+          });
+        } catch (authErr) {
+          const msg = authErr instanceof Error ? authErr.message : "Credenciales inválidas.";
+          const status = msg.includes("Contraseña") ? 401 : 400;
+          sendJson(res, status, { error: msg });
+        }
         return;
       }
 
@@ -472,7 +483,8 @@ export function crearServidor(
         const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
         if (!auth.permitido) return;
         const body = await parseJsonBody<{ motoristaId: string; disponible: boolean }>(req);
-        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
+        const motoristaId =
+          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
         const mot = facade.cambiarDisponibilidadMotorista(motoristaId, body.disponible);
         sendJson(res, 200, {
           identificacion: mot.identificacion,
@@ -491,7 +503,8 @@ export function crearServidor(
           longitud: number;
           direccionGrados?: number;
         }>(req);
-        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
+        const motoristaId =
+          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
         const mot = facade.actualizarUbicacionMotorista(
           motoristaId,
           body.latitud,
@@ -515,6 +528,7 @@ export function crearServidor(
           correoInstitucional: string;
           codigoEstudiantil: string;
           carrera: string;
+          password?: string;
         }>(req);
         const est = facade.registrarEstudiante(body);
         sendJson(res, 201, {
@@ -537,6 +551,7 @@ export function crearServidor(
           cilindraje: number;
           soatVigente: boolean;
           numeroSoat?: string;
+          password?: string;
         }>(req);
         const mot = facade.registrarMotoristaConMoto(body);
         sendJson(res, 201, {
@@ -560,7 +575,8 @@ export function crearServidor(
           metodoPago: string;
         }>(req);
 
-        const estudianteId = auth.sesion ? auth.sesion.identificacion : body.estudianteId;
+        const estudianteId =
+          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.estudianteId;
         const viaje = facade.solicitarViaje(
           estudianteId,
           body.origen,
@@ -584,7 +600,8 @@ export function crearServidor(
         const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
         if (!auth.permitido) return;
         const body = await parseJsonBody<{ codigoViaje: string; motoristaId: string }>(req);
-        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
+        const motoristaId =
+          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
         const viaje = facade.aceptarViaje(body.codigoViaje, motoristaId);
         sendJson(res, 200, {
           mensaje: "Viaje aceptado por el motorista",

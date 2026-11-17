@@ -23,6 +23,12 @@ import type {
   SistemaRepository
 } from "./ports/SistemaRepository.ts";
 
+export const DEFAULT_ADMIN_USER = "tucangoadmin";
+export const DEFAULT_ADMIN_EMAIL = "admin@tucango.edu.co";
+export const DEFAULT_ADMIN_PASSWORD = process.env.TUCANGO_ADMIN_PASSWORD || "TucanAdmin2026";
+export const DEFAULT_STUDENT_PASSWORD = process.env.TUCANGO_DEFAULT_STUDENT_PASSWORD || "Estudiante2026";
+export const DEFAULT_DRIVER_PASSWORD = process.env.TUCANGO_DEFAULT_DRIVER_PASSWORD || "Motorista2026";
+
 export interface RegistrarEstudianteDTO {
   identificacion: string;
   nombre: string;
@@ -30,6 +36,7 @@ export interface RegistrarEstudianteDTO {
   correoInstitucional: string;
   codigoEstudiantil: string;
   carrera: string;
+  password?: string;
 }
 
 export interface RegistrarMotoristaDTO {
@@ -43,6 +50,7 @@ export interface RegistrarMotoristaDTO {
   cilindraje: number;
   soatVigente: boolean;
   numeroSoat?: string;
+  password?: string;
 }
 
 export class TucanGoFacade {
@@ -218,7 +226,8 @@ export class TucanGoFacade {
         telefono: e.telefono,
         correoInstitucional: e.correoInstitucional,
         codigoEstudiantil: e.codigoEstudiantil,
-        carrera: e.carrera
+        carrera: e.carrera,
+        passwordHash: e.passwordHash
       })),
       motoristas: this.obtenerMotoristas().map((m) => ({
         identificacion: m.identificacion,
@@ -229,6 +238,7 @@ export class TucanGoFacade {
         latitud: m.ubicacionActual.latitud,
         longitud: m.ubicacionActual.longitud,
         direccionGrados: m.direccionGrados,
+        passwordHash: m.passwordHash,
         motos: m.motos.map((moto) => ({
           placa: moto.placa,
           marca: moto.marca,
@@ -296,6 +306,11 @@ export class TucanGoFacade {
         estSnap.codigoEstudiantil,
         estSnap.carrera
       );
+      if (estSnap.passwordHash) {
+        est.asignarPasswordHash(estSnap.passwordHash);
+      } else {
+        est.establecerPassword(DEFAULT_STUDENT_PASSWORD);
+      }
       this._estudiantes.set(est.identificacion, est);
     }
 
@@ -313,6 +328,11 @@ export class TucanGoFacade {
         ubicacion,
         motSnap.direccionGrados ?? 0
       );
+      if (motSnap.passwordHash) {
+        mot.asignarPasswordHash(motSnap.passwordHash);
+      } else {
+        mot.establecerPassword(DEFAULT_DRIVER_PASSWORD);
+      }
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
           motoSnap.placa,
@@ -382,6 +402,8 @@ export class TucanGoFacade {
       "EST-2024-001",
       "Ingeniería de Sistemas"
     );
+    est1.establecerPassword(DEFAULT_STUDENT_PASSWORD);
+
     const est2 = new Estudiante(
       "1002",
       "Laura Gómez",
@@ -390,6 +412,8 @@ export class TucanGoFacade {
       "EST-2024-045",
       "Medicina Veterinaria"
     );
+    est2.establecerPassword(DEFAULT_STUDENT_PASSWORD);
+
     this._estudiantes.set(est1.identificacion, est1);
     this._estudiantes.set(est2.identificacion, est2);
 
@@ -403,6 +427,7 @@ export class TucanGoFacade {
       new Coordenada(1.6192, -75.6058),
       215
     );
+    mot1.establecerPassword(DEFAULT_DRIVER_PASSWORD);
     const moto1 = new Moto("GNX-45F", "Suzuki", "GN 125", 125, true);
     mot1.registrarMoto(moto1);
 
@@ -415,6 +440,7 @@ export class TucanGoFacade {
       new Coordenada(1.6151, -75.6115),
       45
     );
+    mot2.establecerPassword(DEFAULT_DRIVER_PASSWORD);
     const moto2 = new Moto("TUK-89D", "Yamaha", "Crypton FI", 115, true);
     mot2.registrarMoto(moto2);
 
@@ -427,6 +453,7 @@ export class TucanGoFacade {
       new Coordenada(1.6229, -75.6112),
       135
     );
+    mot3.establecerPassword(DEFAULT_DRIVER_PASSWORD);
     const moto3 = new Moto("FLR-92H", "Bajaj", "Pulsar NS 160", 160, true, true, "SOAT-2026-PUL");
     mot3.registrarMoto(moto3);
 
@@ -459,6 +486,12 @@ export class TucanGoFacade {
 
     if (!(entrada instanceof Estudiante) && this._estudiantes.has(estudiante.identificacion)) {
       throw new Error(`Ya existe un estudiante registrado con identificación ${estudiante.identificacion}.`);
+    }
+
+    if (!(entrada instanceof Estudiante)) {
+      estudiante.establecerPassword(entrada.password || DEFAULT_STUDENT_PASSWORD);
+    } else if (!estudiante.passwordHash) {
+      estudiante.establecerPassword(DEFAULT_STUDENT_PASSWORD);
     }
 
     this._estudiantes.set(estudiante.identificacion, estudiante);
@@ -499,6 +532,7 @@ export class TucanGoFacade {
       dto.correoInstitucional,
       true
     );
+    motorista.establecerPassword(dto.password || DEFAULT_DRIVER_PASSWORD);
     motorista.registrarMoto(moto);
 
     this._motoristas.set(motorista.identificacion, motorista);
@@ -664,9 +698,10 @@ export class TucanGoFacade {
 
   public autenticarUsuario(
     identificador: string,
-    rolPreferido?: "pasajero" | "motorista"
+    rolPreferido?: "pasajero" | "motorista" | "admin",
+    password?: string
   ): {
-    rol: "pasajero" | "motorista";
+    rol: "pasajero" | "motorista" | "admin";
     identificacion: string;
     nombre: string;
     correo: string;
@@ -675,7 +710,34 @@ export class TucanGoFacade {
   } {
     const clave = (identificador || "").trim().toLowerCase();
     if (!clave) {
-      throw new Error("Ingresa tu cédula, código estudiantil o correo institucional.");
+      throw new Error("Ingresa tu usuario, cédula, código o placa.");
+    }
+
+    // 1. Cuenta por defecto de Administrador (tucangoadmin)
+    if (
+      clave === DEFAULT_ADMIN_USER ||
+      clave === DEFAULT_ADMIN_EMAIL ||
+      rolPreferido === "admin"
+    ) {
+      if (clave !== DEFAULT_ADMIN_USER && clave !== DEFAULT_ADMIN_EMAIL) {
+        throw new Error("Credenciales de administrador inválidas.");
+      }
+      if (password !== undefined && password !== DEFAULT_ADMIN_PASSWORD) {
+        throw new Error("Contraseña incorrecta.");
+      }
+      this.emitirEvento("USUARIO_AUTENTICADO", {
+        rol: "admin",
+        identificacion: DEFAULT_ADMIN_USER,
+        nombre: "Administrador TucanGo"
+      });
+      return {
+        rol: "admin",
+        identificacion: DEFAULT_ADMIN_USER,
+        nombre: "Administrador TucanGo",
+        correo: DEFAULT_ADMIN_EMAIL,
+        telefono: "3000000000",
+        detalle: "ADMIN · Supervisión General TucanGo"
+      };
     }
 
     const buscarEst = () =>
@@ -684,7 +746,8 @@ export class TucanGoFacade {
           e.identificacion.toLowerCase() === clave ||
           e.correoInstitucional.toLowerCase() === clave ||
           e.telefono.toLowerCase() === clave ||
-          e.codigoEstudiantil.toLowerCase() === clave
+          e.codigoEstudiantil.toLowerCase() === clave ||
+          (clave === "estudiante" && e.identificacion === "1001")
       );
 
     const buscarMot = () =>
@@ -693,12 +756,16 @@ export class TucanGoFacade {
           m.identificacion.toLowerCase() === clave ||
           m.correoInstitucional.toLowerCase() === clave ||
           m.telefono.toLowerCase() === clave ||
-          (m.obtenerMotoActiva()?.placa || "").toLowerCase() === clave
+          (m.obtenerMotoActiva()?.placa || "").toLowerCase() === clave ||
+          (clave === "motorista" && m.identificacion === "2001")
       );
 
     if (rolPreferido !== "motorista") {
       const est = buscarEst();
       if (est) {
+        if (password !== undefined && !est.verificarPassword(password)) {
+          throw new Error("Contraseña incorrecta.");
+        }
         this.emitirEvento("USUARIO_AUTENTICADO", {
           rol: "pasajero",
           identificacion: est.identificacion,
@@ -720,6 +787,9 @@ export class TucanGoFacade {
 
     const mot = buscarMot();
     if (mot) {
+      if (password !== undefined && !mot.verificarPassword(password)) {
+        throw new Error("Contraseña incorrecta.");
+      }
       const moto = mot.obtenerMotoActiva();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "motorista",

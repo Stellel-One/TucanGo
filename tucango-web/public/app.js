@@ -170,6 +170,11 @@ async function postJson(url, payload) {
 
 function actualizarBannerSesion() {
   if (!state.data) return;
+  if (state.authUser?.rol === "admin") {
+    els.sessionUserName.textContent = "TucanGo Admin";
+    els.sessionAvatarInitials.textContent = "TA";
+    return;
+  }
   if (state.role === "motorista") {
     const mot = state.data.motoristas.find((m) => m.identificacion === els.selectMotorista.value);
     if (mot) {
@@ -192,20 +197,28 @@ function actualizarTabMovilActiva(tabName) {
 }
 
 function setRole(role) {
-  const rolFinal = state.authUser?.rol || role;
+  const esAdmin = state.authUser?.rol === "admin";
+  const rolFinal = esAdmin ? (role || "pasajero") : (state.authUser?.rol || role);
   state.role = rolFinal;
   const esPasajero = rolFinal === "pasajero";
 
   if (els.roleLockedBadge) {
-    els.roleLockedBadge.textContent = esPasajero ? "PASAJERO" : "MOTORISTA";
+    els.roleLockedBadge.textContent = esAdmin ? "ADMIN" : esPasajero ? "PASAJERO" : "MOTORISTA";
     els.roleLockedBadge.classList.toggle("is-driver", !esPasajero);
   }
   els.panelPasajero.classList.toggle("hidden", !esPasajero);
   els.panelMotorista.classList.toggle("hidden", esPasajero);
 
+  if (els.selectEstudiante) {
+    els.selectEstudiante.disabled = !esAdmin && state.authUser?.rol === "pasajero";
+  }
+  if (els.selectMotorista) {
+    els.selectMotorista.disabled = !esAdmin && state.authUser?.rol === "motorista";
+  }
+
   els.mobileTabBtns.forEach((btn) => {
     const forRole = btn.dataset.forRole;
-    btn.classList.toggle("hidden", Boolean(forRole && forRole !== rolFinal));
+    btn.classList.toggle("hidden", !esAdmin && Boolean(forRole && forRole !== rolFinal));
   });
 
   actualizarTabMovilActiva(esPasajero ? "viajar" : "motorista");
@@ -546,7 +559,10 @@ function renderSeguimientoEnVivo(data) {
     return;
   }
 
-  const estId = state.authUser?.identificacion || els.selectEstudiante.value;
+  const estId =
+    state.authUser?.rol === "pasajero"
+      ? state.authUser.identificacion
+      : els.selectEstudiante.value;
   const viajesOrdenados = [...data.viajes].reverse();
   const viajeActivo = viajesOrdenados.find(
     (v) =>
@@ -735,11 +751,12 @@ function renderEmptyState(titulo, subtitulo) {
 
 function renderFeed(data) {
   const uid = state.authUser?.identificacion;
+  const esAdmin = state.authUser?.rol === "admin";
   const esMotorista = state.role === "motorista";
   const viajes = [...data.viajes]
     .reverse()
     .filter((v) => {
-      if (!uid) return true;
+      if (!uid || esAdmin) return true;
       return esMotorista
         ? v.motorista?.id === uid || v.estado === "SOLICITADO"
         : v.estudiante.id === uid;
@@ -974,6 +991,9 @@ els.mobileTabBtns.forEach((btn) => {
     }
 
     if (tab === "motorista") {
+      if (state.authUser?.rol === "admin" && state.role !== "motorista") {
+        setRole("motorista");
+      }
       if (state.role !== "motorista") return;
       els.panelMotorista.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -985,6 +1005,9 @@ els.mobileTabBtns.forEach((btn) => {
       return;
     }
 
+    if (state.authUser?.rol === "admin" && state.role !== "pasajero") {
+      setRole("pasajero");
+    }
     if (state.role !== "pasajero") return;
     actualizarTabMovilActiva(tab);
     if (tab === "tracking") {
@@ -1312,6 +1335,14 @@ async function iniciarAppAutenticada() {
   } catch {
     window.location.replace("/login");
   }
+}
+
+if (els.roleLockedBadge) {
+  els.roleLockedBadge.addEventListener("click", () => {
+    if (state.authUser?.rol !== "admin") return;
+    setRole(state.role === "pasajero" ? "motorista" : "pasajero");
+    showToast(`Vista Admin cambiada a ${state.role.toUpperCase()}`, "info");
+  });
 }
 
 // --- INIT ---

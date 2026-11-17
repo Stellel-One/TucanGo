@@ -1,14 +1,18 @@
+import { hashPassword, verifyPassword } from "../security/PasswordHasher.ts";
+
 export abstract class Persona {
   private _identificacion: string;
   private _nombre: string;
   private _telefono: string;
   private _correoInstitucional: string;
+  private _passwordHash: string;
 
   constructor(
     identificacion: string,
     nombre: string,
     telefono: string,
-    correoInstitucional: string
+    correoInstitucional: string,
+    passwordHash: string = ""
   ) {
     if (!identificacion || identificacion.trim().length === 0) {
       throw new Error("La identificación no puede estar vacía.");
@@ -27,6 +31,7 @@ export abstract class Persona {
     this._nombre = nombre.trim();
     this._telefono = telefono.trim();
     this._correoInstitucional = correoInstitucional.trim().toLowerCase();
+    this._passwordHash = passwordHash;
   }
 
   public get identificacion(): string {
@@ -50,6 +55,23 @@ export abstract class Persona {
       throw new Error("El teléfono no puede estar vacío.");
     }
     this._telefono = nuevoTelefono.trim();
+  }
+
+  public get passwordHash(): string {
+    return this._passwordHash;
+  }
+
+  public asignarPasswordHash(hash: string): void {
+    this._passwordHash = hash;
+  }
+
+  public establecerPassword(plain: string): void {
+    this._passwordHash = hashPassword(plain);
+  }
+
+  public verificarPassword(plain: string): boolean {
+    if (!this._passwordHash) return false;
+    return verifyPassword(plain, this._passwordHash);
   }
 
   public abstract obtenerRol(): string;
