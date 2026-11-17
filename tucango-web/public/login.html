@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=2.8" />
+  <link rel="stylesheet" href="/login.css?v=2.9" />
 </head>
 <body>
   <!-- F14: Banner de estado de conexión / API offline -->
@@ -102,6 +102,25 @@
         <div id="view-login" class="auth-view-tab" role="tabpanel" aria-labelledby="tab-btn-login">
           <h2 class="view-heading">Ingresa con tu cuenta</h2>
 
+          <!-- ACCESOS RÁPIDOS DE PRUEBA -->
+          <div class="quick-credentials-strip" aria-label="Accesos de prueba rápida">
+            <span class="strip-label">Accesos rápidos de prueba (un clic):</span>
+            <div class="strip-pills">
+              <button type="button" class="quick-cred-pill" data-user="tucanadmin" data-pass="admin123" title="Admin: tucanadmin / admin123">
+                <span class="pill-dot dot-admin"></span>
+                <strong>Admin:</strong> <code>admin123</code>
+              </button>
+              <button type="button" class="quick-cred-pill" data-user="estudiante" data-pass="estudiante123" title="Estudiante: estudiante / estudiante123">
+                <span class="pill-dot dot-student"></span>
+                <strong>Estudiante:</strong> <code>estudiante123</code>
+              </button>
+              <button type="button" class="quick-cred-pill" data-user="motorista" data-pass="motorista123" title="Motorista: motorista / motorista123">
+                <span class="pill-dot dot-driver"></span>
+                <strong>Motorista:</strong> <code>motorista123</code>
+              </button>
+            </div>
+          </div>
+
           <form id="form-login-manual" class="ios-form" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
@@ -117,7 +136,7 @@
                   spellcheck="false"
                   inputmode="text"
                   required
-                  placeholder="Ej. tucangoadmin, 1001 o GNX-45F"
+                  placeholder="Ej. tucanadmin, estudiante o motorista"
                 />
               </div>
 
@@ -372,6 +391,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=2.8"></script>
+  <script src="/login.js?v=2.9"></script>
 </body>
 </html>

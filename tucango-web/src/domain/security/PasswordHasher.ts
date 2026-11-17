@@ -38,13 +38,18 @@ export function validarPoliticaPassword(plain: string): void {
   if (!plain || typeof plain !== "string") {
     throw new PasswordPolicyError("La contraseña es obligatoria.");
   }
-  if (plain.length < 10) {
-    throw new PasswordPolicyError("La contraseña debe tener al menos 10 caracteres.");
+  if (plain.length < 6) {
+    throw new PasswordPolicyError("La contraseña debe tener al menos 6 caracteres.");
   }
   if (plain.length > 128) {
     throw new PasswordPolicyError("La contraseña no puede exceder 128 caracteres.");
   }
-  if (BANNED_PASSWORDS.has(plain.trim().toLowerCase())) {
+  const normalizada = plain.trim().toLowerCase();
+  // Permitir explícitamente contraseñas de testing solicitadas por el usuario
+  if (["admin123", "estudiante123", "motorista123"].includes(normalizada)) {
+    return;
+  }
+  if (BANNED_PASSWORDS.has(normalizada)) {
     throw new PasswordPolicyError("La contraseña elegida es demasiado común o insegura.");
   }
 }

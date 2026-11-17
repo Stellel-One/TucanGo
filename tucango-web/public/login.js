@@ -252,6 +252,21 @@
       els.linkGoLogin.addEventListener("click", () => cambiarModoAuth("login"));
     }
 
+    // Accesos rápidos de prueba (un clic)
+    const quickPills = document.querySelectorAll(".quick-cred-pill");
+    quickPills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        const user = pill.getAttribute("data-user");
+        const pass = pill.getAttribute("data-pass");
+        if (user && pass && els.inputLoginId && els.inputLoginPassword) {
+          els.inputLoginId.value = user;
+          els.inputLoginPassword.value = pass;
+          mostrarAlertaInline(`Credencial de ${user} seleccionada. Presiona Ingresar.`, "success");
+          els.btnLoginSubmit?.focus();
+        }
+      });
+    });
+
     // Toggle visibilidad de contraseña
     if (els.btnToggleLoginPass && els.inputLoginPassword) {
       els.btnToggleLoginPass.addEventListener("click", () => {
