@@ -117,7 +117,7 @@ function setTheme(theme) {
 // --- MOTOR WEB-SCROLL 60 FPS (GOOGLE FLOW FRAMES O CANVAS + PARALLAX) ---
 async function cargarAssetsScroll() {
   const corridor = new Image();
-  corridor.src = "/assets/portal/tucango-corridor-depth.png";
+  corridor.src = "/assets/portal/tucango-corridor-depth.png?v=2.4";
   corridor.onload = () => {
     portalState.corridorImg = corridor;
   };
