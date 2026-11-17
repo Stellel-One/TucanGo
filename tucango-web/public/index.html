@@ -103,21 +103,21 @@
           </button>
         </div>
 
-        <button type="button" id="btn-abrir-registro" class="btn-secondary">
+        <button type="button" id="btn-abrir-registro" class="btn-secondary" aria-label="Registrar usuario">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="8.5" cy="7" r="4" />
             <line x1="20" y1="8" x2="20" y2="14" />
             <line x1="23" y1="11" x2="17" y2="11" />
           </svg>
-          <span>Registrar</span>
+          <span class="hide-xs-label">Registrar</span>
         </button>
       </div>
     </div>
   </header>
 
   <main class="workspace">
-    <div class="didi-stage">
+    <div id="didi-stage" class="didi-stage">
       <!-- COLUMNA IZQUIERDA (MAPA INTERACTIVO ESTILO DIDI + KPIs) -->
       <section class="map-column">
         <div class="map-stage-card">
@@ -205,7 +205,7 @@
         </div>
 
         <!-- Barra de Telemetría Operativa -->
-        <section class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
+        <section id="section-telemetria" class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
           <article class="kpi-card">
             <div class="kpi-head">
               <span>TOTAL VIAJES</span>
@@ -249,7 +249,16 @@
           </div>
 
           <div class="sheet-surface">
-            <div class="sheet-handle" aria-hidden="true"></div>
+            <button
+              type="button"
+              id="btn-toggle-sheet"
+              class="sheet-handle-btn"
+              aria-label="Expandir o minimizar mapa"
+              aria-expanded="true"
+            >
+              <span class="sheet-handle" aria-hidden="true"></span>
+              <span id="sheet-toggle-hint" class="sheet-handle-hint">Ver más mapa</span>
+            </button>
 
             <!-- VISTA PASAJERO ESTILO DIDI -->
             <section id="panel-pasajero" class="ops-stack">
@@ -533,7 +542,7 @@
             </section>
 
             <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD -->
-            <section class="feed-section">
+            <section id="section-actividad" class="feed-section">
               <div class="card-header-compact">
                 <div>
                   <h3>Viajes y Trazabilidad GPS</h3>
@@ -545,6 +554,38 @@
               <div id="viajes-feed" class="rides-list"></div>
             </section>
           </div>
+
+          <nav class="mobile-bottom-nav" aria-label="Navegación rápida móvil">
+            <button type="button" class="mobile-tab-btn active" data-mobile-tab="viajar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>Viajar</span>
+            </button>
+            <button type="button" class="mobile-tab-btn" data-mobile-tab="tracking">
+              <span id="mobile-tracking-dot" class="nav-badge-dot hidden"></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+              <span>En Curso</span>
+            </button>
+            <button type="button" class="mobile-tab-btn" data-mobile-tab="motorista">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="5.5" cy="17.5" r="3.5" />
+                <circle cx="18.5" cy="17.5" r="3.5" />
+                <path d="M15 6h3l2 5h-5.5l-2.5 5H6" />
+              </svg>
+              <span>Motorista</span>
+            </button>
+            <button type="button" class="mobile-tab-btn" data-mobile-tab="actividad">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+              </svg>
+              <span>Actividad</span>
+            </button>
+          </nav>
         </div>
       </section>
     </div>

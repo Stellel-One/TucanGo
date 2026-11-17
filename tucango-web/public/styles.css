@@ -54,7 +54,7 @@ body {
   display: none !important;
 }
 
-/* TOP BAR */
+/* TOP BAR — MOBILE-FIRST */
 .topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -67,30 +67,32 @@ body {
 .topbar-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 10px 20px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .brand-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+  min-width: 0;
 }
 
 .brand-emblem {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: var(--surface-tint);
   border: 1px solid var(--border);
-  padding: 4px;
+  padding: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .brand-emblem svg {
@@ -101,18 +103,19 @@ body {
 .brand-title-row {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 19px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--canopy);
 }
 
 .badge-beta {
+  display: none;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
@@ -124,12 +127,13 @@ body {
 }
 
 .brand-subtitle {
+  display: none;
   font-size: 11px;
   color: var(--text-secondary);
 }
 
 .campus-quick-nav {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
 }
@@ -156,22 +160,23 @@ body {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
 .sse-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 5px;
+  padding: 4px 8px;
   border-radius: 9999px;
   background: var(--verified-wash);
   border: 1px solid var(--border);
   color: var(--verified-leaf);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .sse-pill.offline {
@@ -180,8 +185,8 @@ body {
 }
 
 .sse-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 9999px;
   background: currentColor;
   animation: pulseDot 2s infinite;
@@ -199,7 +204,7 @@ body {
 }
 
 .btn-session-pill {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 7px;
   min-height: 36px;
@@ -233,25 +238,25 @@ body {
 
 .role-switcher {
   display: flex;
-  padding: 3px;
+  padding: 2px;
   background: var(--bg-canvas);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  gap: 3px;
+  gap: 2px;
 }
 
 .role-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 5px 11px;
+  gap: 4px;
+  min-height: 30px;
+  padding: 4px 7px;
   border: none;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -259,8 +264,8 @@ body {
 
 .role-btn svg,
 .btn-secondary svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 
 .role-btn.active {
@@ -273,8 +278,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 38px;
-  padding: 7px 12px;
+  min-height: 32px;
+  padding: 6px 8px;
   border-radius: var(--radius-control);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -283,6 +288,10 @@ body {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.hide-xs-label {
+  display: none;
 }
 
 .btn-secondary:hover {
@@ -294,42 +303,46 @@ body {
   justify-content: center;
 }
 
-/* DIDI SPLIT STAGE */
+/* DIDI APP SHELL — MOBILE-FIRST BASE */
 .workspace {
-  max-width: 1440px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 16px 20px 32px;
+  padding: 0;
 }
 
 .didi-stage {
   display: grid;
-  grid-template-columns: minmax(0, 1.32fr) minmax(0, 470px);
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 0;
   align-items: start;
 }
 
 .map-column {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  position: sticky;
-  top: 78px;
+  gap: 10px;
 }
 
 .map-stage-card {
   position: relative;
-  border-radius: var(--radius-sheet);
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: none;
   background: #EAECEF;
   box-shadow: var(--shadow-whisper);
 }
 
 #campus-map {
   width: 100%;
-  height: calc(100dvh - 220px);
-  min-height: 440px;
+  height: 54dvh;
+  min-height: 310px;
+  transition: height 0.28s ease;
   z-index: 1;
+}
+
+.didi-stage.sheet-peek #campus-map {
+  height: 74dvh;
 }
 
 .map-floating-top {
@@ -553,12 +566,16 @@ body {
 /* DIDI SHEET & SAFETY RIBBON */
 .sheet-column {
   min-width: 0;
+  margin-top: -22px;
+  position: relative;
+  z-index: 700;
+  padding-bottom: 68px;
 }
 
 .didi-sheet {
-  border-radius: var(--radius-sheet);
+  border-radius: 24px 24px 0 0;
   overflow: hidden;
-  box-shadow: var(--shadow-float);
+  box-shadow: 0 -8px 30px rgba(18, 28, 22, 0.16);
   background: linear-gradient(135deg, #4B8EF7 0%, #2D6FE4 100%);
   border: 1px solid rgba(37, 99, 235, 0.25);
 }
@@ -570,38 +587,55 @@ body {
   gap: 8px;
   padding: 9px 14px 10px;
   color: #FFFFFF;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .safety-ribbon svg {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
 .sheet-surface {
   background: var(--surface);
   border-radius: 22px 22px 0 0;
-  padding: 10px 18px 20px;
+  padding: 6px 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.sheet-handle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 4px 0 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .sheet-handle {
-  width: 40px;
+  width: 42px;
   height: 4px;
   border-radius: 9999px;
-  background: #D1D8D4;
-  margin: 0 auto 2px;
+  background: #CBD5CF;
+}
+
+.sheet-handle-hint {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-secondary);
 }
 
 .ops-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* SEARCH BOX "¿A dónde vamos?" */
@@ -1740,57 +1774,188 @@ button:disabled {
   background: var(--canopy);
 }
 
-@media (max-width: 1120px) {
-  .campus-quick-nav {
-    display: none;
-  }
+/* MOBILE BOTTOM TAB BAR */
+.mobile-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 62px;
+  z-index: 950;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  box-shadow: 0 -4px 18px rgba(18, 28, 22, 0.08);
 }
 
-@media (max-width: 960px) {
+.mobile-tab-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-tab-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.mobile-tab-btn.active {
+  color: var(--didi-orange);
+  font-weight: 700;
+}
+
+.nav-badge-dot {
+  position: absolute;
+  top: 8px;
+  right: 26%;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--didi-orange);
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+/* TELEMETRY MOBILE BASE */
+.telemetry-grid {
+  padding: 0 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.map-route-pill-box {
+  max-width: 66%;
+}
+
+/* ADAPTACIÓN DESKTOP / TABLET (>= 768px): MAPA AMPLIADO + MOBILE APP DOCK */
+@media (min-width: 768px) {
+  .topbar-inner {
+    padding: 10px 20px;
+    gap: 12px;
+  }
+
+  .brand-emblem {
+    width: 40px;
+    height: 40px;
+    padding: 4px;
+  }
+
+  .brand-name {
+    font-size: 19px;
+  }
+
+  .badge-beta,
+  .brand-subtitle,
+  .btn-session-pill,
+  .hide-xs-label {
+    display: inline-flex;
+  }
+
+  .brand-subtitle {
+    display: block;
+  }
+
+  .sse-pill {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .role-btn {
+    min-height: 34px;
+    padding: 5px 11px;
+    font-size: 12px;
+  }
+
+  .btn-secondary {
+    min-height: 38px;
+    padding: 7px 12px;
+  }
+
+  .workspace {
+    max-width: 1440px;
+    padding: 16px 20px 32px;
+  }
+
   .didi-stage {
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: minmax(0, 1fr) clamp(350px, 37vw, 420px);
+    gap: 20px;
   }
 
   .map-column {
-    position: static;
+    position: sticky;
+    top: 76px;
+    gap: 14px;
   }
 
   .map-stage-card {
-    border-radius: 18px 18px 0 0;
+    border-radius: 24px;
+    border: 1px solid var(--border);
   }
 
-  #campus-map {
-    height: 46dvh;
-    min-height: 310px;
+  #campus-map,
+  .didi-stage.sheet-peek #campus-map {
+    height: calc(100dvh - 180px);
+    min-height: 540px;
   }
 
   .sheet-column {
-    margin-top: -16px;
-    position: relative;
-    z-index: 700;
+    margin-top: 0;
+    padding-bottom: 0;
+  }
+
+  .didi-sheet {
+    border-radius: 24px;
+    box-shadow: var(--shadow-float);
+    max-height: calc(100dvh - 102px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sheet-surface {
+    padding: 10px 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .sheet-handle-btn {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    position: static;
+    border-radius: 0 0 24px 24px;
+    flex-shrink: 0;
   }
 
   .telemetry-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: 24px;
+    padding: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .campus-quick-nav {
+    display: flex;
   }
 }
 
 @media (max-width: 540px) {
-  .workspace {
-    padding: 8px 10px 28px;
-  }
-
   .form-row-2,
   .form-row-3,
   .strategy-grid,
   .didi-promo-grid,
   .modal-tabs-3 {
     grid-template-columns: 1fr;
-  }
-
-  .map-route-pill-box {
-    max-width: 62%;
   }
 }

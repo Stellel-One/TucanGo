@@ -115,7 +115,13 @@ const els = {
   inputPuntuacion: document.getElementById("input-puntuacion"),
   inputComentario: document.getElementById("input-comentario"),
   stars: document.querySelectorAll("#stars-container .star-btn"),
-  toasts: document.getElementById("toast-container")
+  toasts: document.getElementById("toast-container"),
+  didiStage: document.getElementById("didi-stage"),
+  btnToggleSheet: document.getElementById("btn-toggle-sheet"),
+  sheetToggleHint: document.getElementById("sheet-toggle-hint"),
+  sectionActividad: document.getElementById("section-actividad"),
+  mobileTabBtns: document.querySelectorAll("[data-mobile-tab]"),
+  mobileTrackingDot: document.getElementById("mobile-tracking-dot")
 };
 
 function esc(value) {
@@ -178,6 +184,12 @@ function actualizarBannerSesion() {
   }
 }
 
+function actualizarTabMovilActiva(tabName) {
+  els.mobileTabBtns.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mobileTab === tabName);
+  });
+}
+
 function setRole(role) {
   state.role = role;
   const esPasajero = role === "pasajero";
@@ -187,6 +199,7 @@ function setRole(role) {
   els.btnMotorista.setAttribute("aria-selected", String(!esPasajero));
   els.panelPasajero.classList.toggle("hidden", !esPasajero);
   els.panelMotorista.classList.toggle("hidden", esPasajero);
+  actualizarTabMovilActiva(esPasajero ? "viajar" : "motorista");
   actualizarBannerSesion();
 }
 
@@ -560,6 +573,9 @@ function renderSeguimientoEnVivo(data) {
   els.btnSimularTracking.classList.toggle("hidden", !hayMovimiento);
   els.btnSimularTracking.classList.toggle("running", Boolean(state.autoSimTimer));
   els.btnSimularTracking.textContent = state.autoSimTimer ? "⏸ Pausar GPS" : "▶ Simular GPS";
+  if (els.mobileTrackingDot) {
+    els.mobileTrackingDot.classList.toggle("hidden", !viajeActivo);
+  }
 
   if (!viajeActivo) {
     detenerAutoSimulacion();
@@ -912,6 +928,59 @@ els.btnIntercambiar.addEventListener("click", () => {
 });
 
 els.btnCentrarMapa.addEventListener("click", () => pintarRutaEnMapa(true));
+
+if (els.btnToggleSheet && els.didiStage) {
+  els.btnToggleSheet.addEventListener("click", () => {
+    const peeked = els.didiStage.classList.toggle("sheet-peek");
+    els.btnToggleSheet.setAttribute("aria-expanded", String(!peeked));
+    if (els.sheetToggleHint) {
+      els.sheetToggleHint.textContent = peeked ? "Mostrar panel completo" : "Ver más mapa";
+    }
+    setTimeout(() => {
+      if (state.map) {
+        state.map.invalidateSize();
+        pintarRutaEnMapa(true);
+      }
+    }, 300);
+  });
+}
+
+els.mobileTabBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.mobileTab;
+    if (els.didiStage && els.didiStage.classList.contains("sheet-peek")) {
+      els.didiStage.classList.remove("sheet-peek");
+      if (els.btnToggleSheet) els.btnToggleSheet.setAttribute("aria-expanded", "true");
+      if (els.sheetToggleHint) els.sheetToggleHint.textContent = "Ver más mapa";
+      setTimeout(() => state.map && state.map.invalidateSize(), 300);
+    }
+
+    if (tab === "motorista") {
+      setRole("motorista");
+      els.panelMotorista.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (tab === "actividad") {
+      actualizarTabMovilActiva("actividad");
+      els.sectionActividad?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    setRole("pasajero");
+    actualizarTabMovilActiva(tab);
+    if (tab === "tracking") {
+      if (!els.liveTrackingCard.classList.contains("hidden")) {
+        els.liveTrackingCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        showToast("Sin viaje en curso. Solicita una moto en '¿A dónde vamos?'");
+        els.didiSearchTrigger.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    } else {
+      els.didiSearchTrigger.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+});
 
 els.btnSimularTracking.addEventListener("click", () => {
   const activo = (state.data?.viajes || []).find(
