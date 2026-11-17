@@ -55,7 +55,10 @@ function serveStatic(res: http.ServerResponse, filePath: string, contentType: st
       res.end("404 Not Found");
       return;
     }
-    res.writeHead(200, { "Content-Type": `${contentType}; charset=utf-8` });
+    res.writeHead(200, {
+      "Content-Type": `${contentType}; charset=utf-8`,
+      "Cache-Control": "no-cache, must-revalidate"
+    });
     res.end(content);
   });
 }
