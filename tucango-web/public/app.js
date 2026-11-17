@@ -1312,6 +1312,27 @@ els.formCalificar.addEventListener("submit", async (e) => {
   }
 });
 
+async function sincronizarSesionCookie() {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "same-origin" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.autenticado || !data.usuario) return;
+
+    const rol = data.usuario.rol === "motorista" ? "motorista" : "pasajero";
+    if (rol === "motorista" && els.selectMotorista) {
+      els.selectMotorista.value = data.usuario.identificacion;
+    } else if (els.selectEstudiante) {
+      els.selectEstudiante.value = data.usuario.identificacion;
+    }
+    setRole(rol);
+  } catch {
+    // Fallback silencioso si no hay sesión cookie activa
+  }
+}
+
 // --- INIT ---
 conectarSse();
-cargarConfigMapa().finally(() => cargarEstado(true));
+cargarConfigMapa()
+  .finally(() => cargarEstado(true))
+  .finally(() => sincronizarSesionCookie());

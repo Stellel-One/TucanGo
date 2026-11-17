@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="cream">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TucanGo Portal · Acceso Universitario Uniamazonia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/login.css?v=2.3" />
+</head>
+<body>
+  <!-- Firma arquitectónica vertical heredada de Nous Portal en Tomato Red 10% -->
+  <div class="edge-accent-rule" aria-hidden="true"></div>
+
+  <header class="portal-topbar">
+    <a href="/" class="topbar-back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7" />
+      </svg>
+      <span>Mapa en Vivo</span>
+    </a>
+
+    <div class="topbar-pills">
+      <span class="mono-pill">UNIAMAZONIA · FLORENCIA</span>
+      <button type="button" id="btn-skip-scroll" class="btn-jump-portal">
+        <span>Ir al Portal</span>
+        <span aria-hidden="true">&darr;</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- FASE DE ANIMACIÓN WEB-SCROLL INTERACTIVA (60 FPS CANVAS + PARALLAX) -->
+  <section id="scroll-story-stage" class="scroll-story-stage" aria-label="Recorrido interactivo TucanGo">
+    <div class="story-sticky">
+      <canvas id="flow-scroll-canvas" aria-hidden="true"></canvas>
+
+      <div class="story-hud">
+        <div class="story-chapter-badge mono-text" id="story-chapter-badge">
+          01 / CORREDOR UNIVERSITARIO
+        </div>
+        <h2 class="story-headline" id="story-headline">
+          Movilidad estudiantil con trazabilidad real
+        </h2>
+        <p class="story-copy" id="story-copy">
+          Desliza para recorrer la ruta entre Campus Porvenir, Sede Centro y Granja Balcanes antes de iniciar sesión.
+        </p>
+
+        <div class="story-progress-wrap">
+          <div class="story-progress-track">
+            <div class="story-progress-fill" id="story-progress-fill" style="width: 8%"></div>
+          </div>
+          <div class="story-progress-meta mono-text">
+            <span id="story-scroll-pct">SCROLL 0%</span>
+            <span id="story-engine-tag">CANVAS 60 FPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta visual de apoyo para mostrar assets generados si el usuario prefiere vista estática -->
+      <figure class="story-hero-card" id="story-hero-card">
+        <img
+          src="/assets/portal/tucango-rider-hero.png"
+          alt="Estudiante universitario TucanGo en ruta segura"
+          loading="eager"
+          onerror="this.closest('.story-hero-card').classList.add('fallback-svg')"
+        />
+      </figure>
+    </div>
+  </section>
+
+  <!-- PORTAL DE AUTENTICACIÓN ESTILO NOUS PORTAL (60-30-10 CREAM / FOREST / TOMATO) -->
+  <main id="auth-portal-section" class="portal-stage">
+    <div class="portal-wrapper">
+      <section class="portal-card" aria-labelledby="portal-sign-in-heading">
+        <!-- Header apilado compacto estilo Nous Portal -->
+        <div class="portal-brand-header">
+          <div class="portal-badge-box">
+            <img
+              src="/assets/portal/tucan-portal-badge.png"
+              alt="Emblema TucanGo Uniamazonia"
+              width="40"
+              height="48"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            />
+            <svg viewBox="0 0 40 40" fill="none" class="badge-fallback-svg" style="display:none" aria-hidden="true">
+              <path d="M10 30C10 21 16 14 25 14H28V22C28 28 22 32 15 32H10V30Z" fill="#1B4532" />
+              <path d="M28 14C32 14 37 16 38 20C35 22 31 22 28 21V14Z" fill="#EE4129" />
+              <circle cx="23.5" cy="18.5" r="1.8" fill="#EEE2CB" />
+            </svg>
+          </div>
+          <p class="portal-brand-stack">
+            <span>TucanGo</span>
+            <span>Portal</span>
+          </p>
+        </div>
+
+        <!-- Estado autenticado si ya tiene cookie HttpOnly activa -->
+        <div id="portal-active-session" class="active-session-box hidden">
+          <div class="hairline-divider">
+            <span class="hairline-line"></span>
+            <span class="hairline-label mono-text">SESIÓN ACTIVA</span>
+            <span class="hairline-line"></span>
+          </div>
+          <div class="session-identity-card">
+            <div class="session-avatar-lg mono-text" id="active-user-initials">CR</div>
+            <div>
+              <strong id="active-user-name">Carlos Rivera</strong>
+              <p class="session-role-meta mono-text" id="active-user-detail">PASAJERO · EST-2024-001</p>
+            </div>
+          </div>
+          <div class="session-cta-stack">
+            <a href="/" class="portal-btn portal-btn-primary">
+              <span>Continuar al Mapa DiDi Moto</span>
+              <span class="btn-hover-border" aria-hidden="true"></span>
+            </a>
+            <button type="button" id="btn-logout-portal" class="portal-btn portal-btn-outline">
+              <span>Cerrar Sesión Segura</span>
+              <span class="btn-hover-border" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Flujo de Sign In estilo Nous Portal -->
+        <div id="portal-auth-views">
+          <div class="hairline-divider">
+            <span class="hairline-line"></span>
+            <h1 id="portal-sign-in-heading" class="hairline-label mono-text">INGRESAR</h1>
+            <span class="hairline-line"></span>
+          </div>
+
+          <!-- Switcher interactivo de modo (Ingresar vs Crear Cuenta) -->
+          <div class="portal-mode-switch" role="tablist" aria-label="Acción de portal">
+            <button type="button" class="mode-tab active" data-portal-mode="login" role="tab" aria-selected="true">
+              Iniciar Sesión
+            </button>
+            <button type="button" class="mode-tab" data-portal-mode="register" role="tab" aria-selected="false">
+              Registrar Cuenta
+            </button>
+          </div>
+
+          <!-- TAB LOGIN -->
+          <div id="view-portal-login" class="portal-view-stack">
+            <div class="role-pill-row" role="radiogroup" aria-label="Rol universitario">
+              <button type="button" class="role-chip active" data-login-role="pasajero">
+                Pasajero Estudiante
+              </button>
+              <button type="button" class="role-chip" data-login-role="motorista">
+                Motorista SOAT
+              </button>
+            </div>
+
+            <form id="portal-login-form" class="portal-form">
+              <div class="field-block">
+                <label for="portal-identificador" id="portal-id-label">
+                  Cédula, código estudiantil o correo institucional
+                </label>
+                <div class="portal-input-shell">
+                  <input
+                    id="portal-identificador"
+                    type="text"
+                    autocomplete="username"
+                    required
+                    placeholder="Ej. 1001 o c.rivera@uniamazonia.edu.co"
+                  />
+                </div>
+                <span class="field-hint" id="portal-login-feedback"></span>
+              </div>
+
+              <button type="submit" id="btn-portal-submit" class="portal-btn portal-btn-primary">
+                <span>Continuar con credencial</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+            </form>
+
+            <div class="hairline-divider">
+              <span class="hairline-line"></span>
+              <span class="hairline-label mono-text">O ACCESO RÁPIDO</span>
+              <span class="hairline-line"></span>
+            </div>
+
+            <!-- Grid asimétrico 2 columnas + last:odd centrado heredado de Nous Portal -->
+            <div class="portal-oauth-grid" id="portal-quick-grid">
+              <button type="button" class="portal-btn portal-btn-outline" data-quick-id="1001" data-quick-role="pasajero">
+                <span>Carlos R. · Est.</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="portal-btn portal-btn-outline" data-quick-id="2001" data-quick-role="motorista">
+                <span>Jhonatan · GNX-45F</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="portal-btn portal-btn-outline" data-quick-id="1002" data-quick-role="pasajero">
+                <span>Laura G. · Vet.</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <!-- Botón de contraste alto ancho completo equivalente a "Continue with ChatGPT" -->
+            <a href="/" class="portal-btn portal-btn-contrast">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+              </svg>
+              <span>Entrar directo al Mapa DiDi Moto</span>
+            </a>
+
+            <p class="portal-alt-link">
+              <button type="button" class="link-btn" id="btn-go-register">
+                ¿Primera vez en TucanGo? Registra tu perfil o motocicleta con SOAT
+              </button>
+            </p>
+          </div>
+
+          <!-- TAB REGISTRO -->
+          <div id="view-portal-register" class="portal-view-stack hidden">
+            <div class="role-pill-row">
+              <button type="button" class="role-chip active" data-reg-type="estudiante">
+                Estudiante
+              </button>
+              <button type="button" class="role-chip" data-reg-type="motorista">
+                Motorista + Moto
+              </button>
+            </div>
+
+            <form id="portal-reg-est-form" class="portal-form">
+              <div class="grid-2-inputs">
+                <div class="field-block">
+                  <label for="p-est-id">Cédula</label>
+                  <div class="portal-input-shell">
+                    <input id="p-est-id" type="text" required placeholder="1006888999" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-est-cod">Código</label>
+                  <div class="portal-input-shell">
+                    <input id="p-est-cod" type="text" required placeholder="202610045" />
+                  </div>
+                </div>
+              </div>
+              <div class="field-block">
+                <label for="p-est-nombre">Nombre completo</label>
+                <div class="portal-input-shell">
+                  <input id="p-est-nombre" type="text" required placeholder="Sofía Muñoz" />
+                </div>
+              </div>
+              <div class="grid-2-inputs">
+                <div class="field-block">
+                  <label for="p-est-tel">Teléfono</label>
+                  <div class="portal-input-shell">
+                    <input id="p-est-tel" type="text" required placeholder="3110000000" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-est-correo">Correo institucional</label>
+                  <div class="portal-input-shell">
+                    <input id="p-est-correo" type="email" required placeholder="s.munoz@uniamazonia.edu.co" />
+                  </div>
+                </div>
+              </div>
+              <div class="field-block">
+                <label for="p-est-carrera">Programa académico</label>
+                <div class="portal-input-shell">
+                  <input id="p-est-carrera" type="text" required placeholder="Ingeniería de Sistemas" />
+                </div>
+              </div>
+              <button type="submit" class="portal-btn portal-btn-primary">
+                <span>Crear Cuenta Estudiante</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+            </form>
+
+            <form id="portal-reg-mot-form" class="portal-form hidden">
+              <div class="grid-2-inputs">
+                <div class="field-block">
+                  <label for="p-mot-id">Cédula</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-id" type="text" required placeholder="1117555444" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-mot-tel">Teléfono</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-tel" type="text" required placeholder="3200000000" />
+                  </div>
+                </div>
+              </div>
+              <div class="grid-2-inputs">
+                <div class="field-block">
+                  <label for="p-mot-nombre">Nombre</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-nombre" type="text" required placeholder="Andrés Rojas" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-mot-correo">Correo</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-correo" type="email" required placeholder="a.rojas@udla.edu.co" />
+                  </div>
+                </div>
+              </div>
+              <div class="grid-3-inputs">
+                <div class="field-block">
+                  <label for="p-mot-placa">Placa</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-placa" type="text" required placeholder="AMZ-77G" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-mot-marca">Marca</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-marca" type="text" required placeholder="Suzuki" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-mot-cc">CC</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-cc" type="number" min="50" required value="150" />
+                  </div>
+                </div>
+              </div>
+              <div class="grid-2-inputs">
+                <div class="field-block">
+                  <label for="p-mot-modelo">Modelo</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-modelo" type="text" required placeholder="Gixxer 150" />
+                  </div>
+                </div>
+                <div class="field-block">
+                  <label for="p-mot-soat">Póliza SOAT</label>
+                  <div class="portal-input-shell">
+                    <input id="p-mot-soat" type="text" required value="SOAT-2026-FLR" />
+                  </div>
+                </div>
+              </div>
+              <label class="soat-check-row">
+                <input id="p-mot-soat-ok" type="checkbox" checked />
+                <span>Certifico SOAT vigente obligatorio</span>
+              </label>
+              <button type="submit" class="portal-btn portal-btn-primary">
+                <span>Registrar Motorista Verificado</span>
+                <span class="btn-hover-border" aria-hidden="true"></span>
+              </button>
+            </form>
+          </div>
+
+          <p class="portal-legal-note">
+            Al ingresar aceptás el <strong>Protocolo de Llegada Segura</strong> y trazabilidad institucional Uniamazonia.
+          </p>
+        </div>
+      </section>
+
+      <footer class="portal-footer">
+        <a href="/">Mapa en Vivo</a>
+        <a href="/api/salud" target="_blank" rel="noopener">Estado API</a>
+        <a href="#scroll-story-stage">Ver Animación</a>
+        <button
+          type="button"
+          id="btn-theme-toggle"
+          class="theme-toggle-btn"
+          aria-label="Cambiar a modo noche bosque"
+          aria-pressed="false"
+        >
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <svg id="icon-sun" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+        </button>
+      </footer>
+    </div>
+  </main>
+
+  <div id="portal-toast" class="portal-toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="/login.js?v=2.3"></script>
+</body>
+</html>

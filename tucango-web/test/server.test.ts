@@ -267,4 +267,72 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("GET /login, assets del portal y sesión cookie HttpOnly (/api/auth/me & /logout)", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-auth-cookie-"));
+    const repo = new SqliteSistemaRepository(path.join(tmpDir, "tucango.db"));
+    const facade = new TucanGoFacade(repo);
+    const server = crearServidor(facade, { persistencia: "sqlite" });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const { port } = server.address() as AddressInfo;
+    const baseUrl = `http://127.0.0.1:${port}`;
+
+    try {
+      const loginPageRes = await fetch(`${baseUrl}/login`);
+      assert.equal(loginPageRes.status, 200);
+      assert.match(loginPageRes.headers.get("content-type") || "", /text\/html/);
+      const loginHtml = await loginPageRes.text();
+      assert.match(loginHtml, /TucanGo/);
+      assert.match(loginHtml, /flow-scroll-canvas/);
+
+      const assetRes = await fetch(`${baseUrl}/assets/portal/tucan-portal-badge.png`);
+      assert.equal(assetRes.status, 200);
+      assert.match(assetRes.headers.get("content-type") || "", /image\/png/);
+
+      const anonMeRes = await fetch(`${baseUrl}/api/auth/me`);
+      assert.equal(anonMeRes.status, 200);
+      const anonMe = (await anonMeRes.json()) as { autenticado: boolean };
+      assert.equal(anonMe.autenticado, false);
+
+      const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rol: "pasajero", identificador: "1001" })
+      });
+      assert.equal(loginRes.status, 200);
+      const setCookie = loginRes.headers.get("set-cookie") || "";
+      assert.match(setCookie, /tucango_sid=/);
+      assert.match(setCookie, /HttpOnly/i);
+      assert.match(setCookie, /SameSite=Lax/i);
+
+      const cookiePair = setCookie.split(";")[0];
+      const authMeRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Cookie: cookiePair }
+      });
+      assert.equal(authMeRes.status, 200);
+      const authMe = (await authMeRes.json()) as {
+        autenticado: boolean;
+        usuario?: { rol: string; identificacion: string };
+      };
+      assert.equal(authMe.autenticado, true);
+      assert.equal(authMe.usuario?.rol, "pasajero");
+      assert.equal(authMe.usuario?.identificacion, "1001");
+
+      const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
+        method: "POST",
+        headers: { Cookie: cookiePair }
+      });
+      assert.equal(logoutRes.status, 200);
+      const logoutSetCookie = logoutRes.headers.get("set-cookie") || "";
+      assert.match(logoutSetCookie, /Max-Age=0/i);
+
+      const afterLogoutMeRes = await fetch(`${baseUrl}/api/auth/me`);
+      const afterLogoutMe = (await afterLogoutMeRes.json()) as { autenticado: boolean };
+      assert.equal(afterLogoutMe.autenticado, false);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      repo.cerrar();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

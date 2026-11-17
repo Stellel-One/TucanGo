@@ -3,8 +3,9 @@
   "projectName": "projects/15651838928486418186",
   "title": "TucanGo Beta v1 — Uniamazonia Mobility",
   "designSystem": {
-    "assetId": "fcccecdf25c64c88b6e6c50adfb76a39",
-    "resourceName": "assets/fcccecdf25c64c88b6e6c50adfb76a39",
+    "assetId": "11436719985199985504",
+    "resourceName": "assets/11436719985199985504",
+    "previousAssetId": "fcccecdf25c64c88b6e6c50adfb76a39",
     "sourceScreen": "projects/15651838928486418186/screens/14938137624786066595",
     "sourceScreenInstanceId": "14938137624786066595"
   }

@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "frameCount": 0,
+  "pattern": "/assets/flow-frames/frame-{index}.jpg",
+  "padLength": 3,
+  "notes": "Cambia enabled a true y ajusta frameCount luego de extraer frames desde Google Flow siguiendo Docs/PROMPTS_GOOGLE_FLOW_ANIMACION.md"
+}

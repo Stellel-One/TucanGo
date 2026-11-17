@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { TucanGoFacade } from "./application/TucanGoFacade.ts";
 import { SqliteSistemaRepository } from "./infrastructure/SqliteSistemaRepository.ts";
@@ -11,6 +12,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_PUBLIC_DIR = path.join(__dirname, "..", "public");
 
+const SESSION_COOKIE_NAME = "tucango_sid";
+const SESSION_SECRET = crypto
+  .createHash("sha256")
+  .update(process.env.SESSION_SECRET || `${process.env.DATA_DIR || "tucango"}:portal-auth-v2`)
+  .digest();
+
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
   ".css": "text/css",
@@ -18,8 +25,71 @@ const MIME_TYPES: Record<string, string> = {
   ".json": "application/json",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
   ".svg": "image/svg+xml"
 };
+
+function parseCookies(req: http.IncomingMessage): Record<string, string> {
+  const header = req.headers.cookie || "";
+  const out: Record<string, string> = {};
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx <= 0) continue;
+    const k = part.slice(0, idx).trim();
+    const v = part.slice(idx + 1).trim();
+    if (k) out[k] = decodeURIComponent(v);
+  }
+  return out;
+}
+
+function firmarSesionCookie(payload: {
+  rol: "pasajero" | "motorista";
+  identificacion: string;
+  exp: number;
+}): string {
+  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
+  return `${encoded}.${sig}`;
+}
+
+function verificarSesionCookie(
+  token: string
+): { rol: "pasajero" | "motorista"; identificacion: string; exp: number } | null {
+  if (!token || !token.includes(".")) return null;
+  const [encoded, sig] = token.split(".", 2);
+  if (!encoded || !sig) return null;
+  const expected = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
+  const bufSig = Buffer.from(sig);
+  const bufExp = Buffer.from(expected);
+  if (bufSig.length !== bufExp.length || !crypto.timingSafeEqual(bufSig, bufExp)) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    if (!parsed || typeof parsed.exp !== "number" || parsed.exp <= Date.now()) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function construirSetCookie(req: http.IncomingMessage, valor: string, maxAgeSeconds: number): string {
+  const esHttps =
+    req.headers["x-forwarded-proto"] === "https" ||
+    Boolean((req.socket as { encrypted?: boolean }).encrypted);
+  const parts = [
+    `${SESSION_COOKIE_NAME}=${encodeURIComponent(valor)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+    `Max-Age=${maxAgeSeconds}`
+  ];
+  if (esHttps) parts.push("Secure");
+  return parts.join("; ");
+}
 
 function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -38,12 +108,18 @@ function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
   });
 }
 
-function sendJson(res: http.ServerResponse, statusCode: number, data: unknown): void {
+function sendJson(
+  res: http.ServerResponse,
+  statusCode: number,
+  data: unknown,
+  extraHeaders: Record<string, string> = {}
+): void {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
+    ...extraHeaders
   });
   res.end(JSON.stringify(data));
 }
@@ -168,8 +244,8 @@ function construirEstadoDTO(facade: TucanGoFacade) {
 
 function resolverArchivoPublico(publicDir: string, pathname: string): string | null {
   const baseResuelta = path.resolve(publicDir);
-  const relativo = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
-  const candidato = path.resolve(baseResuelta, relativo);
+  const limpio = pathname === "/" ? "index.html" : pathname === "/login" || pathname === "/login/" ? "login.html" : pathname.replace(/^\/+/, "");
+  const candidato = path.resolve(baseResuelta, limpio);
   if (candidato !== baseResuelta && !candidato.startsWith(baseResuelta + path.sep)) {
     return null;
   }
@@ -305,7 +381,40 @@ export function crearServidor(
           rol?: "pasajero" | "motorista";
         }>(req);
         const sesion = facade.autenticarUsuario(body.identificador, body.rol);
-        sendJson(res, 200, sesion);
+        const token = firmarSesionCookie({
+          rol: sesion.rol,
+          identificacion: sesion.identificacion,
+          exp: Date.now() + 86400 * 1000
+        });
+        sendJson(res, 200, sesion, {
+          "Set-Cookie": construirSetCookie(req, token, 86400)
+        });
+        return;
+      }
+
+      if (pathname === "/api/auth/me" && req.method === "GET") {
+        const cookies = parseCookies(req);
+        const parsed = verificarSesionCookie(cookies[SESSION_COOKIE_NAME] || "");
+        if (!parsed) {
+          sendJson(res, 200, { autenticado: false, usuario: null });
+          return;
+        }
+        try {
+          const usuario = facade.autenticarUsuario(parsed.identificacion, parsed.rol);
+          sendJson(res, 200, { autenticado: true, usuario });
+        } catch {
+          sendJson(res, 200, { autenticado: false, usuario: null });
+        }
+        return;
+      }
+
+      if (pathname === "/api/auth/logout" && req.method === "POST") {
+        sendJson(
+          res,
+          200,
+          { ok: true },
+          { "Set-Cookie": construirSetCookie(req, "", 0) }
+        );
         return;
       }
 
