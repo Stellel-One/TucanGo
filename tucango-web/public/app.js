@@ -257,20 +257,46 @@ async function cargarConfigMapa() {
   }
 }
 
+// Delimitación geográfica estricta: Florencia, Caquetá (Suroccidente Balcanes km 17 -> Nororiente La Vega / Aeropuerto)
+const FLORENCIA_BOUNDS_COORDS = [
+  [1.5200, -75.6800],
+  [1.6600, -75.5400]
+];
+const FLORENCIA_CENTRO = [1.6144, -75.6062];
+
 function initMap(sectores) {
   if (typeof window.L === "undefined" || state.map) return;
 
-  const map = window.L.map("campus-map", { zoomControl: true }).setView([1.617, -75.609], 14);
+  const bounds = window.L.latLngBounds(
+    FLORENCIA_BOUNDS_COORDS[0],
+    FLORENCIA_BOUNDS_COORDS[1]
+  );
+  state.florenciaBounds = bounds;
+
+  const map = window.L.map("campus-map", {
+    zoomControl: true,
+    minZoom: 12,
+    maxZoom: 19,
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0
+  }).setView(FLORENCIA_CENTRO, 14);
+
+  map.setMaxBounds(bounds);
+
   const tileUrl =
     state.mapConfig?.tileUrlDidi || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   const baseLayer = window.L.tileLayer(tileUrl, {
+    minZoom: 12,
     maxZoom: 19,
-    attribution: "&copy; OpenStreetMap"
+    bounds: bounds,
+    attribution: "&copy; OpenStreetMap · Florencia, Caquetá"
   }).addTo(map);
 
   const fallbackOsm = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    minZoom: 12,
     maxZoom: 18,
+    bounds: bounds,
     attribution: "&copy; OpenStreetMap"
   });
   baseLayer.on("tileerror", () => {
@@ -293,6 +319,16 @@ function initMap(sectores) {
   }
 
   state.map = map;
+
+  if (sectores && sectores.length > 0) {
+    const latLngs = sectores.map((s) => [s.latitud, s.longitud]);
+    const secBounds = window.L.latLngBounds(latLngs);
+    map.fitBounds(secBounds, { padding: [36, 36], maxZoom: 15 });
+  }
+
+  setTimeout(() => {
+    if (state.map) state.map.invalidateSize();
+  }, 250);
 }
 
 function normalizarAnguloContinuo(motoristaId, targetDeg) {
@@ -419,6 +455,8 @@ function pintarRutaEnMapa(ajustarEncuadre = true) {
           ];
     dibujarPolilineaEnMapa(puntos, ajustarEncuadre);
     els.coordsReadout.textContent = `Lat ${origen.latitud.toFixed(4)} N · Lon ${origen.longitud.toFixed(4)} W`;
+  } else if (ajustarEncuadre && state.florenciaBounds) {
+    state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
   }
   renderMarcadoresEnVivo(state.data);
 }
@@ -962,7 +1000,20 @@ els.btnIntercambiar.addEventListener("click", () => {
   actualizarRutaDesdeSectores();
 });
 
-els.btnCentrarMapa.addEventListener("click", () => pintarRutaEnMapa(true));
+if (els.btnCentrarMapa) {
+  els.btnCentrarMapa.addEventListener("click", () => {
+    if (state.map) {
+      state.map.invalidateSize();
+      if (state.routeLine && state.routeLine.getLatLngs().length >= 2) {
+        state.map.fitBounds(state.routeLine.getBounds(), { padding: [54, 54], maxZoom: 15 });
+      } else if (state.florenciaBounds) {
+        state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
+      } else {
+        pintarRutaEnMapa(true);
+      }
+    }
+  });
+}
 
 if (els.btnToggleSheet && els.didiStage) {
   els.btnToggleSheet.addEventListener("click", () => {
