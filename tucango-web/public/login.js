@@ -351,9 +351,9 @@ async function verificarSesionActual() {
 
 async function ejecutarLogin(identificador, rol) {
   const sesion = await postJson("/api/auth/login", { identificador, rol });
-  showToast(`Bienvenido ${sesion.nombre} · Redirigiendo al mapa...`);
+  showToast(`Bienvenido ${sesion.nombre} · Abriendo panel ${sesion.rol}...`);
   setTimeout(() => {
-    window.location.href = "/";
+    window.location.href = "/app";
   }, 450);
 }
 

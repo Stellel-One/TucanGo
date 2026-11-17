@@ -1,5 +1,6 @@
 const state = {
   data: null,
+  authUser: null,
   role: "pasajero",
   calificandoCodigo: null,
   routeKm: 1.15,
@@ -30,8 +31,8 @@ const els = {
   btnSesionTopbar: document.getElementById("btn-sesion-topbar"),
   sessionAvatarInitials: document.getElementById("session-avatar-initials"),
   sessionUserName: document.getElementById("session-user-name"),
-  btnPasajero: document.getElementById("btn-vista-pasajero"),
-  btnMotorista: document.getElementById("btn-vista-motorista"),
+  roleLockedBadge: document.getElementById("role-locked-badge"),
+  btnCerrarSesionApp: document.getElementById("btn-cerrar-sesion-app"),
   panelPasajero: document.getElementById("panel-pasajero"),
   panelMotorista: document.getElementById("panel-motorista"),
   selectEstudiante: document.getElementById("select-estudiante"),
@@ -99,12 +100,12 @@ const els = {
   btnAbrirLogin: document.getElementById("btn-abrir-login"),
   btnAbrirLoginBadge: document.getElementById("btn-abrir-login-badge"),
   btnCerrarLogin: document.getElementById("btn-cerrar-login"),
-  quickAccountsList: document.getElementById("quick-accounts-list"),
-  formLogin: document.getElementById("form-login"),
+  btnModalLogout: document.getElementById("btn-modal-logout"),
+  modalAccountName: document.getElementById("modal-account-name"),
+  modalAccountMeta: document.getElementById("modal-account-meta"),
   loginTabRapido: document.getElementById("login-tab-rapido"),
   loginTabGmaps: document.getElementById("login-tab-googlemaps"),
   modalRegistro: document.getElementById("modal-registro"),
-  btnAbrirRegistro: document.getElementById("btn-abrir-registro"),
   btnCerrarRegistro: document.getElementById("btn-cerrar-registro"),
   formRegEst: document.getElementById("form-registro-estudiante"),
   formRegMot: document.getElementById("form-registro-motorista"),
@@ -191,14 +192,22 @@ function actualizarTabMovilActiva(tabName) {
 }
 
 function setRole(role) {
-  state.role = role;
-  const esPasajero = role === "pasajero";
-  els.btnPasajero.classList.toggle("active", esPasajero);
-  els.btnMotorista.classList.toggle("active", !esPasajero);
-  els.btnPasajero.setAttribute("aria-selected", String(esPasajero));
-  els.btnMotorista.setAttribute("aria-selected", String(!esPasajero));
+  const rolFinal = state.authUser?.rol || role;
+  state.role = rolFinal;
+  const esPasajero = rolFinal === "pasajero";
+
+  if (els.roleLockedBadge) {
+    els.roleLockedBadge.textContent = esPasajero ? "PASAJERO" : "MOTORISTA";
+    els.roleLockedBadge.classList.toggle("is-driver", !esPasajero);
+  }
   els.panelPasajero.classList.toggle("hidden", !esPasajero);
   els.panelMotorista.classList.toggle("hidden", esPasajero);
+
+  els.mobileTabBtns.forEach((btn) => {
+    const forRole = btn.dataset.forRole;
+    btn.classList.toggle("hidden", Boolean(forRole && forRole !== rolFinal));
+  });
+
   actualizarTabMovilActiva(esPasajero ? "viajar" : "motorista");
   actualizarBannerSesion();
 }
@@ -484,7 +493,9 @@ function renderSelectores(data) {
   els.selectEstudiante.innerHTML = data.estudiantes
     .map((e) => `<option value="${esc(e.identificacion)}">${esc(e.nombre)} · ${esc(e.carrera)}</option>`)
     .join("");
-  if (prevEst && data.estudiantes.some((e) => e.identificacion === prevEst)) {
+  if (state.authUser?.rol === "pasajero") {
+    els.selectEstudiante.value = state.authUser.identificacion;
+  } else if (prevEst && data.estudiantes.some((e) => e.identificacion === prevEst)) {
     els.selectEstudiante.value = prevEst;
   }
 
@@ -494,7 +505,9 @@ function renderSelectores(data) {
       return `<option value="${esc(m.identificacion)}">${esc(m.nombre)} (${esc(placa)})</option>`;
     })
     .join("");
-  if (prevMot && data.motoristas.some((m) => m.identificacion === prevMot)) {
+  if (state.authUser?.rol === "motorista") {
+    els.selectMotorista.value = state.authUser.identificacion;
+  } else if (prevMot && data.motoristas.some((m) => m.identificacion === prevMot)) {
     els.selectMotorista.value = prevMot;
   }
 
@@ -508,34 +521,7 @@ function renderSelectores(data) {
     els.selectDestino.value = prevDest || "CENTRO";
   }
 
-  renderQuickAccountsModal(data);
   actualizarBannerSesion();
-}
-
-function renderQuickAccountsModal(data) {
-  if (!els.quickAccountsList) return;
-  const estButtons = data.estudiantes.map(
-    (e) => `
-      <button type="button" class="quick-account-btn" data-quick-login="${esc(e.identificacion)}" data-quick-role="pasajero">
-        <div>
-          <strong>${esc(e.nombre)}</strong>
-          <div class="muted-sub">Pasajero · ${esc(e.carrera)} (${esc(e.codigo)})</div>
-        </div>
-        <span class="chip-mono chip-verified">PASAJERO</span>
-      </button>`
-  );
-  const motButtons = data.motoristas.map((m) => {
-    const placa = m.motoActiva ? m.motoActiva.placa : "SIN-MOTO";
-    return `
-      <button type="button" class="quick-account-btn" data-quick-login="${esc(m.identificacion)}" data-quick-role="motorista">
-        <div>
-          <strong>${esc(m.nombre)}</strong>
-          <div class="muted-sub">Moto ${esc(placa)} · SOAT Activo</div>
-        </div>
-        <span class="chip-mono chip-ochre-soft">MOTORISTA</span>
-      </button>`;
-  });
-  els.quickAccountsList.innerHTML = [...estButtons, ...motButtons].join("");
 }
 
 function badgeEstadoClase(estado) {
@@ -552,20 +538,24 @@ function badgeEstadoClase(estado) {
 }
 
 function renderSeguimientoEnVivo(data) {
-  const estId = els.selectEstudiante.value;
+  if (state.role !== "pasajero") {
+    detenerAutoSimulacion();
+    els.liveTrackingCard.classList.add("hidden");
+    els.btnSimularTracking.classList.add("hidden");
+    if (els.mobileTrackingDot) els.mobileTrackingDot.classList.add("hidden");
+    return;
+  }
+
+  const estId = state.authUser?.identificacion || els.selectEstudiante.value;
   const viajesOrdenados = [...data.viajes].reverse();
-  const viajeActivo =
-    viajesOrdenados.find(
-      (v) =>
-        v.estudiante.id === estId &&
-        (v.estado === "SOLICITADO" ||
-          v.estado === "ACEPTADO" ||
-          v.estado === "EN_CURSO" ||
-          (v.estado === "FINALIZADO" && !v.llegadaSeguraConfirmada))
-    ) ||
-    viajesOrdenados.find(
-      (v) => v.estado === "SOLICITADO" || v.estado === "ACEPTADO" || v.estado === "EN_CURSO"
-    );
+  const viajeActivo = viajesOrdenados.find(
+    (v) =>
+      v.estudiante.id === estId &&
+      (v.estado === "SOLICITADO" ||
+        v.estado === "ACEPTADO" ||
+        v.estado === "EN_CURSO" ||
+        (v.estado === "FINALIZADO" && !v.llegadaSeguraConfirmada))
+  );
 
   const hayMovimiento =
     viajeActivo && (viajeActivo.estado === "ACEPTADO" || viajeActivo.estado === "EN_CURSO");
@@ -744,13 +734,24 @@ function renderEmptyState(titulo, subtitulo) {
 }
 
 function renderFeed(data) {
-  const viajes = [...data.viajes].reverse();
+  const uid = state.authUser?.identificacion;
+  const esMotorista = state.role === "motorista";
+  const viajes = [...data.viajes]
+    .reverse()
+    .filter((v) => {
+      if (!uid) return true;
+      return esMotorista
+        ? v.motorista?.id === uid || v.estado === "SOLICITADO"
+        : v.estudiante.id === uid;
+    });
   els.feedCount.textContent = `${viajes.length} REGISTROS`;
 
   if (viajes.length === 0) {
     els.viajesFeed.innerHTML = renderEmptyState(
-      "Sin trayectos registrados aún",
-      "Toca '¿A dónde vamos?' o los pines del mapa para pedir tu primera moto."
+      esMotorista ? "Sin carreras asignadas aún" : "Sin trayectos registrados aún",
+      esMotorista
+        ? "Acepta una solicitud pendiente en el Radar Moto para iniciar tu recorrido."
+        : "Toca '¿A dónde vamos?' o los pines del mapa para pedir tu primera moto."
     );
     return;
   }
@@ -773,22 +774,28 @@ function renderFeed(data) {
           : "";
 
       const botones = [];
-      if (v.estado === "SOLICITADO") {
-        botones.push(`<button type="button" class="btn-primary btn-sm" data-aceptar-viaje="${esc(v.codigo)}">Aceptar</button>`);
-        botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
-      } else if (v.estado === "ACEPTADO") {
-        botones.push(`<button type="button" class="btn-chip" data-simular-paso="${esc(v.codigo)}">GPS +25%</button>`);
-        botones.push(`<button type="button" class="btn-primary btn-sm" data-iniciar-viaje="${esc(v.codigo)}">Iniciar</button>`);
-        botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
-      } else if (v.estado === "EN_CURSO") {
-        botones.push(`<button type="button" class="btn-chip" data-simular-paso="${esc(v.codigo)}">GPS +25%</button>`);
-        botones.push(`<button type="button" class="btn-leaf btn-sm" data-finalizar-viaje="${esc(v.codigo)}">Finalizar</button>`);
-      } else if (v.estado === "FINALIZADO") {
-        if (!v.llegadaSeguraConfirmada) {
-          botones.push(`<button type="button" class="btn-primary btn-sm" data-llegada-segura="${esc(v.codigo)}">Confirmar Llegada Segura</button>`);
+      if (esMotorista) {
+        if (v.estado === "SOLICITADO") {
+          botones.push(`<button type="button" class="btn-primary btn-sm" data-aceptar-viaje="${esc(v.codigo)}">Aceptar Pedido</button>`);
+        } else if (v.estado === "ACEPTADO" && v.motorista?.id === uid) {
+          botones.push(`<button type="button" class="btn-chip" data-simular-paso="${esc(v.codigo)}">GPS +25%</button>`);
+          botones.push(`<button type="button" class="btn-primary btn-sm" data-iniciar-viaje="${esc(v.codigo)}">Iniciar</button>`);
+        } else if (v.estado === "EN_CURSO" && v.motorista?.id === uid) {
+          botones.push(`<button type="button" class="btn-chip" data-simular-paso="${esc(v.codigo)}">GPS +25%</button>`);
+          botones.push(`<button type="button" class="btn-leaf btn-sm" data-finalizar-viaje="${esc(v.codigo)}">Finalizar</button>`);
         }
-        if (v.calificaciones.length === 0) {
-          botones.push(`<button type="button" class="btn-chip" data-calificar-viaje="${esc(v.codigo)}">Calificar</button>`);
+      } else {
+        if (v.estado === "SOLICITADO") {
+          botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
+        } else if (v.estado === "ACEPTADO") {
+          botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
+        } else if (v.estado === "FINALIZADO") {
+          if (!v.llegadaSeguraConfirmada) {
+            botones.push(`<button type="button" class="btn-primary btn-sm" data-llegada-segura="${esc(v.codigo)}">Confirmar Llegada Segura</button>`);
+          }
+          if (v.calificaciones.length === 0) {
+            botones.push(`<button type="button" class="btn-chip" data-calificar-viaje="${esc(v.codigo)}">Calificar</button>`);
+          }
         }
       }
 
@@ -895,19 +902,31 @@ function conectarSse() {
   };
 }
 
-function abrirModalLogin(tab = "rapido") {
+function abrirModalLogin(tab = "cuenta") {
+  if (state.authUser && els.modalAccountName && els.modalAccountMeta) {
+    els.modalAccountName.textContent = state.authUser.nombre;
+    els.modalAccountMeta.textContent = `${state.authUser.rol.toUpperCase()} · ${state.authUser.detalle}`;
+  }
   els.modalLogin.classList.remove("hidden");
   document.querySelectorAll("[data-login-tab]").forEach((t) => {
     t.classList.toggle("active", t.dataset.loginTab === tab);
   });
-  els.loginTabRapido.classList.toggle("hidden", tab !== "rapido");
-  els.formLogin.classList.toggle("hidden", tab !== "credenciales");
+  els.loginTabRapido.classList.toggle("hidden", tab !== "cuenta");
   els.loginTabGmaps.classList.toggle("hidden", tab !== "googlemaps");
 }
 
+async function cerrarSesionActual() {
+  try {
+    await postJson("/api/auth/logout", {});
+  } catch {
+    // Redirigir de todas formas a login
+  }
+  window.location.replace("/login");
+}
+
 // --- EVENTOS UI ---
-els.btnPasajero.addEventListener("click", () => setRole("pasajero"));
-els.btnMotorista.addEventListener("click", () => setRole("motorista"));
+els.btnCerrarSesionApp?.addEventListener("click", cerrarSesionActual);
+els.btnModalLogout?.addEventListener("click", cerrarSesionActual);
 els.selectEstudiante.addEventListener("change", () => {
   actualizarBannerSesion();
   if (state.data) renderSeguimientoEnVivo(state.data);
@@ -955,7 +974,7 @@ els.mobileTabBtns.forEach((btn) => {
     }
 
     if (tab === "motorista") {
-      setRole("motorista");
+      if (state.role !== "motorista") return;
       els.panelMotorista.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
@@ -966,7 +985,7 @@ els.mobileTabBtns.forEach((btn) => {
       return;
     }
 
-    setRole("pasajero");
+    if (state.role !== "pasajero") return;
     actualizarTabMovilActiva(tab);
     if (tab === "tracking") {
       if (!els.liveTrackingCard.classList.contains("hidden")) {
@@ -1002,12 +1021,12 @@ els.btnTarifaInteligente.addEventListener("click", () => {
   showToast("Tarifa Estudiantil Inteligente aplicada ($2.500 COP)", "success");
 });
 
-els.btnElegirCuenta.addEventListener("click", () => abrirModalLogin("rapido"));
-els.btnAbrirLogin.addEventListener("click", () => abrirModalLogin("rapido"));
-els.btnAbrirLoginBadge.addEventListener("click", () => abrirModalLogin("googlemaps"));
-els.btnSesionTopbar.addEventListener("click", () => abrirModalLogin("rapido"));
-els.btnMapEnginePill.addEventListener("click", () => abrirModalLogin("googlemaps"));
-els.btnCerrarLogin.addEventListener("click", () => els.modalLogin.classList.add("hidden"));
+els.btnElegirCuenta?.addEventListener("click", () => abrirModalLogin("cuenta"));
+els.btnAbrirLogin?.addEventListener("click", () => abrirModalLogin("cuenta"));
+els.btnAbrirLoginBadge?.addEventListener("click", () => abrirModalLogin("googlemaps"));
+els.btnSesionTopbar?.addEventListener("click", () => abrirModalLogin("cuenta"));
+els.btnMapEnginePill?.addEventListener("click", () => abrirModalLogin("googlemaps"));
+els.btnCerrarLogin?.addEventListener("click", () => els.modalLogin.classList.add("hidden"));
 
 document.querySelectorAll("[data-login-tab]").forEach((tab) => {
   tab.addEventListener("click", () => abrirModalLogin(tab.dataset.loginTab));
@@ -1112,22 +1131,7 @@ document.addEventListener("click", async (e) => {
   if (!target) return;
 
   try {
-    if (target.dataset.quickLogin) {
-      const sesion = await postJson("/api/auth/login", {
-        identificador: target.dataset.quickLogin,
-        rol: target.dataset.quickRole
-      });
-      await cargarEstado(false);
-      if (sesion.rol === "motorista") {
-        els.selectMotorista.value = sesion.identificacion;
-        setRole("motorista");
-      } else {
-        els.selectEstudiante.value = sesion.identificacion;
-        setRole("pasajero");
-      }
-      els.modalLogin.classList.add("hidden");
-      showToast(`Sesión iniciada como ${sesion.nombre}`, "success");
-    } else if (target.dataset.aceptarViaje) {
+    if (target.dataset.aceptarViaje) {
       const r = await postJson("/api/viajes/aceptar", {
         codigoViaje: target.dataset.aceptarViaje,
         motoristaId: els.selectMotorista.value
@@ -1170,29 +1174,6 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-els.formLogin.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  try {
-    const sesion = await postJson("/api/auth/login", {
-      identificador: document.getElementById("login-identificador").value,
-      rol: document.getElementById("login-rol").value
-    });
-    await cargarEstado(false);
-    if (sesion.rol === "motorista") {
-      els.selectMotorista.value = sesion.identificacion;
-      setRole("motorista");
-    } else {
-      els.selectEstudiante.value = sesion.identificacion;
-      setRole("pasajero");
-    }
-    els.modalLogin.classList.add("hidden");
-    els.formLogin.reset();
-    showToast(`Bienvenido ${sesion.nombre}`, "success");
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-});
-
 els.btnIniciarViaje.addEventListener("click", async () => {
   const codigo = els.driverActiveBox.dataset.codigo;
   if (!codigo) return;
@@ -1218,9 +1199,8 @@ els.btnFinalizarViaje.addEventListener("click", async () => {
   }
 });
 
-// --- MODAL REGISTRO ---
-els.btnAbrirRegistro.addEventListener("click", () => els.modalRegistro.classList.remove("hidden"));
-els.btnCerrarRegistro.addEventListener("click", () => els.modalRegistro.classList.add("hidden"));
+// --- MODAL REGISTRO (solo fallback si existiera) ---
+els.btnCerrarRegistro?.addEventListener("click", () => els.modalRegistro.classList.add("hidden"));
 
 document.querySelectorAll("[data-reg-tab]").forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -1312,27 +1292,27 @@ els.formCalificar.addEventListener("submit", async (e) => {
   }
 });
 
-async function sincronizarSesionCookie() {
+async function iniciarAppAutenticada() {
   try {
     const res = await fetch("/api/auth/me", { credentials: "same-origin" });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.autenticado || !data.usuario) return;
-
-    const rol = data.usuario.rol === "motorista" ? "motorista" : "pasajero";
-    if (rol === "motorista" && els.selectMotorista) {
-      els.selectMotorista.value = data.usuario.identificacion;
-    } else if (els.selectEstudiante) {
-      els.selectEstudiante.value = data.usuario.identificacion;
+    if (!res.ok) {
+      window.location.replace("/login");
+      return;
     }
-    setRole(rol);
+    const data = await res.json();
+    if (!data.autenticado || !data.usuario) {
+      window.location.replace("/login");
+      return;
+    }
+    state.authUser = data.usuario;
+    setRole(data.usuario.rol === "motorista" ? "motorista" : "pasajero");
+    conectarSse();
+    await cargarConfigMapa();
+    await cargarEstado(true);
   } catch {
-    // Fallback silencioso si no hay sesión cookie activa
+    window.location.replace("/login");
   }
 }
 
 // --- INIT ---
-conectarSse();
-cargarConfigMapa()
-  .finally(() => cargarEstado(true))
-  .finally(() => sincronizarSesionCookie());
+iniciarAppAutenticada();

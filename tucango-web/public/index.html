@@ -16,7 +16,7 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css?v=2.3" />
+  <link rel="stylesheet" href="styles.css?v=2.5" />
 </head>
 <body>
   <header class="topbar">
@@ -65,52 +65,22 @@
           <span id="sse-label">Conectando SSE</span>
         </div>
 
-        <button type="button" id="btn-sesion-topbar" class="btn-session-pill" title="Iniciar sesión o cambiar de cuenta">
-          <span class="session-avatar" id="session-avatar-initials">CR</span>
-          <span id="session-user-name">Carlos Rivera</span>
+        <button type="button" id="btn-sesion-topbar" class="btn-session-pill" title="Cuenta autenticada y configuración de mapas">
+          <span class="session-avatar" id="session-avatar-initials">TG</span>
+          <span id="session-user-name">Cargando sesión...</span>
         </button>
 
-        <div class="role-switcher" role="tablist" aria-label="Selector de rol">
-          <button
-            type="button"
-            id="btn-vista-pasajero"
-            class="role-btn active"
-            role="tab"
-            aria-selected="true"
-            data-role="pasajero"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>Pasajero</span>
-          </button>
-          <button
-            type="button"
-            id="btn-vista-motorista"
-            class="role-btn"
-            role="tab"
-            aria-selected="false"
-            data-role="motorista"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="5.5" cy="17.5" r="3.5" />
-              <circle cx="18.5" cy="17.5" r="3.5" />
-              <path d="M15 6h3l2 5h-5.5l-2.5 5H6" />
-              <path d="M9 17.5L11.5 11H7" />
-            </svg>
-            <span>Motorista</span>
-          </button>
-        </div>
+        <span id="role-locked-badge" class="role-locked-pill mono-text" aria-label="Rol activo autenticado">
+          PASAJERO
+        </span>
 
-        <button type="button" id="btn-abrir-registro" class="btn-secondary" aria-label="Registrar usuario">
+        <button type="button" id="btn-cerrar-sesion-app" class="btn-secondary" title="Cerrar sesión y volver al portal de acceso" aria-label="Cerrar sesión">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="8.5" cy="7" r="4" />
-            <line x1="20" y1="8" x2="20" y2="14" />
-            <line x1="23" y1="11" x2="17" y2="11" />
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          <span class="hide-xs-label">Registrar</span>
+          <span>Salir</span>
         </button>
       </div>
     </div>
@@ -330,8 +300,8 @@
               <!-- Configurador completo de viaje y estrategias -->
               <form id="form-solicitar" class="form-stack didi-quote-panel">
                 <div class="field-group">
-                  <label for="select-estudiante">Pasajero Uniamazonia conectado</label>
-                  <select id="select-estudiante" required></select>
+                  <label for="select-estudiante">Pasajero autenticado</label>
+                  <select id="select-estudiante" required disabled></select>
                 </div>
 
                 <div class="route-selectors">
@@ -470,8 +440,8 @@
                 </div>
 
                 <div class="field-group">
-                  <label for="select-motorista">Motorista en servicio</label>
-                  <select id="select-motorista"></select>
+                  <label for="select-motorista">Motorista autenticado en servicio</label>
+                  <select id="select-motorista" disabled></select>
                   <p class="driver-moto-summary mono-text" id="driver-moto-info"></p>
                 </div>
 
@@ -555,27 +525,27 @@
           </div>
 
           <nav class="mobile-bottom-nav" aria-label="Navegación rápida móvil">
-            <button type="button" class="mobile-tab-btn active" data-mobile-tab="viajar">
+            <button type="button" class="mobile-tab-btn active" data-mobile-tab="viajar" data-for-role="pasajero">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
               <span>Viajar</span>
             </button>
-            <button type="button" class="mobile-tab-btn" data-mobile-tab="tracking">
+            <button type="button" class="mobile-tab-btn" data-mobile-tab="tracking" data-for-role="pasajero">
               <span id="mobile-tracking-dot" class="nav-badge-dot hidden"></span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <polygon points="3 11 22 2 13 21 11 13 3 11" />
               </svg>
               <span>En Curso</span>
             </button>
-            <button type="button" class="mobile-tab-btn" data-mobile-tab="motorista">
+            <button type="button" class="mobile-tab-btn hidden" data-mobile-tab="motorista" data-for-role="motorista">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <circle cx="5.5" cy="17.5" r="3.5" />
                 <circle cx="18.5" cy="17.5" r="3.5" />
                 <path d="M15 6h3l2 5h-5.5l-2.5 5H6" />
               </svg>
-              <span>Motorista</span>
+              <span>Radar Moto</span>
             </button>
             <button type="button" class="mobile-tab-btn" data-mobile-tab="actividad">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -590,43 +560,31 @@
     </div>
   </main>
 
-  <!-- MODAL DE LOGIN / CUENTA Y CONFIG GOOGLE MAPS -->
+  <!-- MODAL DE CUENTA ACTIVA Y CONFIGURACIÓN DE MAPAS -->
   <div id="modal-login" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-login-title">
     <div class="modal-card">
       <div class="modal-header">
         <div>
-          <h3 id="modal-login-title">Acceso TucanGo · Sesión &amp; Mapas</h3>
-          <p class="muted-sub">Ingresa como Estudiante o Motorista con 1 clic o por credencial</p>
+          <h3 id="modal-login-title">Cuenta Activa &amp; Mapas</h3>
+          <p class="muted-sub">Sesión aislada por rol con cookie segura HttpOnly</p>
         </div>
         <button type="button" class="btn-close" id="btn-cerrar-login" aria-label="Cerrar modal">&times;</button>
       </div>
 
-      <div class="modal-tabs modal-tabs-3">
-        <button type="button" class="modal-tab active" data-login-tab="rapido">Acceso Rápido</button>
-        <button type="button" class="modal-tab" data-login-tab="credenciales">Login Manual</button>
+      <div class="modal-tabs">
+        <button type="button" class="modal-tab active" data-login-tab="cuenta">Mi Sesión</button>
         <button type="button" class="modal-tab" data-login-tab="googlemaps">APIs Google Maps</button>
       </div>
 
       <div id="login-tab-rapido" class="form-stack">
-        <p class="muted-sub">Cuentas verificadas Uniamazonia listas para probar el flujo completo:</p>
-        <div class="quick-accounts-list" id="quick-accounts-list"></div>
-        <a href="/login" class="btn-secondary btn-full">Abrir TucanGo Portal (/login) &rarr;</a>
+        <div class="account-session-card">
+          <strong id="modal-account-name">Usuario TucanGo</strong>
+          <p class="muted-sub mono-text" id="modal-account-meta">ROL · DETALLE</p>
+        </div>
+        <button type="button" id="btn-modal-logout" class="btn-didi-cta">
+          Cerrar Sesión y Volver a /login
+        </button>
       </div>
-
-      <form id="form-login" class="form-stack hidden">
-        <div class="field-group">
-          <label for="login-rol">Perfil</label>
-          <select id="login-rol">
-            <option value="pasajero">Pasajero (Estudiante Uniamazonia)</option>
-            <option value="motorista">Motorista (Conductor + Moto SOAT)</option>
-          </select>
-        </div>
-        <div class="field-group">
-          <label for="login-identificador">Cédula, Código Estudiantil, Placa o Correo</label>
-          <input id="login-identificador" type="text" required placeholder="Ej. 1001 o c.rivera@uniamazonia.edu.co o GNX-45F" />
-        </div>
-        <button type="submit" class="btn-didi-cta">Iniciar Sesión en TucanGo</button>
-      </form>
 
       <div id="login-tab-googlemaps" class="form-stack hidden">
         <div class="gmaps-info-box">
@@ -783,6 +741,6 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-  <script src="app.js?v=2.3"></script>
+  <script src="app.js?v=2.5"></script>
 </body>
 </html>

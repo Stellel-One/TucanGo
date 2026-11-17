@@ -329,6 +329,60 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const afterLogoutMeRes = await fetch(`${baseUrl}/api/auth/me`);
       const afterLogoutMe = (await afterLogoutMeRes.json()) as { autenticado: boolean };
       assert.equal(afterLogoutMe.autenticado, false);
+
+      // Auth Gate: sin sesión, GET / y GET /app redirigen 302 -> /login
+      const anonRootRes = await fetch(`${baseUrl}/`, { redirect: "manual" });
+      assert.equal(anonRootRes.status, 302);
+      assert.equal(anonRootRes.headers.get("location"), "/login");
+
+      const anonAppRes = await fetch(`${baseUrl}/app`, { redirect: "manual" });
+      assert.equal(anonAppRes.status, 302);
+      assert.equal(anonAppRes.headers.get("location"), "/login");
+
+      // Con cookie Pasajero: GET / -> /app y GET /app -> 200 OK; RBAC bloquea aceptar viaje (403)
+      const authRootRes = await fetch(`${baseUrl}/`, {
+        headers: { Cookie: cookiePair },
+        redirect: "manual"
+      });
+      assert.equal(authRootRes.status, 302);
+      assert.equal(authRootRes.headers.get("location"), "/app");
+
+      const authAppRes = await fetch(`${baseUrl}/app`, {
+        headers: { Cookie: cookiePair },
+        redirect: "manual"
+      });
+      assert.equal(authAppRes.status, 200);
+      const appHtml = await authAppRes.text();
+      assert.match(appHtml, /role-locked-badge/);
+      assert.doesNotMatch(appHtml, /class="role-switcher"/);
+
+      const pasajeroAceptaRes = await fetch(`${baseUrl}/api/viajes/aceptar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: cookiePair },
+        body: JSON.stringify({ codigoViaje: "TUC-999", motoristaId: "2001" })
+      });
+      assert.equal(pasajeroAceptaRes.status, 403);
+
+      // Con cookie Motorista: RBAC bloquea solicitar viaje (403)
+      const motLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rol: "motorista", identificador: "2001" })
+      });
+      const motCookie = (motLoginRes.headers.get("set-cookie") || "").split(";")[0];
+      const motSolicitaRes = await fetch(`${baseUrl}/api/viajes/solicitar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
+        body: JSON.stringify({
+          estudianteId: "1001",
+          origen: "Campus Porvenir",
+          destino: "Sede Centro",
+          distanciaKm: 1.15,
+          tipoTarifa: "estudiantil",
+          metodoPago: "EFECTIVO"
+        })
+      });
+      assert.equal(motSolicitaRes.status, 403);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       repo.cerrar();

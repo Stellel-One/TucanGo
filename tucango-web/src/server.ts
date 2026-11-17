@@ -124,7 +124,12 @@ function sendJson(
   res.end(JSON.stringify(data));
 }
 
-function serveStatic(res: http.ServerResponse, filePath: string, contentType: string): void {
+function serveStatic(
+  res: http.ServerResponse,
+  filePath: string,
+  contentType: string,
+  cacheControl = "no-cache, must-revalidate"
+): void {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
@@ -133,10 +138,44 @@ function serveStatic(res: http.ServerResponse, filePath: string, contentType: st
     }
     res.writeHead(200, {
       "Content-Type": `${contentType}; charset=utf-8`,
-      "Cache-Control": "no-cache, must-revalidate"
+      "Cache-Control": cacheControl
     });
     res.end(content);
   });
+}
+
+function redirectTo(res: http.ServerResponse, location: string): void {
+  res.writeHead(302, {
+    Location: location,
+    "Cache-Control": "no-store"
+  });
+  res.end();
+}
+
+function obtenerSesionRequest(req: http.IncomingMessage, facade: TucanGoFacade) {
+  const cookies = parseCookies(req);
+  const parsed = verificarSesionCookie(cookies[SESSION_COOKIE_NAME] || "");
+  if (!parsed) return null;
+  try {
+    const usuario = facade.autenticarUsuario(parsed.identificacion, parsed.rol);
+    return { rol: usuario.rol, identificacion: usuario.identificacion, usuario };
+  } catch {
+    return null;
+  }
+}
+
+function exigirRolSiAutenticado(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  facade: TucanGoFacade,
+  rolRequerido: "pasajero" | "motorista"
+): { permitido: boolean; sesion: ReturnType<typeof obtenerSesionRequest> } {
+  const sesion = obtenerSesionRequest(req, facade);
+  if (sesion && sesion.rol !== rolRequerido) {
+    sendJson(res, 403, { error: `Operación restringida al rol ${rolRequerido}` });
+    return { permitido: false, sesion };
+  }
+  return { permitido: true, sesion };
 }
 
 function serializarSector(sector: SectorCampus) {
@@ -293,6 +332,23 @@ export function crearServidor(
     }
 
     try {
+      if (pathname === "/" || pathname === "/index.html") {
+        const sesion = obtenerSesionRequest(req, facade);
+        redirectTo(res, sesion ? "/app" : "/login");
+        return;
+      }
+
+      if (pathname === "/app" || pathname === "/app/") {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (!sesion) {
+          redirectTo(res, "/login");
+          return;
+        }
+        const appHtml = path.join(path.resolve(publicDir), "index.html");
+        serveStatic(res, appHtml, "text/html", "no-store, private");
+        return;
+      }
+
       if (pathname === "/api/salud" && req.method === "GET") {
         sendJson(res, 200, {
           ok: true,
@@ -393,18 +449,12 @@ export function crearServidor(
       }
 
       if (pathname === "/api/auth/me" && req.method === "GET") {
-        const cookies = parseCookies(req);
-        const parsed = verificarSesionCookie(cookies[SESSION_COOKIE_NAME] || "");
-        if (!parsed) {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (!sesion) {
           sendJson(res, 200, { autenticado: false, usuario: null });
           return;
         }
-        try {
-          const usuario = facade.autenticarUsuario(parsed.identificacion, parsed.rol);
-          sendJson(res, 200, { autenticado: true, usuario });
-        } catch {
-          sendJson(res, 200, { autenticado: false, usuario: null });
-        }
+        sendJson(res, 200, { autenticado: true, usuario: sesion.usuario });
         return;
       }
 
@@ -419,8 +469,11 @@ export function crearServidor(
       }
 
       if (pathname === "/api/motoristas/disponibilidad" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{ motoristaId: string; disponible: boolean }>(req);
-        const mot = facade.cambiarDisponibilidadMotorista(body.motoristaId, body.disponible);
+        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
+        const mot = facade.cambiarDisponibilidadMotorista(motoristaId, body.disponible);
         sendJson(res, 200, {
           identificacion: mot.identificacion,
           nombre: mot.nombre,
@@ -430,14 +483,17 @@ export function crearServidor(
       }
 
       if (pathname === "/api/motoristas/ubicacion" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{
           motoristaId: string;
           latitud: number;
           longitud: number;
           direccionGrados?: number;
         }>(req);
+        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
         const mot = facade.actualizarUbicacionMotorista(
-          body.motoristaId,
+          motoristaId,
           body.latitud,
           body.longitud,
           body.direccionGrados
@@ -493,6 +549,8 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/solicitar" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{
           estudianteId: string;
           origen: string;
@@ -502,8 +560,9 @@ export function crearServidor(
           metodoPago: string;
         }>(req);
 
+        const estudianteId = auth.sesion ? auth.sesion.identificacion : body.estudianteId;
         const viaje = facade.solicitarViaje(
-          body.estudianteId,
+          estudianteId,
           body.origen,
           body.destino,
           body.distanciaKm,
@@ -522,8 +581,11 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/aceptar" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{ codigoViaje: string; motoristaId: string }>(req);
-        const viaje = facade.aceptarViaje(body.codigoViaje, body.motoristaId);
+        const motoristaId = auth.sesion ? auth.sesion.identificacion : body.motoristaId;
+        const viaje = facade.aceptarViaje(body.codigoViaje, motoristaId);
         sendJson(res, 200, {
           mensaje: "Viaje aceptado por el motorista",
           codigo: viaje.codigoViaje,
@@ -550,6 +612,8 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/iniciar" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.iniciarViaje(body.codigoViaje);
         sendJson(res, 200, {
@@ -561,6 +625,8 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/finalizar" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.finalizarViaje(body.codigoViaje);
         sendJson(res, 200, {
@@ -573,6 +639,8 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/llegada-segura" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.marcarLlegadaSegura(body.codigoViaje);
         sendJson(res, 200, {
@@ -596,17 +664,20 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/calificar" && req.method === "POST") {
+        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
+        if (!auth.permitido) return;
         const body = await parseJsonBody<{
           codigoViaje: string;
           puntuacion: number;
           comentario: string;
           autorId: string;
         }>(req);
+        const autorId = auth.sesion ? auth.sesion.identificacion : body.autorId;
         const viaje = facade.calificarViaje(
           body.codigoViaje,
           body.puntuacion,
           body.comentario,
-          body.autorId
+          autorId
         );
         sendJson(res, 200, {
           mensaje: "Calificación registrada con éxito",
