@@ -245,11 +245,14 @@ export function crearServidor(
 
       if (pathname === "/api/mapa/config" && req.method === "GET") {
         const googleKey = process.env.GOOGLE_MAPS_API_KEY || null;
+        const cartoKey = process.env.CARTO_API_KEY || null;
+        const tileUrlDidi = cartoKey
+          ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`
+          : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
         sendJson(res, 200, {
-          proveedorActivo: googleKey ? "google_maps" : "carto_osrm",
+          proveedorActivo: googleKey ? "google_maps" : cartoKey ? "carto_osrm" : "osm_osrm",
           googleMapsApiKey: googleKey,
-          tileUrlDidi:
-            "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+          tileUrlDidi,
           osrmRouteUrl: "https://router.project-osrm.org/route/v1/driving",
           googleApisRequeridas: [
             "Maps JavaScript API",

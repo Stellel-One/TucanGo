@@ -16,7 +16,7 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css?v=2.1" />
+  <link rel="stylesheet" href="styles.css?v=2.2" />
 </head>
 <body>
   <header class="topbar">
@@ -203,38 +203,6 @@
             <span class="mono-text" id="map-coords-readout">Lat 1.6203 N · Lon -75.6042 W</span>
           </div>
         </div>
-
-        <!-- Barra de Telemetría Operativa -->
-        <section id="section-telemetria" class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
-          <article class="kpi-card">
-            <div class="kpi-head">
-              <span>TOTAL VIAJES</span>
-              <span class="kpi-tag">HISTÓRICO</span>
-            </div>
-            <div class="kpi-value mono-text" id="metric-total">0</div>
-          </article>
-          <article class="kpi-card">
-            <div class="kpi-head">
-              <span>FINALIZADOS</span>
-              <span class="kpi-tag kpi-green">COMPLETADOS</span>
-            </div>
-            <div class="kpi-value mono-text text-canopy" id="metric-finalizados">0</div>
-          </article>
-          <article class="kpi-card">
-            <div class="kpi-head">
-              <span>SOLICITADOS</span>
-              <span class="kpi-tag kpi-ochre">EN COLA</span>
-            </div>
-            <div class="kpi-value mono-text text-ochre" id="metric-solicitados">0</div>
-          </article>
-          <article class="kpi-card">
-            <div class="kpi-head">
-              <span>INGRESOS COP</span>
-              <span class="kpi-tag">RECAUDO</span>
-            </div>
-            <div class="kpi-value mono-text" id="metric-ingresos">$0</div>
-          </article>
-        </section>
       </section>
 
       <!-- COLUMNA DERECHA: BOTTOM SHEET / DOCK ESTILO DIDI -->
@@ -543,6 +511,37 @@
 
             <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD -->
             <section id="section-actividad" class="feed-section">
+              <div id="section-telemetria" class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
+                <article class="kpi-card">
+                  <div class="kpi-head">
+                    <span>TOTAL VIAJES</span>
+                    <span class="kpi-tag">HISTÓRICO</span>
+                  </div>
+                  <div class="kpi-value mono-text" id="metric-total">0</div>
+                </article>
+                <article class="kpi-card">
+                  <div class="kpi-head">
+                    <span>FINALIZADOS</span>
+                    <span class="kpi-tag kpi-green">COMPLETADOS</span>
+                  </div>
+                  <div class="kpi-value mono-text text-canopy" id="metric-finalizados">0</div>
+                </article>
+                <article class="kpi-card">
+                  <div class="kpi-head">
+                    <span>SOLICITADOS</span>
+                    <span class="kpi-tag kpi-ochre">EN COLA</span>
+                  </div>
+                  <div class="kpi-value mono-text text-ochre" id="metric-solicitados">0</div>
+                </article>
+                <article class="kpi-card">
+                  <div class="kpi-head">
+                    <span>INGRESOS COP</span>
+                    <span class="kpi-tag">RECAUDO</span>
+                  </div>
+                  <div class="kpi-value mono-text" id="metric-ingresos">$0</div>
+                </article>
+              </div>
+
               <div class="card-header-compact">
                 <div>
                   <h3>Viajes y Trazabilidad GPS</h3>
@@ -783,6 +782,6 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-  <script src="app.js?v=2.1"></script>
+  <script src="app.js?v=2.2"></script>
 </body>
 </html>

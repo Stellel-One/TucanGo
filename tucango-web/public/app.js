@@ -227,7 +227,7 @@ async function cargarConfigMapa() {
     if (!res.ok) return;
     state.mapConfig = await res.json();
     const esGoogle = state.mapConfig.proveedorActivo === "google_maps";
-    const texto = esGoogle ? "Google Maps API Activa" : "Carto Voyager + OSRM";
+    const texto = esGoogle ? "Google Maps API Activa" : "Mapa Vial · OSRM";
     if (els.mapEngineLabel) els.mapEngineLabel.textContent = texto;
     if (els.gmapsStatusBadge) els.gmapsStatusBadge.textContent = texto;
   } catch {
@@ -240,22 +240,21 @@ function initMap(sectores) {
 
   const map = window.L.map("campus-map", { zoomControl: true }).setView([1.617, -75.609], 14);
   const tileUrl =
-    state.mapConfig?.tileUrlDidi ||
-    "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+    state.mapConfig?.tileUrlDidi || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
   const baseLayer = window.L.tileLayer(tileUrl, {
     maxZoom: 19,
-    attribution: "&copy; OpenStreetMap &copy; CARTO"
+    attribution: "&copy; OpenStreetMap"
   }).addTo(map);
 
+  const fallbackOsm = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap"
+  });
   baseLayer.on("tileerror", () => {
     if (!map.hasLayer(fallbackOsm)) {
       fallbackOsm.addTo(map);
     }
-  });
-  const fallbackOsm = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: "&copy; OpenStreetMap"
   });
 
   for (const sec of sectores) {
