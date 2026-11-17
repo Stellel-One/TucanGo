@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TucanGo · Acceso Universitario Uniamazonia</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <title>TucanGo · Acceso Universitario · Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=2.7" />
+  <link rel="stylesheet" href="/login.css?v=2.8" />
 </head>
 <body>
+  <!-- F14: Banner de estado de conexión / API offline -->
+  <div id="network-offline-banner" class="network-offline-banner hidden" role="alert" aria-live="polite">
+    ⚠️ Sin conexión con el servidor TucanGo. Verifica tu conexión de red.
+  </div>
+
   <!-- Canvas invisible para preservar contrato de pruebas automatizadas -->
   <canvas id="flow-scroll-canvas" style="display:none;" aria-hidden="true"></canvas>
 
@@ -23,7 +29,7 @@
       <header class="ios-brand-header">
         <div class="brand-avatar-box">
           <img
-            src="/assets/portal/tucan-portal-badge.png?v=2.7"
+            src="/assets/portal/tucan-portal-badge.png?v=2.8"
             alt="Emblema TucanGo"
             width="44"
             height="52"
@@ -40,6 +46,9 @@
           <span class="brand-subtitle">Universidad de la Amazonia</span>
         </div>
       </header>
+
+      <!-- F3: Resumen accesible de errores inline -->
+      <div id="auth-alert-summary" class="auth-alert-summary hidden" role="alert" aria-live="assertive"></div>
 
       <!-- SESIÓN ACTIVA (SI YA TIENE COOKIE HTTPONLY) -->
       <section id="portal-active-session" class="session-active-card hidden" aria-label="Sesión activa">
@@ -63,7 +72,7 @@
       <!-- VISTAS PRINCIPALES DE AUTENTICACIÓN -->
       <section id="portal-auth-views" class="auth-content-box">
 
-        <!-- SELECTOR DE MODO (INICIAR SESIÓN / REGISTRARSE) -->
+        <!-- F10: SELECTOR DE MODO CON ARIA COMPLETO -->
         <nav class="ios-segmented-control" role="tablist" aria-label="Modo de autenticación">
           <button
             type="button"
@@ -72,6 +81,7 @@
             data-auth-mode="login"
             role="tab"
             aria-selected="true"
+            aria-controls="view-login"
           >
             Iniciar sesión
           </button>
@@ -82,16 +92,17 @@
             data-auth-mode="register"
             role="tab"
             aria-selected="false"
+            aria-controls="view-register"
           >
             Registrarse
           </button>
         </nav>
 
         <!-- ==================== VISTA 1: INICIAR SESIÓN GENERAL ==================== -->
-        <div id="view-login" class="auth-view-tab">
+        <div id="view-login" class="auth-view-tab" role="tabpanel" aria-labelledby="tab-btn-login">
           <h2 class="view-heading">Ingresa con tu cuenta</h2>
 
-          <form id="form-login-manual" class="ios-form">
+          <form id="form-login-manual" class="ios-form" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="input-login-id" class="ios-input-label">
@@ -102,8 +113,11 @@
                   type="text"
                   class="ios-input-field"
                   autocomplete="username"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  inputmode="text"
                   required
-                  placeholder="Ej. tucangoadmin, estudiante o motorista"
+                  placeholder="Ej. tucangoadmin, 1001 o GNX-45F"
                 />
               </div>
 
@@ -117,6 +131,8 @@
                     type="password"
                     class="ios-input-field"
                     autocomplete="current-password"
+                    autocapitalize="none"
+                    spellcheck="false"
                     required
                     placeholder="Ingresa tu contraseña"
                   />
@@ -135,65 +151,12 @@
               </div>
             </div>
 
+            <!-- F2: Botón con estado busy/spinner -->
             <button type="submit" id="btn-login-submit" class="btn-tactile btn-tactile-primary">
-              <span>Ingresar</span>
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+              <span class="btn-text">Ingresar</span>
             </button>
           </form>
-
-          <!-- CUENTAS POR DEFECTO (ADMIN / ESTUDIANTE / MOTORISTA) -->
-          <details class="default-accounts-details" id="default-accounts-details">
-            <summary class="default-accounts-summary">
-              <span>Cuentas por defecto</span>
-              <span class="summary-chevron" aria-hidden="true">&#9662;</span>
-            </summary>
-
-            <div class="account-cards-list" id="account-cards-list">
-              <button
-                type="button"
-                class="account-card"
-                data-default-user="tucangoadmin"
-                data-default-pass="TucanAdmin2026"
-                title="Cargar credenciales de Administrador"
-              >
-                <span class="account-avatar-circle avatar-forest">TA</span>
-                <span class="account-info">
-                  <span class="account-name">tucangoadmin</span>
-                  <span class="account-role-tag">Admin · Clave: <code>TucanAdmin2026</code></span>
-                </span>
-                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-              </button>
-
-              <button
-                type="button"
-                class="account-card"
-                data-default-user="estudiante"
-                data-default-pass="Estudiante2026"
-                title="Cargar credenciales de Estudiante"
-              >
-                <span class="account-avatar-circle avatar-forest-light">ES</span>
-                <span class="account-info">
-                  <span class="account-name">estudiante</span>
-                  <span class="account-role-tag">Pasajero · Clave: <code>Estudiante2026</code></span>
-                </span>
-                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-              </button>
-
-              <button
-                type="button"
-                class="account-card"
-                data-default-user="motorista"
-                data-default-pass="Motorista2026"
-                title="Cargar credenciales de Motorista"
-              >
-                <span class="account-avatar-circle avatar-tomato">MO</span>
-                <span class="account-info">
-                  <span class="account-name">motorista</span>
-                  <span class="account-role-tag">Motorista GNX-45F · Clave: <code>Motorista2026</code></span>
-                </span>
-                <span class="account-chevron" aria-hidden="true">&rsaquo;</span>
-              </button>
-            </div>
-          </details>
 
           <footer class="view-switch-footer">
             <button type="button" class="footer-link-btn" id="link-go-register">
@@ -203,43 +166,47 @@
         </div>
 
         <!-- ==================== VISTA 2: REGISTRO DE ROLES ==================== -->
-        <div id="view-register" class="auth-view-tab hidden">
+        <div id="view-register" class="auth-view-tab hidden" role="tabpanel" aria-labelledby="tab-btn-register">
           <h2 class="view-heading">Crear cuenta</h2>
 
           <!-- SELECTOR DE ROL PARA REGISTRO -->
           <div class="role-segmented-pills" role="radiogroup" aria-label="Rol a registrar">
-            <button type="button" class="role-pill-btn active" data-reg-role="estudiante">
+            <button type="button" class="role-pill-btn active" data-reg-role="estudiante" role="radio" aria-checked="true">
               Estudiante
             </button>
-            <button type="button" class="role-pill-btn" data-reg-role="motorista">
+            <button type="button" class="role-pill-btn" data-reg-role="motorista" role="radio" aria-checked="false">
               Motorista + Moto
             </button>
           </div>
 
           <!-- FLUJO 1: REGISTRO DE ESTUDIANTE -->
-          <form id="form-reg-estudiante" class="ios-form">
+          <form id="form-reg-estudiante" class="ios-form" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="reg-est-id" class="ios-input-label">Cédula de ciudadanía</label>
-                <input id="reg-est-id" type="text" class="ios-input-field" required placeholder="Ej. 1006888999" />
+                <input id="reg-est-id" type="text" inputmode="numeric" pattern="[0-9]*" class="ios-input-field" required placeholder="Ej. 1006888999" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-cod" class="ios-input-label">Código estudiantil</label>
-                <input id="reg-est-cod" type="text" class="ios-input-field" required placeholder="Ej. 202610045" />
+                <input id="reg-est-cod" type="text" inputmode="numeric" class="ios-input-field" required placeholder="Ej. 202610045" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-nombre" class="ios-input-label">Nombre completo</label>
-                <input id="reg-est-nombre" type="text" class="ios-input-field" required placeholder="Ej. Sofía Muñoz" />
+                <input id="reg-est-nombre" type="text" autocapitalize="words" autocomplete="name" class="ios-input-field" required placeholder="Ej. Sofía Muñoz" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-tel" class="ios-input-label">Teléfono celular</label>
-                <input id="reg-est-tel" type="tel" class="ios-input-field" required placeholder="Ej. 3110000000" />
+                <input id="reg-est-tel" type="tel" inputmode="tel" autocomplete="tel" class="ios-input-field" required placeholder="Ej. 3110000000" />
               </div>
               <div class="ios-input-row">
-                <label for="reg-est-correo" class="ios-input-label">Correo institucional</label>
+                <label for="reg-est-correo" class="ios-input-label">Correo institucional (@uniamazonia.edu.co)</label>
                 <input
                   id="reg-est-correo"
                   type="email"
+                  inputmode="email"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  autocomplete="email"
                   class="ios-input-field"
                   required
                   placeholder="Ej. s.munoz@uniamazonia.edu.co"
@@ -250,66 +217,98 @@
                 <input
                   id="reg-est-carrera"
                   type="text"
+                  autocapitalize="words"
                   class="ios-input-field"
                   required
                   placeholder="Ej. Ingeniería de Sistemas"
                 />
               </div>
               <div class="ios-input-row">
-                <label for="reg-est-password" class="ios-input-label">Contraseña</label>
+                <label for="reg-est-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
                 <input
                   id="reg-est-password"
                   type="password"
-                  minlength="4"
+                  minlength="10"
                   class="ios-input-field"
                   autocomplete="new-password"
                   required
-                  placeholder="Mínimo 4 caracteres"
+                  placeholder="Mínimo 10 caracteres"
+                />
+              </div>
+              <!-- F11: Confirmación de contraseña -->
+              <div class="ios-input-row">
+                <label for="reg-est-password-confirm" class="ios-input-label">Confirmar contraseña</label>
+                <input
+                  id="reg-est-password-confirm"
+                  type="password"
+                  minlength="10"
+                  class="ios-input-field"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Repite tu contraseña"
                 />
               </div>
             </div>
 
-            <button type="submit" class="btn-tactile btn-tactile-forest">
-              <span>Crear cuenta de estudiante</span>
+            <button type="submit" id="btn-reg-est-submit" class="btn-tactile btn-tactile-forest">
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+              <span class="btn-text">Crear cuenta de estudiante</span>
             </button>
           </form>
 
           <!-- FLUJO 2: REGISTRO DE MOTORISTA + MOTOCICLETA -->
-          <form id="form-reg-motorista" class="ios-form hidden">
+          <form id="form-reg-motorista" class="ios-form hidden" novalidate>
             <span class="form-group-title">Datos personales</span>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="reg-mot-id" class="ios-input-label">Cédula de ciudadanía</label>
-                <input id="reg-mot-id" type="text" class="ios-input-field" required placeholder="Ej. 1117555444" />
+                <input id="reg-mot-id" type="text" inputmode="numeric" pattern="[0-9]*" class="ios-input-field" required placeholder="Ej. 1117555444" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-mot-nombre" class="ios-input-label">Nombre completo</label>
-                <input id="reg-mot-nombre" type="text" class="ios-input-field" required placeholder="Ej. Andrés Rojas" />
+                <input id="reg-mot-nombre" type="text" autocapitalize="words" autocomplete="name" class="ios-input-field" required placeholder="Ej. Andrés Rojas" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-mot-tel" class="ios-input-label">Teléfono celular</label>
-                <input id="reg-mot-tel" type="tel" class="ios-input-field" required placeholder="Ej. 3200000000" />
+                <input id="reg-mot-tel" type="tel" inputmode="tel" autocomplete="tel" class="ios-input-field" required placeholder="Ej. 3200000000" />
               </div>
               <div class="ios-input-row">
-                <label for="reg-mot-correo" class="ios-input-label">Correo electrónico</label>
+                <label for="reg-mot-correo" class="ios-input-label">Correo institucional (@uniamazonia.edu.co)</label>
                 <input
                   id="reg-mot-correo"
                   type="email"
+                  inputmode="email"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  autocomplete="email"
                   class="ios-input-field"
                   required
-                  placeholder="Ej. a.rojas@udla.edu.co"
+                  placeholder="Ej. a.rojas@uniamazonia.edu.co"
                 />
               </div>
               <div class="ios-input-row">
-                <label for="reg-mot-password" class="ios-input-label">Contraseña</label>
+                <label for="reg-mot-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
                 <input
                   id="reg-mot-password"
                   type="password"
-                  minlength="4"
+                  minlength="10"
                   class="ios-input-field"
                   autocomplete="new-password"
                   required
-                  placeholder="Mínimo 4 caracteres"
+                  placeholder="Mínimo 10 caracteres"
+                />
+              </div>
+              <!-- F11: Confirmación de contraseña -->
+              <div class="ios-input-row">
+                <label for="reg-mot-password-confirm" class="ios-input-label">Confirmar contraseña</label>
+                <input
+                  id="reg-mot-password-confirm"
+                  type="password"
+                  minlength="10"
+                  class="ios-input-field"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Repite tu contraseña"
                 />
               </div>
             </div>
@@ -318,36 +317,39 @@
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="reg-mot-placa" class="ios-input-label">Placa de la moto</label>
-                <input id="reg-mot-placa" type="text" class="ios-input-field" required placeholder="Ej. AMZ-77G" />
+                <input id="reg-mot-placa" type="text" autocapitalize="characters" class="ios-input-field" required placeholder="Ej. AMZ-77G" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-mot-marca" class="ios-input-label">Marca</label>
-                <input id="reg-mot-marca" type="text" class="ios-input-field" required placeholder="Ej. Suzuki" />
+                <input id="reg-mot-marca" type="text" autocapitalize="words" class="ios-input-field" required placeholder="Ej. Suzuki" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-mot-modelo" class="ios-input-label">Modelo / Año</label>
                 <input id="reg-mot-modelo" type="text" class="ios-input-field" required placeholder="Ej. Gixxer 150 (2024)" />
               </div>
+              <!-- F13: Campos SOAT limpios sin precarga -->
               <div class="ios-input-row">
                 <label for="reg-mot-cc" class="ios-input-label">Cilindraje (CC)</label>
-                <input id="reg-mot-cc" type="number" min="50" class="ios-input-field" required value="150" />
+                <input id="reg-mot-cc" type="number" min="50" class="ios-input-field" required placeholder="Ej. 150" />
               </div>
               <div class="ios-input-row">
                 <label for="reg-mot-soat" class="ios-input-label">Número de póliza SOAT</label>
-                <input id="reg-mot-soat" type="text" class="ios-input-field" required value="SOAT-2026-FLR" />
+                <input id="reg-mot-soat" type="text" class="ios-input-field" required placeholder="Ej. SOAT-2026-FLR" />
               </div>
             </div>
 
+            <!-- F13: Checkbox desmarcado por defecto -->
             <label class="ios-checkbox-card">
-              <input id="reg-mot-soat-ok" type="checkbox" checked required />
+              <input id="reg-mot-soat-ok" type="checkbox" required />
               <span class="checkbox-caption">
                 <strong>Certifico SOAT vigente y activo</strong>
                 <small>Requisito institucional obligatorio para operar en campus</small>
               </span>
             </label>
 
-            <button type="submit" class="btn-tactile btn-tactile-forest">
-              <span>Registrar motorista y motocicleta</span>
+            <button type="submit" id="btn-reg-mot-submit" class="btn-tactile btn-tactile-forest">
+              <span class="btn-spinner hidden" aria-hidden="true"></span>
+              <span class="btn-text">Registrar motorista y motocicleta</span>
             </button>
           </form>
 
@@ -362,7 +364,7 @@
 
       <!-- PIE DE PÁGINA LIMPIO -->
       <footer class="ios-app-footer">
-        <span>TucanGo v2.7 · Florencia, Caquetá</span>
+        <span>TucanGo v2.8 · Florencia, Caquetá</span>
       </footer>
 
     </div>
@@ -370,6 +372,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=2.7"></script>
+  <script src="/login.js?v=2.8"></script>
 </body>
 </html>

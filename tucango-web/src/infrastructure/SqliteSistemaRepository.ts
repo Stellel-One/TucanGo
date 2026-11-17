@@ -27,6 +27,11 @@ export class SqliteSistemaRepository implements SistemaRepository {
         payload_json TEXT NOT NULL,
         actualizado_en TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS sesiones_revocadas (
+        jti TEXT PRIMARY KEY,
+        expira_en INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_sesiones_revocadas_exp ON sesiones_revocadas(expira_en);
     `);
   }
 
@@ -67,6 +72,40 @@ export class SqliteSistemaRepository implements SistemaRepository {
     } catch (error) {
       this._db.exec("ROLLBACK");
       throw error;
+    }
+  }
+
+  public revocarSesion(jti: string, expiraEnMs: number): void {
+    if (!jti) return;
+    try {
+      const stmt = this._db.prepare(`
+        INSERT OR REPLACE INTO sesiones_revocadas (jti, expira_en)
+        VALUES (?, ?)
+      `);
+      stmt.run(jti, expiraEnMs);
+    } catch (err) {
+      // Registrar sin detener flujo
+    }
+  }
+
+  public estaSesionRevocada(jti: string): boolean {
+    if (!jti) return true;
+    try {
+      const stmt = this._db.prepare("SELECT 1 FROM sesiones_revocadas WHERE jti = ?");
+      const row = stmt.get(jti);
+      return Boolean(row);
+    } catch {
+      return false;
+    }
+  }
+
+  public limpiarSesionesExpiradas(): void {
+    try {
+      const ahora = Date.now();
+      const stmt = this._db.prepare("DELETE FROM sesiones_revocadas WHERE expira_en < ?");
+      stmt.run(ahora);
+    } catch {
+      // Ignorar fallos de limpieza periódica
     }
   }
 

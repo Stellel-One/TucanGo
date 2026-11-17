@@ -7,16 +7,42 @@ import { TucanGoFacade } from "./application/TucanGoFacade.ts";
 import { SqliteSistemaRepository } from "./infrastructure/SqliteSistemaRepository.ts";
 import type { SectorCampus } from "./domain/model/SectorCampus.ts";
 import type { EventoDominio } from "./domain/patterns/EventBus.ts";
+import {
+  AuthError,
+  CredencialesInvalidasError,
+  NoAutenticadoError,
+  AccesoDenegadoError,
+  ValidacionError,
+  DemasiadasPeticionesError,
+  CuerpoExcesivoError
+} from "./domain/security/ErroresAuth.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_PUBLIC_DIR = path.join(__dirname, "..", "public");
 
+const IS_PROD = process.env.NODE_ENV === "production";
+const RAW_SESSION_SECRET = process.env.SESSION_SECRET;
+
+// B1: Exigir SESSION_SECRET en producción con fallo al arranque si falta o es débil
+if (IS_PROD && (!RAW_SESSION_SECRET || RAW_SESSION_SECRET.length < 32)) {
+  console.error(
+    "FATAL: SESSION_SECRET es obligatoria en producción y debe tener al menos 32 caracteres."
+  );
+  process.exit(1);
+}
+
+// B1: Keyring con soporte de rotación mediante 'kid' en el token
+const ACTIVE_KID = "k1";
+const KEY_RING: Record<string, Buffer> = {
+  k1: RAW_SESSION_SECRET
+    ? Buffer.from(RAW_SESSION_SECRET, "utf8")
+    : crypto.randomBytes(32)
+};
+
 const SESSION_COOKIE_NAME = "tucango_sid";
-const SESSION_SECRET = crypto
-  .createHash("sha256")
-  .update(process.env.SESSION_SECRET || `${process.env.DATA_DIR || "tucango"}:portal-auth-v2`)
-  .digest();
+const HOST_SESSION_COOKIE_NAME = "__Host-tucango_sid";
+const MAX_BODY_BYTES = 64 * 1024; // 64 KB (B14)
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html",
@@ -30,6 +56,75 @@ const MIME_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml"
 };
 
+// B16: Cabeceras de seguridad universales
+const SECURITY_HEADERS: Record<string, string> = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "geolocation=(self), camera=(), microphone=()",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self';"
+};
+
+// B6: Rate Limiting en memoria con backoff exponencial
+interface RateLimitEntry {
+  intentos: number;
+  bloqueadoHasta: number;
+  ultimoIntento: number;
+}
+const rateLimitMap = new Map<string, RateLimitEntry>();
+
+function obtenerClienteIp(req: http.IncomingMessage): string {
+  const xForwardedFor = req.headers["x-forwarded-for"];
+  if (typeof xForwardedFor === "string") {
+    return xForwardedFor.split(",")[0].trim();
+  }
+  return req.socket.remoteAddress || "127.0.0.1";
+}
+
+function verificarRateLimit(
+  clave: string,
+  maxIntentos = 5,
+  ventanaMs = 60000
+): { permitido: boolean; retryAfterSegundos: number } {
+  const ahora = Date.now();
+  const entry = rateLimitMap.get(clave);
+  if (!entry) {
+    return { permitido: true, retryAfterSegundos: 0 };
+  }
+
+  if (entry.bloqueadoHasta > ahora) {
+    const retryAfterSegundos = Math.ceil((entry.bloqueadoHasta - ahora) / 1000);
+    return { permitido: false, retryAfterSegundos };
+  }
+
+  if (ahora - entry.ultimoIntento > ventanaMs) {
+    rateLimitMap.delete(clave);
+    return { permitido: true, retryAfterSegundos: 0 };
+  }
+
+  return { permitido: true, retryAfterSegundos: 0 };
+}
+
+function registrarFalloRateLimit(clave: string, maxIntentos = 5, backoffBaseMs = 15000): void {
+  const ahora = Date.now();
+  const entry = rateLimitMap.get(clave) || { intentos: 0, bloqueadoHasta: 0, ultimoIntento: ahora };
+  entry.intentos += 1;
+  entry.ultimoIntento = ahora;
+
+  if (entry.intentos >= maxIntentos) {
+    const exponente = Math.min(entry.intentos - maxIntentos, 5);
+    const bloqueoMs = backoffBaseMs * Math.pow(2, exponente);
+    entry.bloqueadoHasta = ahora + bloqueoMs;
+  }
+  rateLimitMap.set(clave, entry);
+}
+
+function resetearRateLimit(clave: string): void {
+  rateLimitMap.delete(clave);
+}
+
+// B15: Parseo y construcción de Cookies seguras
 function parseCookies(req: http.IncomingMessage): Record<string, string> {
   const header = req.headers.cookie || "";
   const out: Record<string, string> = {};
@@ -43,67 +138,134 @@ function parseCookies(req: http.IncomingMessage): Record<string, string> {
   return out;
 }
 
+function obtenerCookieSesion(req: http.IncomingMessage): string {
+  const cookies = parseCookies(req);
+  return cookies[HOST_SESSION_COOKIE_NAME] || cookies[SESSION_COOKIE_NAME] || "";
+}
+
+function construirSetCookie(
+  req: http.IncomingMessage,
+  valor: string,
+  maxAgeSeconds: number
+): string {
+  const esHttps =
+    req.headers["x-forwarded-proto"] === "https" ||
+    Boolean((req.socket as { encrypted?: boolean }).encrypted);
+
+  const cookieName = esHttps ? HOST_SESSION_COOKIE_NAME : SESSION_COOKIE_NAME;
+  const expires = new Date(Date.now() + maxAgeSeconds * 1000).toUTCString();
+
+  const parts = [
+    `${cookieName}=${encodeURIComponent(valor)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Strict",
+    `Max-Age=${maxAgeSeconds}`,
+    `Expires=${expires}`
+  ];
+
+  if (esHttps) {
+    parts.push("Secure");
+  }
+
+  return parts.join("; ");
+}
+
+// B1 & B4: Firma y verificación de tokens con rotación kid y revocación jti
+interface SessionTokenPayload {
+  kid: string;
+  jti: string;
+  rol: "pasajero" | "motorista" | "admin";
+  identificacion: string;
+  exp: number;
+}
+
 function firmarSesionCookie(payload: {
   rol: "pasajero" | "motorista" | "admin";
   identificacion: string;
   exp: number;
+  jti?: string;
+  kid?: string;
 }): string {
-  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
+  const kid = payload.kid || ACTIVE_KID;
+  const key = KEY_RING[kid] || KEY_RING[ACTIVE_KID];
+  const fullPayload: SessionTokenPayload = {
+    kid,
+    jti: payload.jti || crypto.randomUUID(),
+    rol: payload.rol,
+    identificacion: payload.identificacion,
+    exp: payload.exp
+  };
+  const encoded = Buffer.from(JSON.stringify(fullPayload), "utf8").toString("base64url");
+  const sig = crypto.createHmac("sha256", key).update(encoded).digest("base64url");
   return `${encoded}.${sig}`;
 }
 
 function verificarSesionCookie(
-  token: string
-): { rol: "pasajero" | "motorista" | "admin"; identificacion: string; exp: number } | null {
+  token: string,
+  facade: TucanGoFacade
+): SessionTokenPayload | null {
   if (!token || !token.includes(".")) return null;
   const [encoded, sig] = token.split(".", 2);
   if (!encoded || !sig) return null;
-  const expected = crypto.createHmac("sha256", SESSION_SECRET).update(encoded).digest("base64url");
-  const bufSig = Buffer.from(sig);
-  const bufExp = Buffer.from(expected);
-  if (bufSig.length !== bufExp.length || !crypto.timingSafeEqual(bufSig, bufExp)) {
-    return null;
-  }
+
   try {
-    const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as SessionTokenPayload;
     if (!parsed || typeof parsed.exp !== "number" || parsed.exp <= Date.now()) {
       return null;
     }
+    const kid = parsed.kid || "k1";
+    const key = KEY_RING[kid];
+    if (!key) return null;
+
+    const expected = crypto.createHmac("sha256", key).update(encoded).digest("base64url");
+    const bufSig = Buffer.from(sig);
+    const bufExp = Buffer.from(expected);
+    if (bufSig.length !== bufExp.length || !crypto.timingSafeEqual(bufSig, bufExp)) {
+      return null;
+    }
+
+    // B4: Revocación por jti
+    if (parsed.jti && facade.repository?.estaSesionRevocada(parsed.jti)) {
+      return null;
+    }
+
     return parsed;
   } catch {
     return null;
   }
 }
 
-function construirSetCookie(req: http.IncomingMessage, valor: string, maxAgeSeconds: number): string {
-  const esHttps =
-    req.headers["x-forwarded-proto"] === "https" ||
-    Boolean((req.socket as { encrypted?: boolean }).encrypted);
-  const parts = [
-    `${SESSION_COOKIE_NAME}=${encodeURIComponent(valor)}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${maxAgeSeconds}`
-  ];
-  if (esHttps) parts.push("Secure");
-  return parts.join("; ");
-}
-
+// B14: Validación de tamaño (64 KB) y Content-Type
 function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
+    const contentType = req.headers["content-type"] || "";
+    if (req.method !== "GET" && req.method !== "HEAD" && req.headers["content-length"] !== "0") {
+      if (contentType && !contentType.toLowerCase().includes("application/json")) {
+        return reject(new ValidacionError("Content-Type debe ser application/json."));
+      }
+    }
+
     let body = "";
+    let byteCount = 0;
+
     req.on("data", (chunk) => {
+      byteCount += chunk.length;
+      if (byteCount > MAX_BODY_BYTES) {
+        req.destroy();
+        return reject(new CuerpoExcesivoError("El cuerpo de la solicitud excede el límite de 64 KB."));
+      }
       body += chunk;
     });
+
     req.on("end", () => {
       try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(err);
+        resolve(body.trim() ? JSON.parse(body) : ({} as T));
+      } catch {
+        reject(new ValidacionError("JSON malformado en el cuerpo de la solicitud."));
       }
     });
+
     req.on("error", reject);
   });
 }
@@ -116,29 +278,38 @@ function sendJson(
 ): void {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    ...SECURITY_HEADERS,
     ...extraHeaders
   });
   res.end(JSON.stringify(data));
 }
 
+// F7: Cache Control estricto
 function serveStatic(
   res: http.ServerResponse,
   filePath: string,
   contentType: string,
-  cacheControl = "no-cache, must-revalidate"
+  cacheControl?: string
 ): void {
   fs.readFile(filePath, (err, content) => {
     if (err) {
-      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+      res.writeHead(404, {
+        "Content-Type": "text/plain; charset=utf-8",
+        ...SECURITY_HEADERS
+      });
       res.end("404 Not Found");
       return;
     }
+
+    const defaultCache =
+      contentType === "text/html"
+        ? "no-cache, must-revalidate"
+        : "public, max-age=3600";
+
     res.writeHead(200, {
       "Content-Type": `${contentType}; charset=utf-8`,
-      "Cache-Control": cacheControl
+      "Cache-Control": cacheControl || defaultCache,
+      ...SECURITY_HEADERS
     });
     res.end(content);
   });
@@ -147,35 +318,58 @@ function serveStatic(
 function redirectTo(res: http.ServerResponse, location: string): void {
   res.writeHead(302, {
     Location: location,
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    ...SECURITY_HEADERS
   });
   res.end();
 }
 
+// B3 & B8: Autenticación e Hidratación de Sesión separadas
 function obtenerSesionRequest(req: http.IncomingMessage, facade: TucanGoFacade) {
-  const cookies = parseCookies(req);
-  const parsed = verificarSesionCookie(cookies[SESSION_COOKIE_NAME] || "");
+  const token = obtenerCookieSesion(req);
+  const parsed = verificarSesionCookie(token, facade);
   if (!parsed) return null;
   try {
-    const usuario = facade.autenticarUsuario(parsed.identificacion, parsed.rol);
-    return { rol: usuario.rol, identificacion: usuario.identificacion, usuario };
+    const usuario = facade.resolverSesion(parsed.identificacion, parsed.rol);
+    return {
+      rol: usuario.rol,
+      identificacion: usuario.identificacion,
+      usuario,
+      token,
+      payload: parsed
+    };
   } catch {
     return null;
   }
 }
 
-function exigirRolSiAutenticado(
+function requerirSesion(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  facade: TucanGoFacade
+): NonNullable<ReturnType<typeof obtenerSesionRequest>> | null {
+  const sesion = obtenerSesionRequest(req, facade);
+  if (!sesion) {
+    sendJson(res, 401, { error: "Autenticación requerida. Inicia sesión para continuar." });
+    return null;
+  }
+  return sesion;
+}
+
+function requerirRol(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   facade: TucanGoFacade,
   rolRequerido: "pasajero" | "motorista"
-): { permitido: boolean; sesion: ReturnType<typeof obtenerSesionRequest> } {
-  const sesion = obtenerSesionRequest(req, facade);
-  if (sesion && sesion.rol !== "admin" && sesion.rol !== rolRequerido) {
-    sendJson(res, 403, { error: `Operación restringida al rol ${rolRequerido}` });
-    return { permitido: false, sesion };
+): NonNullable<ReturnType<typeof obtenerSesionRequest>> | null {
+  const sesion = requerirSesion(req, res, facade);
+  if (!sesion) return null;
+
+  if (sesion.rol !== "admin" && sesion.rol !== rolRequerido) {
+    sendJson(res, 403, { error: `Operación restringida al rol ${rolRequerido}.` });
+    return null;
   }
-  return { permitido: true, sesion };
+  return sesion;
 }
 
 function serializarSector(sector: SectorCampus) {
@@ -283,7 +477,12 @@ function construirEstadoDTO(facade: TucanGoFacade) {
 
 function resolverArchivoPublico(publicDir: string, pathname: string): string | null {
   const baseResuelta = path.resolve(publicDir);
-  const limpio = pathname === "/" ? "index.html" : pathname === "/login" || pathname === "/login/" ? "login.html" : pathname.replace(/^\/+/, "");
+  const limpio =
+    pathname === "/"
+      ? "index.html"
+      : pathname === "/login" || pathname === "/login/"
+        ? "login.html"
+        : pathname.replace(/^\/+/, "");
   const candidato = path.resolve(baseResuelta, limpio);
   if (candidato !== baseResuelta && !candidato.startsWith(baseResuelta + path.sep)) {
     return null;
@@ -323,9 +522,9 @@ export function crearServidor(
 
     if (req.method === "OPTIONS") {
       res.writeHead(204, {
-        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
+        "Access-Control-Allow-Headers": "Content-Type",
+        ...SECURITY_HEADERS
       });
       res.end();
       return;
@@ -364,8 +563,8 @@ export function crearServidor(
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
           Connection: "keep-alive",
-          "Access-Control-Allow-Origin": "*",
-          "X-Accel-Buffering": "no"
+          "X-Accel-Buffering": "no",
+          ...SECURITY_HEADERS
         });
         res.write(`event: conectado\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
         clientesSse.add(res);
@@ -431,30 +630,70 @@ export function crearServidor(
         return;
       }
 
+      // B6, B8, B9, B10, B11: Endpoint Login endurecido
       if (pathname === "/api/auth/login" && req.method === "POST") {
-        const body = await parseJsonBody<{
-          identificador: string;
-          password?: string;
-          rol?: "pasajero" | "motorista" | "admin";
-        }>(req);
-        if (!body.password || body.password.trim().length === 0) {
-          sendJson(res, 401, { error: "Ingresa tu contraseña." });
+        const ip = obtenerClienteIp(req);
+        const rateCheckIp = verificarRateLimit(`ip:${ip}`, 10, 60000);
+        if (!rateCheckIp.permitido) {
+          sendJson(
+            res,
+            429,
+            { error: `Demasiados intentos fallidos. Intenta nuevamente en ${rateCheckIp.retryAfterSegundos} segundos.` },
+            { "Retry-After": String(rateCheckIp.retryAfterSegundos) }
+          );
           return;
         }
+
+        const body = await parseJsonBody<{
+          identificador?: string;
+          password?: string;
+        }>(req);
+
+        const identificador = (body.identificador || "").trim();
+        if (!identificador || !body.password || body.password.trim().length === 0) {
+          sendJson(res, 401, { error: "Credenciales inválidas." });
+          return;
+        }
+
+        const rateCheckUser = verificarRateLimit(`user:${identificador.toLowerCase()}`, 5, 60000);
+        if (!rateCheckUser.permitido) {
+          sendJson(
+            res,
+            429,
+            { error: `Demasiados intentos para esta cuenta. Intenta nuevamente en ${rateCheckUser.retryAfterSegundos} segundos.` },
+            { "Retry-After": String(rateCheckUser.retryAfterSegundos) }
+          );
+          return;
+        }
+
         try {
-          const sesion = facade.autenticarUsuario(body.identificador, body.rol, body.password);
+          // B8: Iniciar sesión valida credenciales de forma asíncrona; el rol se deriva de la cuenta (B9)
+          const sesion = await facade.iniciarSesion(identificador, body.password);
+          resetearRateLimit(`ip:${ip}`);
+          resetearRateLimit(`user:${identificador.toLowerCase()}`);
+
+          // B4: Asignar jti único para revocabilidad en logout
+          const jti = crypto.randomUUID();
           const token = firmarSesionCookie({
             rol: sesion.rol,
             identificacion: sesion.identificacion,
-            exp: Date.now() + 86400 * 1000
+            exp: Date.now() + 8 * 3600 * 1000, // 8h TTL
+            jti,
+            kid: ACTIVE_KID
           });
+
           sendJson(res, 200, sesion, {
-            "Set-Cookie": construirSetCookie(req, token, 86400)
+            "Set-Cookie": construirSetCookie(req, token, 8 * 3600)
           });
         } catch (authErr) {
-          const msg = authErr instanceof Error ? authErr.message : "Credenciales inválidas.";
-          const status = msg.includes("Contraseña") ? 401 : 400;
-          sendJson(res, status, { error: msg });
+          registrarFalloRateLimit(`ip:${ip}`);
+          registrarFalloRateLimit(`user:${identificador.toLowerCase()}`);
+
+          if (authErr instanceof AuthError) {
+            sendJson(res, authErr.statusHttp, { error: authErr.message });
+          } else {
+            sendJson(res, 401, { error: "Credenciales inválidas." });
+          }
         }
         return;
       }
@@ -469,7 +708,12 @@ export function crearServidor(
         return;
       }
 
+      // B4: Revocar jti en logout
       if (pathname === "/api/auth/logout" && req.method === "POST") {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (sesion && sesion.payload && sesion.payload.jti && facade.repository) {
+          facade.repository.revocarSesion(sesion.payload.jti, sesion.payload.exp);
+        }
         sendJson(
           res,
           200,
@@ -479,12 +723,13 @@ export function crearServidor(
         return;
       }
 
+      // B3: Motoristas disponibilidad
       if (pathname === "/api/motoristas/disponibilidad" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
-        if (!auth.permitido) return;
-        const body = await parseJsonBody<{ motoristaId: string; disponible: boolean }>(req);
+        const auth = requerirRol(req, res, facade, "motorista");
+        if (!auth) return;
+        const body = await parseJsonBody<{ motoristaId?: string; disponible: boolean }>(req);
         const motoristaId =
-          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
+          auth.rol === "admin" && body.motoristaId ? body.motoristaId : auth.identificacion;
         const mot = facade.cambiarDisponibilidadMotorista(motoristaId, body.disponible);
         sendJson(res, 200, {
           identificacion: mot.identificacion,
@@ -494,17 +739,18 @@ export function crearServidor(
         return;
       }
 
+      // B3: Motoristas ubicación
       if (pathname === "/api/motoristas/ubicacion" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "motorista");
+        if (!auth) return;
         const body = await parseJsonBody<{
-          motoristaId: string;
+          motoristaId?: string;
           latitud: number;
           longitud: number;
           direccionGrados?: number;
         }>(req);
         const motoristaId =
-          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
+          auth.rol === "admin" && body.motoristaId ? body.motoristaId : auth.identificacion;
         const mot = facade.actualizarUbicacionMotorista(
           motoristaId,
           body.latitud,
@@ -520,7 +766,20 @@ export function crearServidor(
         return;
       }
 
+      // B13: Registro público de estudiante con rate limiting y password obligatoria
       if (pathname === "/api/estudiantes" && req.method === "POST") {
+        const ip = obtenerClienteIp(req);
+        const rateCheck = verificarRateLimit(`reg:${ip}`, 10, 600000);
+        if (!rateCheck.permitido) {
+          sendJson(
+            res,
+            429,
+            { error: `Demasiados registros desde esta IP. Espera ${rateCheck.retryAfterSegundos} segundos.` },
+            { "Retry-After": String(rateCheck.retryAfterSegundos) }
+          );
+          return;
+        }
+
         const body = await parseJsonBody<{
           identificacion: string;
           nombre: string;
@@ -530,6 +789,12 @@ export function crearServidor(
           carrera: string;
           password?: string;
         }>(req);
+
+        if (!body.password || body.password.trim().length === 0) {
+          sendJson(res, 422, { error: "La contraseña es obligatoria (mínimo 10 caracteres)." });
+          return;
+        }
+
         const est = facade.registrarEstudiante(body);
         sendJson(res, 201, {
           mensaje: "Estudiante registrado en la comunidad TucanGo",
@@ -539,7 +804,20 @@ export function crearServidor(
         return;
       }
 
+      // B13: Registro público de motorista con SOAT y password obligatoria
       if (pathname === "/api/motoristas" && req.method === "POST") {
+        const ip = obtenerClienteIp(req);
+        const rateCheck = verificarRateLimit(`reg:${ip}`, 10, 600000);
+        if (!rateCheck.permitido) {
+          sendJson(
+            res,
+            429,
+            { error: `Demasiados registros desde esta IP. Espera ${rateCheck.retryAfterSegundos} segundos.` },
+            { "Retry-After": String(rateCheck.retryAfterSegundos) }
+          );
+          return;
+        }
+
         const body = await parseJsonBody<{
           identificacion: string;
           nombre: string;
@@ -553,6 +831,12 @@ export function crearServidor(
           numeroSoat?: string;
           password?: string;
         }>(req);
+
+        if (!body.password || body.password.trim().length === 0) {
+          sendJson(res, 422, { error: "La contraseña es obligatoria (mínimo 10 caracteres)." });
+          return;
+        }
+
         const mot = facade.registrarMotoristaConMoto(body);
         sendJson(res, 201, {
           mensaje: "Motorista y motocicleta verificados con SOAT vigente",
@@ -563,11 +847,13 @@ export function crearServidor(
         return;
       }
 
+      // B3: Solicitar viaje — actor estrictamente desde la sesión verificada
       if (pathname === "/api/viajes/solicitar" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+
         const body = await parseJsonBody<{
-          estudianteId: string;
+          estudianteId?: string;
           origen: string;
           destino: string;
           distanciaKm: number;
@@ -576,7 +862,8 @@ export function crearServidor(
         }>(req);
 
         const estudianteId =
-          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.estudianteId;
+          auth.rol === "admin" && body.estudianteId ? body.estudianteId : auth.identificacion;
+
         const viaje = facade.solicitarViaje(
           estudianteId,
           body.origen,
@@ -596,12 +883,15 @@ export function crearServidor(
         return;
       }
 
+      // B3: Aceptar viaje — motorista estrictamente desde sesión
       if (pathname === "/api/viajes/aceptar" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
-        if (!auth.permitido) return;
-        const body = await parseJsonBody<{ codigoViaje: string; motoristaId: string }>(req);
+        const auth = requerirRol(req, res, facade, "motorista");
+        if (!auth) return;
+
+        const body = await parseJsonBody<{ codigoViaje: string; motoristaId?: string }>(req);
         const motoristaId =
-          auth.sesion && auth.sesion.rol !== "admin" ? auth.sesion.identificacion : body.motoristaId;
+          auth.rol === "admin" && body.motoristaId ? body.motoristaId : auth.identificacion;
+
         const viaje = facade.aceptarViaje(body.codigoViaje, motoristaId);
         sendJson(res, 200, {
           mensaje: "Viaje aceptado por el motorista",
@@ -629,8 +919,9 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/iniciar" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "motorista");
+        if (!auth) return;
+
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.iniciarViaje(body.codigoViaje);
         sendJson(res, 200, {
@@ -642,8 +933,9 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/finalizar" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "motorista");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "motorista");
+        if (!auth) return;
+
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.finalizarViaje(body.codigoViaje);
         sendJson(res, 200, {
@@ -656,8 +948,9 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/llegada-segura" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
         const viaje = facade.marcarLlegadaSegura(body.codigoViaje);
         sendJson(res, 200, {
@@ -670,6 +963,9 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/cancelar" && req.method === "POST") {
+        const auth = requerirSesion(req, res, facade);
+        if (!auth) return;
+
         const body = await parseJsonBody<{ codigoViaje: string; motivo: string }>(req);
         const viaje = facade.cancelarViaje(body.codigoViaje, body.motivo || "Cancelado por usuario");
         sendJson(res, 200, {
@@ -681,15 +977,15 @@ export function crearServidor(
       }
 
       if (pathname === "/api/viajes/calificar" && req.method === "POST") {
-        const auth = exigirRolSiAutenticado(req, res, facade, "pasajero");
-        if (!auth.permitido) return;
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+
         const body = await parseJsonBody<{
           codigoViaje: string;
           puntuacion: number;
           comentario: string;
-          autorId: string;
         }>(req);
-        const autorId = auth.sesion ? auth.sesion.identificacion : body.autorId;
+        const autorId = auth.identificacion;
         const viaje = facade.calificarViaje(
           body.codigoViaje,
           body.puntuacion,
@@ -704,6 +1000,10 @@ export function crearServidor(
         return;
       }
     } catch (err: any) {
+      if (err instanceof AuthError) {
+        sendJson(res, err.statusHttp, { error: err.message });
+        return;
+      }
       sendJson(res, 400, { error: err.message || "Error procesando solicitud" });
       return;
     }
@@ -715,7 +1015,10 @@ export function crearServidor(
       return;
     }
 
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    res.writeHead(404, {
+      "Content-Type": "text/plain; charset=utf-8",
+      ...SECURITY_HEADERS
+    });
     res.end("Ruta no encontrada");
   });
 

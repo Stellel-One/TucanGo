@@ -10,9 +10,11 @@ export class Estudiante extends Persona {
     telefono: string,
     correoInstitucional: string,
     codigoEstudiantil: string,
-    carrera: string
+    carrera: string,
+    passwordHash: string = "",
+    debeCambiarPassword: boolean = false
   ) {
-    super(identificacion, nombre, telefono, correoInstitucional);
+    super(identificacion, nombre, telefono, correoInstitucional, passwordHash, debeCambiarPassword);
 
     if (!codigoEstudiantil || codigoEstudiantil.trim().length === 0) {
       throw new Error("El código estudiantil es obligatorio.");

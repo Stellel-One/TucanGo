@@ -1,5 +1,15 @@
 import type { MetodoPago, EstadoPago } from "../../domain/model/Pago.ts";
 
+export interface AdministradorSnapshot {
+  identificacion: string;
+  nombre: string;
+  telefono: string;
+  correoInstitucional: string;
+  cargo: string;
+  passwordHash: string;
+  debeCambiarPassword?: boolean;
+}
+
 export interface EstudianteSnapshot {
   identificacion: string;
   nombre: string;
@@ -8,6 +18,7 @@ export interface EstudianteSnapshot {
   codigoEstudiantil: string;
   carrera: string;
   passwordHash?: string;
+  debeCambiarPassword?: boolean;
 }
 
 export interface MotoSnapshot {
@@ -30,6 +41,7 @@ export interface MotoristaSnapshot {
   longitud?: number;
   direccionGrados?: number;
   passwordHash?: string;
+  debeCambiarPassword?: boolean;
   motos: MotoSnapshot[];
 }
 
@@ -70,6 +82,7 @@ export interface ViajeSnapshot {
 
 export interface EstadoSistemaSnapshot {
   contadorViajes: number;
+  administradores?: AdministradorSnapshot[];
   estudiantes: EstudianteSnapshot[];
   motoristas: MotoristaSnapshot[];
   viajes: ViajeSnapshot[];
@@ -78,4 +91,7 @@ export interface EstadoSistemaSnapshot {
 export interface SistemaRepository {
   cargar(): EstadoSistemaSnapshot | null;
   guardar(snapshot: EstadoSistemaSnapshot): void;
+  revocarSesion?(jti: string, expiraEnMs: number): void;
+  estaSesionRevocada?(jti: string): boolean;
+  limpiarSesionesExpiradas?(): void;
 }

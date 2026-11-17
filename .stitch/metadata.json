@@ -3,10 +3,14 @@
   "projectName": "projects/15651838928486418186",
   "title": "TucanGo Beta v1 — Uniamazonia Mobility",
   "designSystem": {
-    "assetId": "11436719985199985504",
-    "resourceName": "assets/11436719985199985504",
-    "previousAssetId": "fcccecdf25c64c88b6e6c50adfb76a39",
-    "sourceScreen": "projects/15651838928486418186/screens/14938137624786066595",
-    "sourceScreenInstanceId": "14938137624786066595"
+    "assetId": "9bf72d5c96214103b61bba6f55183b4a",
+    "resourceName": "assets/9bf72d5c96214103b61bba6f55183b4a",
+    "sourceScreen": "projects/15651838928486418186/screens/2523439602953735306"
+  },
+  "latestScreen": {
+    "screenId": "b234c10b311d4634b5fec8bc6a121251",
+    "title": "TucanGo - Portal de Inicio de Sesión y Movilidad",
+    "htmlFile": ".stitch/designs/tucango-login-portal-v2.html",
+    "screenshotFile": ".stitch/designs/tucango-login-portal-v2.png"
   }
 }

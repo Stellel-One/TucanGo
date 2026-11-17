@@ -56,7 +56,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const firstText = decoder.decode(firstChunk.value || new Uint8Array());
       assert.match(firstText, /conectado/);
 
-      // Validar rechazo SOAT vencido
+      // Validar rechazo SOAT vencido (retorna 422 ValidacionError)
       const resMotInvalido = await fetch(`${baseUrl}/api/motoristas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,12 +69,13 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           marca: "Bajaj",
           modelo: "Boxer",
           cilindraje: 100,
-          soatVigente: false
+          soatVigente: false,
+          password: "PedroPassword*2026"
         })
       });
-      assert.equal(resMotInvalido.status, 400);
+      assert.equal(resMotInvalido.status, 422);
 
-      // Registrar motorista con SOAT vigente
+      // Registrar motorista con SOAT vigente y contraseña segura
       const resMotValido = await fetch(`${baseUrl}/api/motoristas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +89,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           modelo: "Gixxer 150",
           cilindraje: 150,
           soatVigente: true,
-          numeroSoat: "SOAT-8899"
+          numeroSoat: "SOAT-8899",
+          password: "CamilaPassword*2026"
         })
       });
       assert.equal(resMotValido.status, 201);
@@ -103,17 +105,35 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           telefono: "3189990011",
           correoInstitucional: "s.munoz@udla.edu.co",
           codigoEstudiantil: "20261001",
-          carrera: "Derecho"
+          carrera: "Derecho",
+          password: "SofiaPassword*2026"
         })
       });
       assert.equal(resEst.status, 201);
 
-      // Solicitar, aceptar, iniciar, finalizar y confirmar llegada segura
-      const resSol = await fetch(`${baseUrl}/api/viajes/solicitar`, {
+      // Iniciar sesión como estudiante para obtener cookie de sesión (B3)
+      const estLogin = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "4001", password: "SofiaPassword*2026" })
+      });
+      assert.equal(estLogin.status, 200);
+      const estCookie = (estLogin.headers.get("set-cookie") || "").split(";")[0];
+
+      // Iniciar sesión como motorista para obtener cookie de sesión (B3)
+      const motLogin = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "3002", password: "CamilaPassword*2026" })
+      });
+      assert.equal(motLogin.status, 200);
+      const motCookie = (motLogin.headers.get("set-cookie") || "").split(";")[0];
+
+      // Solicitar viaje autenticado (B3)
+      const resSol = await fetch(`${baseUrl}/api/viajes/solicitar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({
-          estudianteId: "4001",
           origen: "Campus Porvenir - Portería Principal",
           destino: "Sede Centro - Edificio Administrativo",
           distanciaKm: 1.5,
@@ -132,30 +152,39 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       }
       assert.match(bufferSse, /VIAJE_SOLICITADO/);
 
+      // Aceptar, iniciar y finalizar con sesión de motorista
       await fetch(`${baseUrl}/api/viajes/aceptar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigoViaje: solJson.codigo, motoristaId: "3002" })
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
+        body: JSON.stringify({ codigoViaje: solJson.codigo })
       });
       await fetch(`${baseUrl}/api/viajes/iniciar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
         body: JSON.stringify({ codigoViaje: solJson.codigo })
       });
       await fetch(`${baseUrl}/api/viajes/finalizar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
         body: JSON.stringify({ codigoViaje: solJson.codigo })
       });
 
+      // Confirmar llegada segura con sesión de estudiante
       const resLlegada = await fetch(`${baseUrl}/api/viajes/llegada-segura`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({ codigoViaje: solJson.codigo })
       });
       assert.equal(resLlegada.status, 200);
       const llegadaJson = (await resLlegada.json()) as any;
       assert.equal(llegadaJson.llegadaSeguraConfirmada, true);
+
+      // Consultar estado consolidado
+      const resEstado = await fetch(`${baseUrl}/api/estado`);
+      assert.equal(resEstado.status, 200);
+      const estado = (await resEstado.json()) as any;
+      assert.equal(estado.viajes.some((v: any) => v.codigo === solJson.codigo), true);
+      assert.equal(estado.motoristas.some((m: any) => m.identificacion === "3002"), true);
     } finally {
       sseController.abort();
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -188,40 +217,54 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(Array.isArray(ruta.polilinea), true);
       assert.equal(ruta.polilinea.length >= 2, true);
 
+      // Login exitoso de estudiante seed
       const resLoginOk = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "estudiante", password: "Estudiante2026" })
+        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
       });
       assert.equal(resLoginOk.status, 200);
       const sesion = (await resLoginOk.json()) as any;
       assert.equal(sesion.rol, "pasajero");
+      const estCookie = (resLoginOk.headers.get("set-cookie") || "").split(";")[0];
 
+      // Login con contraseña incorrecta (401)
       const resLoginWrongPass = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "estudiante", password: "clave-incorrecta" })
+        body: JSON.stringify({ identificador: "1001", password: "clave-incorrecta" })
       });
       assert.equal(resLoginWrongPass.status, 401);
 
+      // Login usuario inexistente: anti-timing unificado 401 (B10)
       const resLoginFail = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "usuario-inexistente", password: "Estudiante2026" })
+        body: JSON.stringify({ identificador: "usuario-inexistente", password: "EstudianteSeguro*2026" })
       });
-      assert.equal(resLoginFail.status, 400);
+      assert.equal(resLoginFail.status, 401);
 
-      const resDisp = await fetch(`${baseUrl}/api/motoristas/disponibilidad`, {
+      // Login motorista seed
+      const motLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ motoristaId: "2001", disponible: true })
+        body: JSON.stringify({ identificador: "2001", password: "MotoristaSeguro*2026" })
+      });
+      assert.equal(motLoginRes.status, 200);
+      const motCookie = (motLoginRes.headers.get("set-cookie") || "").split(";")[0];
+
+      // Disponibilidad y ubicación autenticadas de motorista (B3)
+      const resDisp = await fetch(`${baseUrl}/api/motoristas/disponibilidad`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
+        body: JSON.stringify({ disponible: true })
       });
       assert.equal(resDisp.status, 200);
 
       const resUbic = await fetch(`${baseUrl}/api/motoristas/ubicacion`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ motoristaId: "2001", latitud: 1.618, longitud: -75.607 })
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
+        body: JSON.stringify({ latitud: 1.618, longitud: -75.607 })
       });
       assert.equal(resUbic.status, 200);
 
@@ -232,9 +275,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
 
       const resSol = await fetch(`${baseUrl}/api/viajes/solicitar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({
-          estudianteId: "1001",
           origen: "Campus Porvenir - Portería Principal",
           destino: "Sede Centro - Edificio Administrativo",
           distanciaKm: 1.15,
@@ -247,26 +289,26 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
 
       await fetch(`${baseUrl}/api/viajes/aceptar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigoViaje: sol.codigo, motoristaId: "2001" })
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
+        body: JSON.stringify({ codigoViaje: sol.codigo })
       });
 
-      const resTrack = await fetch(`${baseUrl}/api/viajes/tracking`, {
+      const resTracking = await fetch(`${baseUrl}/api/viajes/tracking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigoViaje: sol.codigo, incremento: 35 })
+        body: JSON.stringify({ codigoViaje: sol.codigo, incremento: 30 })
       });
-      assert.equal(resTrack.status, 200);
-      const track = (await resTrack.json()) as any;
-      assert.equal(track.progresoRuta, 35);
+      assert.equal(resTracking.status, 200);
+      const track = (await resTracking.json()) as any;
+      assert.equal(track.progresoRuta, 30);
       assert.equal(track.etapaTracking, "CAMINO_ORIGEN");
 
-      let sseLog = "";
-      for (let i = 0; i < 6 && !sseLog.includes("TRACKING_VIAJE_ACTUALIZADO"); i++) {
+      let bufferSse = "";
+      for (let i = 0; i < 6 && !bufferSse.includes("TRACKING_VIAJE_ACTUALIZADO"); i++) {
         const chunk = await reader.read();
-        sseLog += decoder.decode(chunk.value || new Uint8Array());
+        bufferSse += decoder.decode(chunk.value || new Uint8Array());
       }
-      assert.match(sseLog, /TRACKING_VIAJE_ACTUALIZADO/);
+      assert.match(bufferSse, /TRACKING_VIAJE_ACTUALIZADO/);
     } finally {
       sseController.abort();
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -276,26 +318,30 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
   });
 
   it("GET /login, assets del portal y sesión cookie HttpOnly (/api/auth/me & /logout)", async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-auth-cookie-"));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-auth-portal-"));
     const repo = new SqliteSistemaRepository(path.join(tmpDir, "tucango.db"));
     const facade = new TucanGoFacade(repo);
     const server = crearServidor(facade, { persistencia: "sqlite" });
+
     await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
     const { port } = server.address() as AddressInfo;
     const baseUrl = `http://127.0.0.1:${port}`;
 
     try {
-      const loginPageRes = await fetch(`${baseUrl}/login`);
-      assert.equal(loginPageRes.status, 200);
-      assert.match(loginPageRes.headers.get("content-type") || "", /text\/html/);
-      const loginHtml = await loginPageRes.text();
-      assert.match(loginHtml, /TucanGo/);
-      assert.match(loginHtml, /flow-scroll-canvas/);
-      assert.match(loginHtml, /ios-auth-card/);
-      assert.match(loginHtml, /account-cards-list/);
-      assert.match(loginHtml, /btn-tactile/);
-      assert.match(loginHtml, /form-reg-estudiante/);
-      assert.match(loginHtml, /form-reg-motorista/);
+      const loginHtmlRes = await fetch(`${baseUrl}/login`);
+      assert.equal(loginHtmlRes.status, 200);
+      const html = await loginHtmlRes.text();
+      assert.match(html, /TucanGo · Acceso Universitario/);
+      assert.match(html, /view-login/);
+      assert.match(html, /view-register/);
+
+      const cssRes = await fetch(`${baseUrl}/login.css`);
+      assert.equal(cssRes.status, 200);
+      assert.match(cssRes.headers.get("content-type") || "", /text\/css/);
+
+      const jsRes = await fetch(`${baseUrl}/login.js`);
+      assert.equal(jsRes.status, 200);
+      assert.match(jsRes.headers.get("content-type") || "", /text\/javascript/);
 
       const assetRes = await fetch(`${baseUrl}/assets/portal/tucan-portal-badge.png`);
       assert.equal(assetRes.status, 200);
@@ -309,13 +355,13 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "Estudiante2026" })
+        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
       });
       assert.equal(loginRes.status, 200);
       const setCookie = loginRes.headers.get("set-cookie") || "";
       assert.match(setCookie, /tucango_sid=/);
       assert.match(setCookie, /HttpOnly/i);
-      assert.match(setCookie, /SameSite=Lax/i);
+      assert.match(setCookie, /SameSite=Strict/i);
 
       const cookiePair = setCookie.split(";")[0];
       const authMeRes = await fetch(`${baseUrl}/api/auth/me`, {
@@ -338,22 +384,25 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const logoutSetCookie = logoutRes.headers.get("set-cookie") || "";
       assert.match(logoutSetCookie, /Max-Age=0/i);
 
-      const afterLogoutMeRes = await fetch(`${baseUrl}/api/auth/me`);
+      // Verificación de revocación por jti (B4): el token viejo ya no es admitido
+      const afterLogoutMeRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Cookie: cookiePair }
+      });
       const afterLogoutMe = (await afterLogoutMeRes.json()) as { autenticado: boolean };
       assert.equal(afterLogoutMe.autenticado, false);
 
-      // Login cuenta por defecto tucangoadmin
+      // Login administrador seed
       const adminLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "tucangoadmin", password: "TucanAdmin2026" })
+        body: JSON.stringify({ identificador: "tucangoadmin", password: "AdminSeguro*2026" })
       });
       assert.equal(adminLoginRes.status, 200);
       const adminUser = (await adminLoginRes.json()) as { rol: string; identificacion: string };
       assert.equal(adminUser.rol, "admin");
       assert.equal(adminUser.identificacion, "tucangoadmin");
 
-      // Flujo de Registro de Estudiante con contraseña propia y auto-login
+      // Flujo de Registro de Estudiante con contraseña propia (B13)
       const regEstRes = await fetch(`${baseUrl}/api/estudiantes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -364,18 +413,18 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           telefono: "3110000000",
           correoInstitucional: "s.munoz@uniamazonia.edu.co",
           carrera: "Ingeniería de Sistemas",
-          password: "SofiaPassword2026"
+          password: "SofiaPassword*2026"
         })
       });
       assert.equal(regEstRes.status, 201);
       const regEstLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1006888999", password: "SofiaPassword2026" })
+        body: JSON.stringify({ identificador: "1006888999", password: "SofiaPassword*2026" })
       });
       assert.equal(regEstLoginRes.status, 200);
 
-      // Flujo de Registro de Motorista con Moto + contraseña propia y auto-login
+      // Flujo de Registro de Motorista con Moto + contraseña propia (B13)
       const regMotRes = await fetch(`${baseUrl}/api/motoristas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -390,14 +439,14 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           cilindraje: 150,
           soatVigente: true,
           numeroSoat: "SOAT-2026-FLR",
-          password: "AndresMoto2026"
+          password: "AndresMoto*2026"
         })
       });
       assert.equal(regMotRes.status, 201);
       const regMotLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "AMZ-77G", password: "AndresMoto2026" })
+        body: JSON.stringify({ identificador: "AMZ-77G", password: "AndresMoto*2026" })
       });
       assert.equal(regMotLoginRes.status, 200);
 
@@ -411,15 +460,22 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(anonAppRes.headers.get("location"), "/login");
 
       // Con cookie Pasajero: GET / -> /app y GET /app -> 200 OK; RBAC bloquea aceptar viaje (403)
+      const authPasajeroLogin = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
+      });
+      const activeCookie = (authPasajeroLogin.headers.get("set-cookie") || "").split(";")[0];
+
       const authRootRes = await fetch(`${baseUrl}/`, {
-        headers: { Cookie: cookiePair },
+        headers: { Cookie: activeCookie },
         redirect: "manual"
       });
       assert.equal(authRootRes.status, 302);
       assert.equal(authRootRes.headers.get("location"), "/app");
 
       const authAppRes = await fetch(`${baseUrl}/app`, {
-        headers: { Cookie: cookiePair },
+        headers: { Cookie: activeCookie },
         redirect: "manual"
       });
       assert.equal(authAppRes.status, 200);
@@ -427,25 +483,25 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.match(appHtml, /role-locked-badge/);
       assert.doesNotMatch(appHtml, /class="role-switcher"/);
 
+      // RBAC (B3): Pasajero intentando aceptar viaje recibe 403
       const pasajeroAceptaRes = await fetch(`${baseUrl}/api/viajes/aceptar`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: cookiePair },
-        body: JSON.stringify({ codigoViaje: "TUC-999", motoristaId: "2001" })
+        headers: { "Content-Type": "application/json", Cookie: activeCookie },
+        body: JSON.stringify({ codigoViaje: "TUC-999" })
       });
       assert.equal(pasajeroAceptaRes.status, 403);
 
-      // Con cookie Motorista: RBAC bloquea solicitar viaje (403)
+      // RBAC (B3): Con cookie Motorista, solicitar viaje recibe 403
       const motLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "motorista", password: "Motorista2026" })
+        body: JSON.stringify({ identificador: "2001", password: "MotoristaSeguro*2026" })
       });
       const motCookie = (motLoginRes.headers.get("set-cookie") || "").split(";")[0];
       const motSolicitaRes = await fetch(`${baseUrl}/api/viajes/solicitar`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: motCookie },
         body: JSON.stringify({
-          estudianteId: "1001",
           origen: "Campus Porvenir",
           destino: "Sede Centro",
           distanciaKm: 1.15,

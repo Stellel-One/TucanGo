@@ -6,13 +6,15 @@ export abstract class Persona {
   private _telefono: string;
   private _correoInstitucional: string;
   private _passwordHash: string;
+  private _debeCambiarPassword: boolean;
 
   constructor(
     identificacion: string,
     nombre: string,
     telefono: string,
     correoInstitucional: string,
-    passwordHash: string = ""
+    passwordHash: string = "",
+    debeCambiarPassword: boolean = false
   ) {
     if (!identificacion || identificacion.trim().length === 0) {
       throw new Error("La identificación no puede estar vacía.");
@@ -32,6 +34,7 @@ export abstract class Persona {
     this._telefono = telefono.trim();
     this._correoInstitucional = correoInstitucional.trim().toLowerCase();
     this._passwordHash = passwordHash;
+    this._debeCambiarPassword = debeCambiarPassword;
   }
 
   public get identificacion(): string {
@@ -61,15 +64,23 @@ export abstract class Persona {
     return this._passwordHash;
   }
 
+  public get debeCambiarPassword(): boolean {
+    return this._debeCambiarPassword;
+  }
+
+  public set debeCambiarPassword(valor: boolean) {
+    this._debeCambiarPassword = valor;
+  }
+
   public asignarPasswordHash(hash: string): void {
     this._passwordHash = hash;
   }
 
-  public establecerPassword(plain: string): void {
-    this._passwordHash = hashPassword(plain);
+  public async establecerPassword(plain: string): Promise<void> {
+    this._passwordHash = await hashPassword(plain);
   }
 
-  public verificarPassword(plain: string): boolean {
+  public async verificarPassword(plain: string): Promise<boolean> {
     if (!this._passwordHash) return false;
     return verifyPassword(plain, this._passwordHash);
   }

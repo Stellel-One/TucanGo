@@ -27,9 +27,11 @@ export class Motorista extends Persona {
     correoInstitucional: string,
     disponible: boolean = true,
     ubicacionActual?: Coordenada,
-    direccionGrados: number = 0
+    direccionGrados: number = 0,
+    passwordHash: string = "",
+    debeCambiarPassword: boolean = false
   ) {
-    super(identificacion, nombre, telefono, correoInstitucional);
+    super(identificacion, nombre, telefono, correoInstitucional, passwordHash, debeCambiarPassword);
     this._disponible = disponible;
     this._motos = [];
     this._ubicacionActual = ubicacionActual ?? new Coordenada(1.6185, -75.6065);

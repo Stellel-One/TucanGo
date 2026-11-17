@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TucanGo · Portal de Inicio de Sesión y Movilidad Universitaria · Florencia, Caquetá</title>
+<!-- Google Fonts: Plus Jakarta Sans, Open Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Open+Sans:wght@300;400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration matching design system tokens -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "secondary-fixed-dim": "#ffb4a7",
+            "primary-fixed": "#bfedd2",
+            "inverse-surface": "#363020",
+            "outline": "#717973",
+            "on-surface": "#201b0d",
+            "on-background": "#201b0d",
+            "almond-hairline": "#E0D3BA",
+            "on-error-container": "#93000a",
+            "surface-tint": "#3d6752",
+            "on-primary-fixed-variant": "#254f3b",
+            "on-primary-container": "#86b29a",
+            "warm-vellum": "#FFFDF9",
+            "tertiary-fixed-dim": "#b0cdbd",
+            "secondary-fixed": "#ffdad4",
+            "secondary": "#b71604",
+            "on-surface-variant": "#414943",
+            "night-canopy": "#0D241A",
+            "tertiary-container": "#2a4337",
+            "parchment-soft": "#F8F2E7",
+            "on-tertiary": "#ffffff",
+            "error-container": "#ffdad6",
+            "error": "#ba1a1a",
+            "primary-container": "#1b4532",
+            "surface-container-highest": "#ede1ca",
+            "surface-dim": "#e5d9c2",
+            "on-secondary-container": "#fffbff",
+            "inverse-on-surface": "#fcefd8",
+            "on-primary-fixed": "#002113",
+            "on-secondary": "#ffffff",
+            "on-error": "#ffffff",
+            "surface-container-high": "#f3e7d0",
+            "on-tertiary-fixed": "#062016",
+            "on-primary": "#ffffff",
+            "forest-deep": "#143628",
+            "on-tertiary-container": "#93afa0",
+            "tertiary": "#132d22",
+            "surface-container": "#f9edd5",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-fixed-variant": "#910b00",
+            "slate-moss": "#425C4F",
+            "surface-container-low": "#fff2db",
+            "tertiary-fixed": "#cce9d8",
+            "primary-fixed-dim": "#a4d1b7",
+            "on-secondary-fixed": "#400200",
+            "background": "#fff8f1",
+            "on-tertiary-fixed-variant": "#324c40",
+            "surface-bright": "#fff8f1",
+            "primary": "#002e1d",
+            "tomato-tint": "#FFE9E4",
+            "tomato-accessible": "#D7331B",
+            "secondary-container": "#db331d",
+            "surface-variant": "#ede1ca",
+            "surface": "#fff8f1",
+            "outline-variant": "#c1c8c2",
+            "inverse-primary": "#a4d1b7"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "space-xl": "2rem",
+            "margin": "1.5rem",
+            "space-lg": "1.5rem"
+          },
+          fontFamily: {
+            "label-lg": ["JetBrains Mono"],
+            "body-md": ["Open Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Open Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-sm": ["JetBrains Mono"]
+          },
+          fontSize: {
+            "label-lg": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.1em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "1.3", "fontWeight": "600" }],
+            "label-sm": ["12px", { "lineHeight": "1.4", "letterSpacing": "0.1em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .whisper-shadow {
+      box-shadow: 0 4px 24px -2px rgba(20, 54, 40, 0.05), 0 1px 3px 0 rgba(20, 54, 40, 0.03);
+    }
+    .active-press {
+      transition: transform 0.1s ease-out, box-shadow 0.15s ease;
+    }
+    .active-press:active {
+      transform: scale(0.98);
+    }
+    /* Subtle paper grain texture pattern simulation */
+    .bg-grain {
+      background-color: #EEE2CB;
+      background-image: radial-gradient(rgba(20, 54, 40, 0.03) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+    .dark .bg-grain {
+      background-color: #0D241A;
+      background-image: radial-gradient(rgba(191, 237, 210, 0.04) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-grain text-forest-deep dark:text-warm-vellum min-h-screen relative antialiased transition-colors duration-300 selection:bg-tomato-accessible selection:text-white pr-[7px] md:pr-[8px]">
+<!-- NOUS PORTAL ARCHITECTURAL VERTICAL ACCENT STRIP (8px Tomato Red on right boundary) -->
+<div aria-hidden="true" class="fixed top-0 right-0 bottom-0 w-[7px] md:w-[8px] bg-secondary z-50 pointer-events-none shadow-sm"></div>
+<!-- FLOATING EDITORIAL APP BAR -->
+<header class="fixed top-4 left-4 right-[11px] md:right-[20px] z-40 max-w-6xl mx-auto">
+<nav class="bg-warm-vellum/90 dark:bg-night-canopy/90 backdrop-blur-md border border-almond-hairline dark:border-forest-deep rounded-full px-4 md:px-6 py-2.5 shadow-sm flex items-center justify-between transition-colors">
+<!-- Left: Telemetry & Security Pill -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-2 bg-parchment-soft dark:bg-forest-deep px-3 py-1 rounded-full border border-almond-hairline/60 dark:border-primary-container">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed text-base">verified_user</span>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-primary-fixed hidden sm:inline">Acceso Seguro · TucanGo v1.0.4</span>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-primary-fixed sm:hidden">v1.0.4</span>
+</div>
+<div class="flex items-center space-x-1.5 px-2 py-0.5">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-surface-tint opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-forest-deep dark:bg-primary-fixed"></span>
+</span>
+<span class="font-label-sm text-label-sm text-slate-moss dark:text-tertiary-fixed-dim font-medium tracking-tight">Uniamazonia En Línea</span>
+</div>
+</div>
+<!-- Center & Right: Campus Context & Direct Anchor -->
+<div class="flex items-center space-x-2 md:space-x-4">
+<div class="hidden lg:flex items-center space-x-1.5 text-slate-moss dark:text-outline-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>UNIAMAZONIA · FLORENCIA (Porvenir - Centro - Balcanes)</span>
+</div>
+<a class="active-press inline-flex items-center space-x-1.5 bg-forest-deep text-warm-vellum hover:bg-primary dark:bg-primary-fixed dark:text-night-canopy px-4 py-1.5 rounded-full font-headline-sm text-xs tracking-tight font-semibold border border-transparent shadow-sm" href="#portal-auth-card">
+<span>Ir al Portal</span>
+<span class="material-symbols-outlined text-sm">arrow_downward</span>
+</a>
+</div>
+</nav>
+</header>
+<!-- MAIN CANVAS -->
+<main class="pt-24 pb-16 px-4 md:px-8 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
+<!-- HERO MOBILITY & NOUS PORTAL AUTHENTICATION STAGE -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto">
+<!-- LEFT COLUMN: Identity, Corridor Story & Route HUD (7 Cols) -->
+<section class="lg:col-span-7 flex flex-col space-y-6">
+<!-- Identity Header Box -->
+<div class="space-y-3">
+<div class="inline-flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-parchment-soft dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep w-fit">
+<!-- Tucan Minimal Vector Monogram -->
+<svg class="w-5 h-5 flex-shrink-0" fill="none" viewbox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 6C7 6 12 5 18 8C24 11 26 18 26 18L19 22L13 18L7 6Z" fill="#143628"></path>
+<path d="M19 8C22 9 27 12 28 17C29 22 24 23 20 22L17 19L19 8Z" fill="#D7331B"></path>
+<circle cx="12" cy="11" fill="#FFFDF9" r="2"></circle>
+</svg>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-primary-fixed tracking-wider uppercase font-semibold">Corredor Verde Estudiantil</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-forest-deep dark:text-warm-vellum font-extrabold tracking-tight">
+            TucanGo <span class="font-normal text-slate-moss dark:text-tertiary-fixed-dim">·</span> Movilidad Universitaria con Trazabilidad Real
+          </h1>
+<p class="font-body-lg text-body-lg text-slate-moss dark:text-outline-variant max-w-xl">
+            Florencia, Caquetá · Conectando de forma segura el Campus Porvenir, Sede Principal Centro y la Granja Balcanes para más de 12,000 estudiantes y docentes.
+          </p>
+</div>
+<!-- Editorial Visual Frame with Generated Artwork -->
+<div class="relative bg-warm-vellum dark:bg-night-canopy rounded-2xl p-2 border border-almond-hairline dark:border-forest-deep whisper-shadow overflow-hidden group">
+<div class="relative w-full h-64 sm:h-72 md:h-80 rounded-xl overflow-hidden bg-parchment-soft dark:bg-forest-deep">
+<img class="w-full h-full object-cover object-center transform group-hover:scale-[1.01] transition-transform duration-500" data-alt="A clean, editorial illustration of an Amazonian university student riding a scooter along a lush tropical road in Florencia Caquetá. The setting is surrounded by deep green foliage, palm trees, and subtle mountain silhouettes in classic cream and forest green tones with tomato red accents. The atmosphere is warm, serene, and institutional with crisp clean line art." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl74UyAsE1ByW26EfibR9Ag13C_78_1ENT4-VT7eeDUwxxJEiLVXqsIUa2mo19H10IHb874Z_yQeJ7JJeWkCg6MEBa0zgkQXByKunhLS0mVKwyt7PTUIfNopTutH-yKHgL5Rna4ZOozS0i3F-gGM4-FGXsbIGPnUxUA4IqmwsPw9aFpEIIGIvMtagYKHG3DEnRW9Mjm6d-7cbdc3LNZcKJo99Ufy0X1lJy14m8RDz3Mtjtt-mw5hbQ9fGgFqsAsfCJeoPm4MQh0hsL"/>
+<!-- Atmospheric Gradient Vignette -->
+<div class="absolute inset-0 bg-gradient-to-t from-forest-deep/80 via-transparent to-transparent"></div>
+<!-- In-Image Editorial Badge -->
+<div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-lg bg-warm-vellum/90 dark:bg-night-canopy/90 backdrop-blur-md border border-almond-hairline dark:border-forest-deep">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-lg">electric_moped</span>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-warm-vellum font-semibold">Ruta Universitaria Activa: Troncal Florencia-Morelia</span>
+</div>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-primary-fixed bg-primary-fixed/40 dark:bg-primary-container px-2 py-0.5 rounded font-mono">SOAT VIGENTE 2025</span>
+</div>
+</div>
+</div>
+<!-- HUD: Corredor de Trazabilidad en Tiempo Real -->
+<div class="bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep rounded-xl p-4 whisper-shadow space-y-3">
+<div class="flex flex-wrap items-center justify-between gap-2 border-b border-almond-hairline/60 dark:border-forest-deep pb-2">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed text-base">route</span>
+<span class="font-label-sm text-label-sm text-forest-deep dark:text-warm-vellum font-bold">MONITOREO DE DESPACHOS VIALES</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-label-sm bg-parchment-soft dark:bg-forest-deep text-slate-moss dark:text-primary-fixed border border-almond-hairline/40">
+<span class="material-symbols-outlined text-xs mr-1">partly_cloudy_day</span> 28°C Nublado
+              </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-label-sm bg-tomato-tint text-secondary font-semibold border border-secondary-fixed">
+<span class="material-symbols-outlined text-xs mr-1">shield</span> Vía Segura Verificada
+              </span>
+</div>
+</div>
+<!-- Step Progression HUD -->
+<div class="grid grid-cols-3 gap-2 text-center pt-1 font-label-sm">
+<div class="p-2 rounded bg-parchment-soft dark:bg-forest-deep/60 border border-almond-hairline/50">
+<div class="text-xs text-slate-moss dark:text-outline-variant font-mono">ORIGEN (KM 0)</div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-primary-fixed">Campus Porvenir</div>
+<div class="text-[10px] text-surface-tint dark:text-on-primary-container font-mono">Despacho continuo</div>
+</div>
+<div class="p-2 rounded bg-parchment-soft dark:bg-forest-deep/60 border border-almond-hairline/50">
+<div class="text-xs text-slate-moss dark:text-outline-variant font-mono">NODO (KM 4)</div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-primary-fixed">Sede Centro</div>
+<div class="text-[10px] text-surface-tint dark:text-on-primary-container font-mono">Parada biblioteca</div>
+</div>
+<div class="p-2 rounded bg-parchment-soft dark:bg-forest-deep/60 border border-almond-hairline/50">
+<div class="text-xs text-slate-moss dark:text-outline-variant font-mono">DESTINO (KM 17)</div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-primary-fixed">Granja Balcanes</div>
+<div class="text-[10px] text-secondary font-mono font-semibold">Zona Agroecológica</div>
+</div>
+</div>
+</div>
+</section>
+<!-- RIGHT COLUMN: Nous Portal Authenticator Card (5 Cols, max-w-[440px]) -->
+<section class="lg:col-span-5 flex justify-center lg:justify-end" id="portal-auth-card">
+<div class="w-full max-w-[440px] bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep rounded-2xl p-7 whisper-shadow flex flex-col space-y-5 transition-all">
+<!-- Card Header & Dual Monogram -->
+<div class="flex items-center justify-between border-b border-almond-hairline/70 dark:border-forest-deep pb-4">
+<div class="flex items-center space-x-3">
+<!-- Geometric Minimal Mascot Monogram -->
+<div class="w-11 h-11 rounded-xl bg-parchment-soft dark:bg-forest-deep border border-almond-hairline dark:border-primary-container flex items-center justify-center shadow-inner">
+<svg class="w-7 h-7" fill="none" viewbox="0 0 32 32">
+<path d="M7 6C7 6 12 5 18 8C24 11 26 18 26 18L19 22L13 18L7 6Z" fill="#143628"></path>
+<path d="M19 8C22 9 27 12 28 17C29 22 24 23 20 22L17 19L19 8Z" fill="#D7331B"></path>
+<circle cx="12" cy="11" fill="#FFFDF9" r="2.5"></circle>
+</svg>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-sm font-bold text-forest-deep dark:text-warm-vellum tracking-tight leading-none">
+                  TucanGo
+                </h2>
+<span class="font-label-sm text-xs text-slate-moss dark:text-tertiary-fixed-dim uppercase tracking-wider">
+                  Portal de Autenticación
+                </span>
+</div>
+</div>
+<!-- Institutional Seal Pill -->
+<div class="text-right">
+<span class="inline-block text-[10px] font-label-sm font-bold uppercase tracking-widest text-forest-deep dark:text-primary-fixed bg-parchment-soft dark:bg-forest-deep px-2 py-0.5 rounded border border-almond-hairline/60">
+                UDLA · 2025
+              </span>
+</div>
+</div>
+<!-- Segmented Tab Navigation -->
+<div class="grid grid-cols-2 p-1 bg-parchment-soft dark:bg-forest-deep/60 rounded-xl border border-almond-hairline/80 dark:border-forest-deep text-center">
+<button class="py-1.5 rounded-lg font-headline-sm text-xs font-bold bg-warm-vellum dark:bg-night-canopy text-forest-deep dark:text-warm-vellum shadow-sm border border-almond-hairline/50 dark:border-primary-container transition-all" type="button">
+              Iniciar Sesión
+            </button>
+<button class="py-1.5 rounded-lg font-headline-sm text-xs font-medium text-slate-moss dark:text-outline-variant hover:text-forest-deep dark:hover:text-warm-vellum transition-colors" type="button">
+              Registrar Cuenta
+            </button>
+</div>
+<!-- SECTION: 1-CLICK QUICK ACCESS GRID (Asymmetric Nous Pattern) -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-[11px] text-forest-deep dark:text-primary-fixed font-bold tracking-wider uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-secondary">bolt</span> Acceso Rápido en 1 Clic
+              </span>
+<span class="text-[10px] font-label-sm text-slate-moss dark:text-outline-variant">Sesiones Locales</span>
+</div>
+<div class="grid grid-cols-2 gap-2.5">
+<!-- User 1: Student -->
+<button class="active-press text-left p-2.5 rounded-xl bg-parchment-soft dark:bg-forest-deep hover:border-tomato-accessible border border-almond-hairline dark:border-primary-container/40 transition-all flex flex-col justify-between group" onclick="selectQuickUser('1001-carlos', 'Estudiante')" type="button">
+<div class="flex items-center justify-between w-full mb-1">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed text-lg">badge</span>
+<span class="font-label-sm text-[9px] text-slate-moss dark:text-outline-variant font-mono">Activo</span>
+</div>
+<div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-warm-vellum group-hover:text-tomato-accessible transition-colors">Carlos R.</div>
+<div class="font-label-sm text-[10px] text-slate-moss dark:text-tertiary-fixed-dim">Estudiante · Ing. Agro</div>
+</div>
+</button>
+<!-- User 2: Motorcycle Driver -->
+<button class="active-press text-left p-2.5 rounded-xl bg-parchment-soft dark:bg-forest-deep hover:border-tomato-accessible border border-almond-hairline dark:border-primary-container/40 transition-all flex flex-col justify-between group" onclick="selectQuickUser('gnx45f-jhonatan', 'Motorista SOAT')" type="button">
+<div class="flex items-center justify-between w-full mb-1">
+<span class="material-symbols-outlined text-secondary text-lg">sports_motorsports</span>
+<span class="font-label-sm text-[9px] bg-tomato-tint text-tomato-accessible px-1 py-0.2 rounded font-mono font-bold">GNX-45F</span>
+</div>
+<div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-warm-vellum group-hover:text-tomato-accessible transition-colors">Jhonatan M.</div>
+<div class="font-label-sm text-[10px] text-slate-moss dark:text-tertiary-fixed-dim">Motorista Verificado</div>
+</div>
+</button>
+<!-- User 3: Spanning Both Columns (Odd final item centered) -->
+<button class="col-span-2 active-press text-left p-2.5 rounded-xl bg-parchment-soft dark:bg-forest-deep hover:border-tomato-accessible border border-almond-hairline dark:border-primary-container/40 transition-all flex items-center justify-between group" onclick="selectQuickUser('balcanes-laura', 'Pasajero')" type="button">
+<div class="flex items-center space-x-2.5">
+<div class="w-7 h-7 rounded-full bg-warm-vellum dark:bg-night-canopy flex items-center justify-center border border-almond-hairline/60">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed text-sm">pets</span>
+</div>
+<div>
+<div class="font-headline-sm text-xs font-bold text-forest-deep dark:text-warm-vellum group-hover:text-tomato-accessible transition-colors">Laura Gaviria · Vet. Balcanes</div>
+<div class="font-label-sm text-[10px] text-slate-moss dark:text-tertiary-fixed-dim">Ruta frecuente Sede Porvenir ➔ Balcanes</div>
+</div>
+</div>
+<span class="font-label-sm text-[10px] font-mono font-bold bg-surface-container-high dark:bg-night-canopy text-forest-deep dark:text-primary-fixed px-2 py-0.5 rounded">Km 17</span>
+</button>
+</div>
+</div>
+<!-- Divider -->
+<div class="relative flex py-1 items-center">
+<div class="flex-grow border-t border-almond-hairline/80 dark:border-forest-deep"></div>
+<span class="flex-shrink mx-3 font-label-sm text-[10px] text-slate-moss dark:text-outline-variant font-medium uppercase tracking-wider">
+              o con credencial institucional
+            </span>
+<div class="flex-grow border-t border-almond-hairline/80 dark:border-forest-deep"></div>
+</div>
+<!-- FORM: Formal Institutional Authentication -->
+<form class="space-y-4" id="auth-form" onsubmit="event.preventDefault(); simulateSubmit();">
+<!-- Role Selector Segment -->
+<div class="space-y-1.5">
+<label class="block font-label-sm text-xs font-semibold text-forest-deep dark:text-warm-vellum">
+                Tipo de Usuario Institucional
+              </label>
+<div class="grid grid-cols-2 gap-2" id="role-selector">
+<button class="py-2 px-3 rounded-xl border border-secondary text-xs font-headline-sm font-semibold bg-tomato-tint/30 text-secondary flex items-center justify-center space-x-1.5 transition-all" id="role-pasajero" onclick="setRole('pasajero')" type="button">
+<span class="material-symbols-outlined text-sm">person</span>
+<span>Pasajero Estudiante</span>
+</button>
+<button class="py-2 px-3 rounded-xl border border-almond-hairline dark:border-forest-deep text-xs font-headline-sm font-semibold bg-parchment-soft dark:bg-forest-deep text-slate-moss dark:text-outline-variant hover:text-forest-deep dark:hover:text-warm-vellum flex items-center justify-center space-x-1.5 transition-all" id="role-motorista" onclick="setRole('motorista')" type="button">
+<span class="material-symbols-outlined text-sm">two_wheeler</span>
+<span>Motorista SOAT</span>
+</button>
+</div>
+</div>
+<!-- Input: Identifier -->
+<div class="space-y-1.5">
+<label class="block font-label-sm text-xs font-semibold text-forest-deep dark:text-warm-vellum" for="identifier">
+                Cédula, código o correo institucional
+              </label>
+<div class="relative rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-forest-deep dark:focus-within:ring-primary-fixed transition-all">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-moss">
+<span class="material-symbols-outlined text-lg">school</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2.5 bg-parchment-soft dark:bg-forest-deep/80 text-forest-deep dark:text-warm-vellum placeholder-slate-moss/60 dark:placeholder-outline-variant font-body-md text-sm rounded-xl border border-almond-hairline dark:border-forest-deep focus:outline-none focus:border-forest-deep transition-colors" id="identifier" name="identifier" placeholder="Ej. 1001 o c.rivera@uniamazonia.edu.co" required="" type="text"/>
+</div>
+</div>
+<!-- Input: PIN / Password -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block font-label-sm text-xs font-semibold text-forest-deep dark:text-warm-vellum" for="password">
+                  PIN o Clave Campus
+                </label>
+<a class="font-label-sm text-[11px] text-secondary hover:underline" href="#">
+                  ¿Olvidaste tu PIN?
+                </a>
+</div>
+<div class="relative rounded-xl shadow-sm focus-within:ring-2 focus-within:ring-forest-deep dark:focus-within:ring-primary-fixed transition-all">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-moss">
+<span class="material-symbols-outlined text-lg">lock</span>
+</div>
+<input class="block w-full pl-10 pr-10 py-2.5 bg-parchment-soft dark:bg-forest-deep/80 text-forest-deep dark:text-warm-vellum placeholder-slate-moss/60 font-body-md text-sm rounded-xl border border-almond-hairline dark:border-forest-deep focus:outline-none focus:border-forest-deep transition-colors" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-moss hover:text-forest-deep" onclick="togglePassVisibility()" type="button">
+<span class="material-symbols-outlined text-lg" id="pass-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- PRIMARY CTA BUTTON (10% Tomato Red Accent & WCAG AA) -->
+<button class="active-press w-full bg-tomato-accessible hover:bg-secondary text-white font-headline-sm text-sm font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center space-x-2 transition-all group" id="submit-btn" type="submit">
+<span>Continuar con credencial</span>
+<span class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</form>
+<!-- Card Footer & Quick Links -->
+<div class="pt-2 border-t border-almond-hairline/60 dark:border-forest-deep flex items-center justify-between text-xs font-label-sm">
+<a class="text-slate-moss dark:text-tertiary-fixed-dim hover:text-tomato-accessible dark:hover:text-secondary-fixed transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-sm">map</span>
+<span>Mapa en Vivo de Despacho ➔</span>
+</a>
+<!-- Quick Dark Mode Toggle within Card -->
+<button class="active-press flex items-center space-x-1.5 text-forest-deep dark:text-primary-fixed bg-parchment-soft dark:bg-forest-deep px-2.5 py-1 rounded-lg border border-almond-hairline dark:border-primary-container" onclick="toggleTheme()" title="Alternar Modo Noche" type="button">
+<span class="material-symbols-outlined text-sm" id="theme-icon">dark_mode</span>
+<span class="text-[11px] font-semibold" id="theme-label">Noche</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- QUICK TELEMETRY STATS BANNER (Bento Style Institutional Safeguard) -->
+<div class="mt-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep p-4 rounded-xl whisper-shadow flex items-start space-x-3">
+<span class="material-symbols-outlined text-tomato-accessible p-2 rounded-lg bg-tomato-tint dark:bg-forest-deep">security</span>
+<div>
+<div class="font-headline-sm text-sm font-bold text-forest-deep dark:text-warm-vellum">Trazabilidad GPS</div>
+<p class="font-body-md text-xs text-slate-moss dark:text-outline-variant">Cada trayecto monitoreado por la Central de Vigilancia Campus.</p>
+</div>
+</div>
+<div class="bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep p-4 rounded-xl whisper-shadow flex items-start space-x-3">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed p-2 rounded-lg bg-parchment-soft dark:bg-forest-deep">electric_moped</span>
+<div>
+<div class="font-headline-sm text-sm font-bold text-forest-deep dark:text-warm-vellum">Validación SOAT</div>
+<p class="font-body-md text-xs text-slate-moss dark:text-outline-variant">Pólizas verificadas con RUNT antes de autorizar despachos.</p>
+</div>
+</div>
+<div class="bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep p-4 rounded-xl whisper-shadow flex items-start space-x-3">
+<span class="material-symbols-outlined text-forest-deep dark:text-primary-fixed p-2 rounded-lg bg-parchment-soft dark:bg-forest-deep">diversity_3</span>
+<div>
+<div class="font-headline-sm text-sm font-bold text-forest-deep dark:text-warm-vellum">Tarifa Solidaria</div>
+<p class="font-body-md text-xs text-slate-moss dark:text-outline-variant">Tarifas concertadas entre Bienestar Universitario y motoristas.</p>
+</div>
+</div>
+<div class="bg-warm-vellum dark:bg-night-canopy border border-almond-hairline dark:border-forest-deep p-4 rounded-xl whisper-shadow flex items-start space-x-3">
+<span class="material-symbols-outlined text-tomato-accessible p-2 rounded-lg bg-tomato-tint dark:bg-forest-deep">contact_emergency</span>
+<div>
+<div class="font-headline-sm text-sm font-bold text-forest-deep dark:text-warm-vellum">Botón de Pánico UDLA</div>
+<p class="font-body-md text-xs text-slate-moss dark:text-outline-variant">Alerta inmediata en enlace directo con Policía de Caquetá.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- SHARED COMPONENT: FOOTER -->
+<footer class="w-full py-space-lg px-gutter md:px-margin border-t border-almond-hairline dark:border-forest-deep mt-auto flex flex-col md:flex-row justify-between items-center gap-space-md bg-warm-vellum dark:bg-night-canopy text-forest-deep dark:text-primary-fixed transition-colors">
+<div class="flex flex-col md:flex-row items-center gap-3 text-center md:text-left">
+<!-- Tucan Icon Small -->
+<div class="flex items-center space-x-2 font-headline-sm text-headline-sm font-bold text-forest-deep dark:text-primary-fixed">
+<span class="material-symbols-outlined text-secondary">eco</span>
+<span>TucanGo</span>
+</div>
+<span class="text-xs text-on-surface-variant dark:text-outline-variant font-body-md">
+        © 2024 Universidad de la Amazonia - Vicerrectoría de Bienestar Universitario. Florencia, Caquetá.
+      </span>
+</div>
+<!-- Editorial Links -->
+<div class="flex flex-wrap items-center justify-center gap-4 text-xs font-label-sm">
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-forest-deep dark:hover:text-primary-fixed transition-colors" href="#">Políticas de Privacidad</a>
+<span class="text-almond-hairline dark:text-forest-deep">·</span>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-forest-deep dark:hover:text-primary-fixed transition-colors" href="#">Términos de Servicio</a>
+<span class="text-almond-hairline dark:text-forest-deep">·</span>
+<a class="text-tomato-accessible dark:text-secondary-fixed underline underline-offset-4" href="#">Protocolo de Movilidad Segura</a>
+<span class="text-almond-hairline dark:text-forest-deep">·</span>
+<a class="text-on-surface-variant dark:text-outline-variant hover:text-forest-deep dark:hover:text-primary-fixed transition-colors" href="#">Directorio Campus</a>
+</div>
+</footer>
+<!-- MINIMAL CLIENT INTERACTIONS -->
+<script>
+    // 1. One-click quick login simulator
+    function selectQuickUser(username, role) {
+      const input = document.getElementById('identifier');
+      const pass = document.getElementById('password');
+      input.value = username;
+      pass.value = '••••••••';
+      
+      // Visual feedback
+      input.classList.add('ring-2', 'ring-secondary');
+      setTimeout(() => {
+        input.classList.remove('ring-2', 'ring-secondary');
+      }, 700);
+
+      if (role === 'Motorista SOAT') {
+        setRole('motorista');
+      } else {
+        setRole('pasajero');
+      }
+    }
+
+    // 2. Role Selector Tabs
+    function setRole(role) {
+      const btnPasajero = document.getElementById('role-pasajero');
+      const btnMotorista = document.getElementById('role-motorista');
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (role === 'pasajero') {
+        btnPasajero.className = "py-2 px-3 rounded-xl border border-secondary text-xs font-headline-sm font-semibold bg-tomato-tint/30 text-secondary flex items-center justify-center space-x-1.5 transition-all";
+        btnMotorista.className = "py-2 px-3 rounded-xl border border-almond-hairline dark:border-forest-deep text-xs font-headline-sm font-semibold bg-parchment-soft dark:bg-forest-deep text-slate-moss dark:text-outline-variant hover:text-forest-deep dark:hover:text-warm-vellum flex items-center justify-center space-x-1.5 transition-all";
+        submitBtn.innerHTML = '<span>Ingresar como Pasajero Estudiante</span><span class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">arrow_forward</span>';
+      } else {
+        btnMotorista.className = "py-2 px-3 rounded-xl border border-secondary text-xs font-headline-sm font-semibold bg-tomato-tint/30 text-secondary flex items-center justify-center space-x-1.5 transition-all";
+        btnPasajero.className = "py-2 px-3 rounded-xl border border-almond-hairline dark:border-forest-deep text-xs font-headline-sm font-semibold bg-parchment-soft dark:bg-forest-deep text-slate-moss dark:text-outline-variant hover:text-forest-deep dark:hover:text-warm-vellum flex items-center justify-center space-x-1.5 transition-all";
+        submitBtn.innerHTML = '<span>Validar Turno de Motorista SOAT</span><span class="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">two_wheeler</span>';
+      }
+    }
+
+    // 3. Password visibility toggle
+    function togglePassVisibility() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('pass-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    // 4. Dark Canopy / Classic Cream Theme Switcher
+    function toggleTheme() {
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('theme-icon');
+      const themeLabel = document.getElementById('theme-label');
+
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        themeIcon.textContent = 'dark_mode';
+        themeLabel.textContent = 'Noche';
+      } else {
+        html.classList.add('dark');
+        themeIcon.textContent = 'light_mode';
+        themeLabel.textContent = 'Día';
+      }
+    }
+
+    // 5. Submit feedback
+    function simulateSubmit() {
+      const btn = document.getElementById('submit-btn');
+      const originalHTML = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-base">sync</span><span>Verificando en Bienestar...</span>';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = '<span class="material-symbols-outlined text-base">check_circle</span><span>¡Acceso Concedido!</span>';
+        btn.classList.remove('bg-tomato-accessible');
+        btn.classList.add('bg-forest-deep');
+        setTimeout(() => {
+          btn.innerHTML = originalHTML;
+          btn.classList.add('bg-tomato-accessible');
+          btn.classList.remove('bg-forest-deep');
+          btn.disabled = false;
+        }, 2000);
+      }, 900);
+    }
+  </script>
+</body></html>
