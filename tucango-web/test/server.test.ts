@@ -284,6 +284,11 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const loginHtml = await loginPageRes.text();
       assert.match(loginHtml, /TucanGo/);
       assert.match(loginHtml, /flow-scroll-canvas/);
+      assert.match(loginHtml, /ios-auth-card/);
+      assert.match(loginHtml, /account-cards-list/);
+      assert.match(loginHtml, /btn-tactile/);
+      assert.match(loginHtml, /form-reg-estudiante/);
+      assert.match(loginHtml, /form-reg-motorista/);
 
       const assetRes = await fetch(`${baseUrl}/assets/portal/tucan-portal-badge.png`);
       assert.equal(assetRes.status, 200);
@@ -329,6 +334,52 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const afterLogoutMeRes = await fetch(`${baseUrl}/api/auth/me`);
       const afterLogoutMe = (await afterLogoutMeRes.json()) as { autenticado: boolean };
       assert.equal(afterLogoutMe.autenticado, false);
+
+      // Flujo de Registro de Estudiante y auto-login
+      const regEstRes = await fetch(`${baseUrl}/api/estudiantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "1006888999",
+          codigoEstudiantil: "202610045",
+          nombre: "Sofía Muñoz",
+          telefono: "3110000000",
+          correoInstitucional: "s.munoz@uniamazonia.edu.co",
+          carrera: "Ingeniería de Sistemas"
+        })
+      });
+      assert.equal(regEstRes.status, 201);
+      const regEstLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "1006888999", rol: "pasajero" })
+      });
+      assert.equal(regEstLoginRes.status, 200);
+
+      // Flujo de Registro de Motorista con Moto y auto-login
+      const regMotRes = await fetch(`${baseUrl}/api/motoristas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "1117555444",
+          nombre: "Andrés Rojas",
+          telefono: "3200000000",
+          correoInstitucional: "a.rojas@udla.edu.co",
+          placa: "AMZ-77G",
+          marca: "Suzuki",
+          modelo: "Gixxer 150",
+          cilindraje: 150,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-FLR"
+        })
+      });
+      assert.equal(regMotRes.status, 201);
+      const regMotLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "AMZ-77G", rol: "motorista" })
+      });
+      assert.equal(regMotLoginRes.status, 200);
 
       // Auth Gate: sin sesión, GET / y GET /app redirigen 302 -> /login
       const anonRootRes = await fetch(`${baseUrl}/`, { redirect: "manual" });
