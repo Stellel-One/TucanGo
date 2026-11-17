@@ -163,4 +163,108 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("Expone /api/mapa/config, /api/auth/login, disponibilidad/ubicación de motorista y tracking GPS vía SSE", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-didi-"));
+    const repo = new SqliteSistemaRepository(path.join(tmpDir, "tucango.db"));
+    const facade = new TucanGoFacade(repo);
+    const server = crearServidor(facade, { persistencia: "sqlite" });
+
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const { port } = server.address() as AddressInfo;
+    const baseUrl = `http://127.0.0.1:${port}`;
+    const sseController = new AbortController();
+
+    try {
+      const resConfig = await fetch(`${baseUrl}/api/mapa/config`);
+      assert.equal(resConfig.status, 200);
+      const cfg = (await resConfig.json()) as any;
+      assert.equal(typeof cfg.tileUrlDidi, "string");
+      assert.equal(Array.isArray(cfg.googleApisRequeridas), true);
+
+      const resRuta = await fetch(`${baseUrl}/api/ruta?origenId=PORVENIR&destinoId=CENTRO`);
+      assert.equal(resRuta.status, 200);
+      const ruta = (await resRuta.json()) as any;
+      assert.equal(Array.isArray(ruta.polilinea), true);
+      assert.equal(ruta.polilinea.length >= 2, true);
+
+      const resLoginOk = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "1001", rol: "pasajero" })
+      });
+      assert.equal(resLoginOk.status, 200);
+      const sesion = (await resLoginOk.json()) as any;
+      assert.equal(sesion.rol, "pasajero");
+
+      const resLoginFail = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "usuario-inexistente" })
+      });
+      assert.equal(resLoginFail.status, 400);
+
+      const resDisp = await fetch(`${baseUrl}/api/motoristas/disponibilidad`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motoristaId: "2001", disponible: true })
+      });
+      assert.equal(resDisp.status, 200);
+
+      const resUbic = await fetch(`${baseUrl}/api/motoristas/ubicacion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motoristaId: "2001", latitud: 1.618, longitud: -75.607 })
+      });
+      assert.equal(resUbic.status, 200);
+
+      const sseRes = await fetch(`${baseUrl}/api/eventos`, { signal: sseController.signal });
+      const reader = sseRes.body!.getReader();
+      const decoder = new TextDecoder();
+      await reader.read();
+
+      const resSol = await fetch(`${baseUrl}/api/viajes/solicitar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          estudianteId: "1001",
+          origen: "Campus Porvenir - Portería Principal",
+          destino: "Sede Centro - Edificio Administrativo",
+          distanciaKm: 1.15,
+          tipoTarifa: "estudiantil",
+          metodoPago: "NEQUI"
+        })
+      });
+      const sol = (await resSol.json()) as any;
+      assert.match(sol.pinSeguridad, /^\d{4}$/);
+
+      await fetch(`${baseUrl}/api/viajes/aceptar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigoViaje: sol.codigo, motoristaId: "2001" })
+      });
+
+      const resTrack = await fetch(`${baseUrl}/api/viajes/tracking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codigoViaje: sol.codigo, incremento: 35 })
+      });
+      assert.equal(resTrack.status, 200);
+      const track = (await resTrack.json()) as any;
+      assert.equal(track.progresoRuta, 35);
+      assert.equal(track.etapaTracking, "CAMINO_ORIGEN");
+
+      let sseLog = "";
+      for (let i = 0; i < 6 && !sseLog.includes("TRACKING_VIAJE_ACTUALIZADO"); i++) {
+        const chunk = await reader.read();
+        sseLog += decoder.decode(chunk.value || new Uint8Array());
+      }
+      assert.match(sseLog, /TRACKING_VIAJE_ACTUALIZADO/);
+    } finally {
+      sseController.abort();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      repo.cerrar();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

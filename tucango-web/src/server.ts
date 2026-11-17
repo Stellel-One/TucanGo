@@ -89,6 +89,9 @@ function construirEstadoDTO(facade: TucanGoFacade) {
       telefono: m.telefono,
       correo: m.correoInstitucional,
       disponible: m.disponible,
+      latitud: m.ubicacionActual.latitud,
+      longitud: m.ubicacionActual.longitud,
+      direccionGrados: m.direccionGrados,
       motoActiva: motoActiva
         ? {
             placa: motoActiva.placa,
@@ -120,6 +123,12 @@ function construirEstadoDTO(facade: TucanGoFacade) {
     motivoCancelacion: v.motivoCancelacion ?? null,
     llegadaSeguraConfirmada: v.llegadaSeguraConfirmada,
     fechaLlegadaSegura: v.fechaLlegadaSegura ? v.fechaLlegadaSegura.toISOString() : null,
+    pinSeguridad: v.pinSeguridad,
+    progresoRuta: v.progresoRuta,
+    etapaTracking: v.etapaTracking,
+    ubicacionMotoristaLat: v.ubicacionMotoristaLat ?? null,
+    ubicacionMotoristaLng: v.ubicacionMotoristaLng ?? null,
+    direccionMotoristaGrados: v.direccionMotoristaGrados,
     estudiante: {
       id: v.estudiante.identificacion,
       nombre: v.estudiante.nombre
@@ -231,6 +240,24 @@ export function crearServidor(
         return;
       }
 
+      if (pathname === "/api/mapa/config" && req.method === "GET") {
+        const googleKey = process.env.GOOGLE_MAPS_API_KEY || null;
+        sendJson(res, 200, {
+          proveedorActivo: googleKey ? "google_maps" : "carto_osrm",
+          googleMapsApiKey: googleKey,
+          tileUrlDidi:
+            "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+          osrmRouteUrl: "https://router.project-osrm.org/route/v1/driving",
+          googleApisRequeridas: [
+            "Maps JavaScript API",
+            "Directions API (Routes API)",
+            "Places API",
+            "Roads API"
+          ]
+        });
+        return;
+      }
+
       if (pathname === "/api/sectores" && req.method === "GET") {
         sendJson(res, 200, {
           sectores: facade.obtenerSectoresCampus().map(serializarSector)
@@ -254,6 +281,8 @@ export function crearServidor(
           destino: serializarSector(ruta.destino),
           distanciaKm: ruta.distanciaKm,
           tiempoEstimadoMin: ruta.tiempoEstimadoMin,
+          polilinea: ruta.polilinea,
+          direccionInicialGrados: ruta.direccionInicialGrados,
           tarifas
         });
         return;
@@ -261,6 +290,49 @@ export function crearServidor(
 
       if (pathname === "/api/estado" && req.method === "GET") {
         sendJson(res, 200, construirEstadoDTO(facade));
+        return;
+      }
+
+      if (pathname === "/api/auth/login" && req.method === "POST") {
+        const body = await parseJsonBody<{
+          identificador: string;
+          rol?: "pasajero" | "motorista";
+        }>(req);
+        const sesion = facade.autenticarUsuario(body.identificador, body.rol);
+        sendJson(res, 200, sesion);
+        return;
+      }
+
+      if (pathname === "/api/motoristas/disponibilidad" && req.method === "POST") {
+        const body = await parseJsonBody<{ motoristaId: string; disponible: boolean }>(req);
+        const mot = facade.cambiarDisponibilidadMotorista(body.motoristaId, body.disponible);
+        sendJson(res, 200, {
+          identificacion: mot.identificacion,
+          nombre: mot.nombre,
+          disponible: mot.disponible
+        });
+        return;
+      }
+
+      if (pathname === "/api/motoristas/ubicacion" && req.method === "POST") {
+        const body = await parseJsonBody<{
+          motoristaId: string;
+          latitud: number;
+          longitud: number;
+          direccionGrados?: number;
+        }>(req);
+        const mot = facade.actualizarUbicacionMotorista(
+          body.motoristaId,
+          body.latitud,
+          body.longitud,
+          body.direccionGrados
+        );
+        sendJson(res, 200, {
+          identificacion: mot.identificacion,
+          latitud: mot.ubicacionActual.latitud,
+          longitud: mot.ubicacionActual.longitud,
+          direccionGrados: mot.direccionGrados
+        });
         return;
       }
 
@@ -328,7 +400,8 @@ export function crearServidor(
           mensaje: "Viaje solicitado con éxito",
           codigo: viaje.codigoViaje,
           tarifa: viaje.tarifa,
-          estado: viaje.estado.nombre
+          estado: viaje.estado.nombre,
+          pinSeguridad: viaje.pinSeguridad
         });
         return;
       }
@@ -340,7 +413,23 @@ export function crearServidor(
           mensaje: "Viaje aceptado por el motorista",
           codigo: viaje.codigoViaje,
           estado: viaje.estado.nombre,
-          motorista: viaje.motorista?.nombre
+          motorista: viaje.motorista?.nombre,
+          pinSeguridad: viaje.pinSeguridad
+        });
+        return;
+      }
+
+      if (pathname === "/api/viajes/tracking" && req.method === "POST") {
+        const body = await parseJsonBody<{ codigoViaje: string; incremento?: number }>(req);
+        const viaje = facade.avanzarSimulacionViaje(body.codigoViaje, body.incremento ?? 25);
+        sendJson(res, 200, {
+          codigo: viaje.codigoViaje,
+          estado: viaje.estado.nombre,
+          etapaTracking: viaje.etapaTracking,
+          progresoRuta: viaje.progresoRuta,
+          latitud: viaje.ubicacionMotoristaLat,
+          longitud: viaje.ubicacionMotoristaLng,
+          direccionGrados: viaje.direccionMotoristaGrados
         });
         return;
       }

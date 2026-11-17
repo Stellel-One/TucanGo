@@ -12,6 +12,23 @@ import {
 } from "./EstadoViaje.ts";
 import { type EstrategiaTarifa, TarifaEstudiantilFija } from "./EstrategiaTarifa.ts";
 
+export type EtapaTracking =
+  | "BUSCANDO"
+  | "CAMINO_ORIGEN"
+  | "EN_VIAJE"
+  | "COMPLETADO"
+  | "CANCELADO";
+
+function generarPinDesdeCodigo(codigoViaje: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < codigoViaje.length; i++) {
+    hash ^= codigoViaje.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const numero = 1000 + (Math.abs(hash) % 9000);
+  return String(numero);
+}
+
 export class Viaje {
   private _codigoViaje: string;
   private _origen: string;
@@ -28,6 +45,12 @@ export class Viaje {
   private _fechaCreacion: Date;
   private _llegadaSeguraConfirmada: boolean = false;
   private _fechaLlegadaSegura?: Date;
+  private _pinSeguridad: string;
+  private _progresoRuta: number = 0;
+  private _etapaTracking: EtapaTracking = "BUSCANDO";
+  private _ubicacionMotoristaLat?: number;
+  private _ubicacionMotoristaLng?: number;
+  private _direccionMotoristaGrados: number = 0;
 
   constructor(
     codigoViaje: string,
@@ -65,6 +88,8 @@ export class Viaje {
     this._calificaciones = [];
     this._fechaCreacion = new Date();
     this._estado = new EstadoSolicitado();
+    this._pinSeguridad = generarPinDesdeCodigo(this._codigoViaje);
+    this._etapaTracking = "BUSCANDO";
   }
 
   // --- Getters de Encapsulamiento ---
@@ -128,21 +153,78 @@ export class Viaje {
     return this._fechaLlegadaSegura;
   }
 
+  public get pinSeguridad(): string {
+    return this._pinSeguridad;
+  }
+
+  public get progresoRuta(): number {
+    return this._progresoRuta;
+  }
+
+  public get etapaTracking(): EtapaTracking {
+    return this._etapaTracking;
+  }
+
+  public get ubicacionMotoristaLat(): number | undefined {
+    return this._ubicacionMotoristaLat;
+  }
+
+  public get ubicacionMotoristaLng(): number | undefined {
+    return this._ubicacionMotoristaLng;
+  }
+
+  public get direccionMotoristaGrados(): number {
+    return this._direccionMotoristaGrados;
+  }
+
   // --- Delegación a la Máquina de Estados (State Pattern) ---
   public aceptar(motorista: Motorista): void {
     this._estado.aceptar(this, motorista);
+    this._etapaTracking = "CAMINO_ORIGEN";
+    this._progresoRuta = 0;
+    this._ubicacionMotoristaLat = motorista.ubicacionActual.latitud;
+    this._ubicacionMotoristaLng = motorista.ubicacionActual.longitud;
+    this._direccionMotoristaGrados = motorista.direccionGrados;
   }
 
   public iniciar(): void {
     this._estado.iniciar(this);
+    this._etapaTracking = "EN_VIAJE";
+    this._progresoRuta = 0;
   }
 
   public finalizar(): void {
     this._estado.finalizar(this);
+    this._etapaTracking = "COMPLETADO";
+    this._progresoRuta = 100;
   }
 
   public cancelar(motivo: string): void {
     this._estado.cancelar(this, motivo);
+    this._etapaTracking = "CANCELADO";
+  }
+
+  public actualizarTracking(
+    progreso: number,
+    lat: number,
+    lng: number,
+    direccionGrados: number
+  ): void {
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      throw new Error("La latitud de seguimiento debe estar entre -90 y 90 grados.");
+    }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+      throw new Error("La longitud de seguimiento debe estar entre -180 y 180 grados.");
+    }
+    if (!Number.isFinite(progreso)) {
+      throw new Error("El progreso de ruta debe ser un número válido.");
+    }
+    this._progresoRuta = Math.max(0, Math.min(100, Math.round(progreso)));
+    this._ubicacionMotoristaLat = lat;
+    this._ubicacionMotoristaLng = lng;
+    this._direccionMotoristaGrados = Number.isFinite(direccionGrados)
+      ? ((Math.round(direccionGrados) % 360) + 360) % 360
+      : 0;
   }
 
   public confirmarLlegadaSegura(): void {
@@ -197,6 +279,12 @@ export class Viaje {
     fechaCreacion: string;
     llegadaSeguraConfirmada: boolean;
     fechaLlegadaSegura?: string;
+    pinSeguridad?: string;
+    progresoRuta?: number;
+    etapaTracking?: string;
+    ubicacionMotoristaLat?: number;
+    ubicacionMotoristaLng?: number;
+    direccionMotoristaGrados?: number;
     calificaciones: Calificacion[];
   }): Viaje {
     const viaje = new Viaje(
@@ -218,23 +306,35 @@ export class Viaje {
     viaje._fechaLlegadaSegura = params.fechaLlegadaSegura
       ? new Date(params.fechaLlegadaSegura)
       : undefined;
+    viaje._pinSeguridad = params.pinSeguridad || generarPinDesdeCodigo(params.codigoViaje);
+    viaje._progresoRuta =
+      typeof params.progresoRuta === "number" ? Math.max(0, Math.min(100, params.progresoRuta)) : 0;
+    viaje._ubicacionMotoristaLat = params.ubicacionMotoristaLat;
+    viaje._ubicacionMotoristaLng = params.ubicacionMotoristaLng;
+    viaje._direccionMotoristaGrados = params.direccionMotoristaGrados ?? 0;
     viaje._calificaciones = [...params.calificaciones];
 
     switch (params.estadoNombre) {
       case "ACEPTADO":
         viaje._estado = new EstadoAceptado();
+        viaje._etapaTracking = (params.etapaTracking as EtapaTracking) || "CAMINO_ORIGEN";
         break;
       case "EN_CURSO":
         viaje._estado = new EstadoEnCurso();
+        viaje._etapaTracking = (params.etapaTracking as EtapaTracking) || "EN_VIAJE";
         break;
       case "FINALIZADO":
         viaje._estado = new EstadoFinalizado();
+        viaje._etapaTracking = "COMPLETADO";
+        viaje._progresoRuta = 100;
         break;
       case "CANCELADO":
         viaje._estado = new EstadoCancelado();
+        viaje._etapaTracking = "CANCELADO";
         break;
       default:
         viaje._estado = new EstadoSolicitado();
+        viaje._etapaTracking = "BUSCANDO";
         break;
     }
 

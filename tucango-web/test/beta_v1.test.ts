@@ -208,4 +208,78 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("Soporta login por rol/placa, disponibilidad de motorista, polilínea y tracking GPS con PIN estilo DiDi", () => {
+    const bus = new EventBus();
+    const tipos: string[] = [];
+    const desuscribir = bus.suscribir((ev) => tipos.push(ev.tipo));
+
+    const facade = new TucanGoFacade(undefined, bus);
+
+    // 1. Login rápido pasajero y motorista (por placa)
+    const sesEst = facade.autenticarUsuario("c.rivera@uniamazonia.edu.co", "pasajero");
+    assert.equal(sesEst.rol, "pasajero");
+    assert.equal(sesEst.identificacion, "1001");
+
+    const sesMot = facade.autenticarUsuario("GNX-45F", "motorista");
+    assert.equal(sesMot.rol, "motorista");
+    assert.equal(sesMot.identificacion, "2001");
+
+    assert.throws(() => facade.autenticarUsuario("no-existe-999"), /No se encontró/);
+
+    // 2. Ruta devuelve polilinea suavizada y rumbo inicial
+    const ruta = facade.calcularRutaEntreSectores("PORVENIR", "CENTRO");
+    assert.equal(ruta.polilinea.length >= 2, true);
+    assert.equal(ruta.direccionInicialGrados >= 0 && ruta.direccionInicialGrados < 360, true);
+
+    // 3. Ubicación y disponibilidad del motorista
+    const motLibre = facade.cambiarDisponibilidadMotorista("2001", false);
+    assert.equal(motLibre.disponible, false);
+    facade.cambiarDisponibilidadMotorista("2001", true);
+
+    const coord = new (facade.obtenerMotoristas()[0].ubicacionActual.constructor as any)(1.6199, -75.6050);
+    const motMovido = facade.actualizarUbicacionMotorista("2001", coord.latitud, coord.longitud);
+    assert.equal(motMovido.ubicacionActual.latitud, 1.6199);
+
+    // 4. Ciclo completo de tracking GPS en CAMINO_ORIGEN y EN_VIAJE
+    const viaje = facade.solicitarViaje(
+      "1001",
+      "Campus Porvenir - Portería Principal",
+      "Sede Centro - Edificio Administrativo",
+      1.15,
+      "estudiantil",
+      MetodoPago.EFECTIVO
+    );
+    assert.match(viaje.pinSeguridad, /^\d{4}$/);
+
+    facade.aceptarViaje(viaje.codigoViaje, "2001");
+    assert.equal(viaje.etapaTracking, "CAMINO_ORIGEN");
+
+    // No puede desconectarse con viaje activo
+    assert.throws(
+      () => facade.cambiarDisponibilidadMotorista("2001", false),
+      /mientras atiendes/i
+    );
+
+    facade.avanzarSimulacionViaje(viaje.codigoViaje, 50);
+    assert.equal(viaje.progresoRuta, 50);
+    assert.equal(typeof viaje.ubicacionMotoristaLat, "number");
+
+    facade.iniciarViaje(viaje.codigoViaje);
+    assert.equal(viaje.etapaTracking, "EN_VIAJE");
+    assert.equal(viaje.progresoRuta, 0);
+
+    facade.avanzarSimulacionViaje(viaje.codigoViaje, 40);
+    assert.equal(viaje.progresoRuta, 40);
+    facade.finalizarViaje(viaje.codigoViaje);
+    assert.equal(viaje.etapaTracking, "COMPLETADO");
+    assert.equal(viaje.progresoRuta, 100);
+
+    assert.equal(tipos.includes("USUARIO_AUTENTICADO"), true);
+    assert.equal(tipos.includes("MOTORISTA_DISPONIBILIDAD_CAMBIADA"), true);
+    assert.equal(tipos.includes("UBICACION_MOTORISTA_ACTUALIZADA"), true);
+    assert.equal(tipos.includes("TRACKING_VIAJE_ACTUALIZADO"), true);
+
+    desuscribir();
+  });
 });

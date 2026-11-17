@@ -25,6 +25,9 @@ export interface MotoristaSnapshot {
   telefono: string;
   correoInstitucional: string;
   disponible: boolean;
+  latitud?: number;
+  longitud?: number;
+  direccionGrados?: number;
   motos: MotoSnapshot[];
 }
 
@@ -48,6 +51,12 @@ export interface ViajeSnapshot {
   fechaCreacion: string;
   llegadaSeguraConfirmada: boolean;
   fechaLlegadaSegura?: string;
+  pinSeguridad?: string;
+  progresoRuta?: number;
+  etapaTracking?: string;
+  ubicacionMotoristaLat?: number;
+  ubicacionMotoristaLng?: number;
+  direccionMotoristaGrados?: number;
   pago: {
     monto: number;
     metodo: MetodoPago;

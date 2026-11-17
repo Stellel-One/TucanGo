@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TucanGo · Movilidad Universitaria Uniamazonia</title>
+  <title>TucanGo · Movilidad Moto Estilo DiDi · Uniamazonia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -38,7 +38,7 @@
             <circle cx="21" cy="21" r="1.5" fill="#FFFFFF" />
             <path
               d="M25 18C28.2 18 33.8 19.1 35 22.5C33 24.1 29 24.5 25 24V18Z"
-              fill="#C93B2B"
+              fill="#FF6600"
             />
             <path d="M25 21H29.5" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" />
           </svg>
@@ -46,9 +46,9 @@
         <div class="brand-copy">
           <div class="brand-title-row">
             <span class="brand-name">TucanGo</span>
-            <span class="badge-beta">BETA V1</span>
+            <span class="badge-beta">BETA V2 · MOTO</span>
           </div>
-          <p class="brand-subtitle">Movilidad Universitaria · Uniamazonia</p>
+          <p class="brand-subtitle">Uniamazonia · Florencia, Caquetá</p>
         </div>
       </div>
 
@@ -65,6 +65,11 @@
           <span id="sse-label">Conectando SSE</span>
         </div>
 
+        <button type="button" id="btn-sesion-topbar" class="btn-session-pill" title="Iniciar sesión o cambiar de cuenta">
+          <span class="session-avatar" id="session-avatar-initials">CR</span>
+          <span id="session-user-name">Carlos Rivera</span>
+        </button>
+
         <div class="role-switcher" role="tablist" aria-label="Selector de rol">
           <button
             type="button"
@@ -78,7 +83,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
-            <span>Vista Pasajero</span>
+            <span>Pasajero</span>
           </button>
           <button
             type="button"
@@ -94,7 +99,7 @@
               <path d="M15 6h3l2 5h-5.5l-2.5 5H6" />
               <path d="M9 17.5L11.5 11H7" />
             </svg>
-            <span>Vista Motorista</span>
+            <span>Motorista</span>
           </button>
         </div>
 
@@ -105,68 +110,101 @@
             <line x1="20" y1="8" x2="20" y2="14" />
             <line x1="23" y1="11" x2="17" y2="11" />
           </svg>
-          <span>Registrar Usuario</span>
+          <span>Registrar</span>
         </button>
       </div>
     </div>
   </header>
 
   <main class="workspace">
-    <!-- Corredor Informativo -->
-    <section class="corridor-strip">
-      <div class="corridor-left">
-        <div class="corridor-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="3 11 22 2 13 21 11 13 3 11" />
-          </svg>
-        </div>
-        <div>
-          <h1>Despacho y Movilidad Florencia</h1>
-          <p>Corredor Universitario: Campus Porvenir · Av. Circunvalar · Sede Centro · Granja Balcanes</p>
-        </div>
-      </div>
-      <div class="corridor-tags">
-        <span class="chip-mono chip-neutral">TRAZABILIDAD SQLITE WAL</span>
-        <span class="chip-mono chip-verified">PROTOCOLO SOAT ACTIVO</span>
-      </div>
-    </section>
+    <div class="didi-stage">
+      <!-- COLUMNA IZQUIERDA (MAPA INTERACTIVO ESTILO DIDI + KPIs) -->
+      <section class="map-column">
+        <div class="map-stage-card">
+          <div id="campus-map" aria-label="Mapa interactivo estilo DiDi de Florencia, Caquetá"></div>
 
-    <div class="grid-main">
-      <!-- COLUMNA IZQUIERDA (60%): MAPA INTERACTIVO + TELEMETRÍA -->
-      <div class="col-map">
-        <section class="card map-card">
-          <div class="card-header-compact">
-            <div class="card-title-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                <line x1="8" y1="2" x2="8" y2="18" />
-                <line x1="16" y1="6" x2="16" y2="22" />
+          <!-- Botones flotantes superiores del mapa (estilo DiDi) -->
+          <div class="map-floating-top">
+            <button
+              type="button"
+              id="btn-abrir-login"
+              class="map-circle-btn"
+              title="Menú de cuenta, Login y API Google Maps"
+              aria-label="Abrir login y configuración"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
               </svg>
-              <h2>Mapa de Sectores · Florencia, Caquetá</h2>
-            </div>
-            <button type="button" id="btn-centrar-mapa" class="btn-chip">Centrar Campus</button>
+            </button>
+
+            <button type="button" id="btn-map-engine-pill" class="map-engine-pill" title="Estado del motor de mapas y ruteo">
+              <span class="engine-dot"></span>
+              <span id="map-engine-label">Mapa Híbrido · OSRM</span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-abrir-login-badge"
+              class="map-promo-circle"
+              title="Beneficios y seguridad Uniamazonia"
+              aria-label="Beneficios y cuenta"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </button>
           </div>
 
-          <div class="map-frame">
-            <div id="campus-map" aria-label="Mapa interactivo de sectores Uniamazonia en Florencia"></div>
-            <div class="map-route-overlay" id="map-route-summary">
+          <!-- Botones flotantes inferiores del mapa (diana GPS + Simulador Tracking + Pill de Ruta) -->
+          <div class="map-floating-bottom">
+            <div class="map-route-pill-box" id="map-route-summary">
               <div class="route-pill">
                 <span class="route-dot"></span>
                 <strong id="overlay-dist">1.15 km</strong>
                 <span class="route-sep">·</span>
-                <span id="overlay-eta">3 min estimados</span>
+                <span id="overlay-eta">3 min</span>
               </div>
-              <p class="route-sub" id="overlay-corridor">Campus Porvenir → Sede Centro · Haz clic en los pines del mapa para cambiar ruta</p>
+              <p class="route-sub" id="overlay-corridor">Campus Porvenir → Sede Centro · Toca pines para trazar ruta</p>
+            </div>
+
+            <div class="map-floating-controls">
+              <button
+                type="button"
+                id="btn-simular-tracking"
+                class="btn-track-sim hidden"
+                title="Simular avance GPS del motorista en vivo"
+              >
+                ▶ Simular GPS
+              </button>
+              <button
+                type="button"
+                id="btn-centrar-mapa"
+                class="map-gps-btn"
+                title="Centrar GPS en ruta activa"
+                aria-label="Centrar GPS en campus"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="7" />
+                  <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+                  <line x1="12" y1="2" x2="12" y2="5" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                  <line x1="2" y1="12" x2="5" y2="12" />
+                  <line x1="19" y1="12" x2="22" y2="12" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          <div class="map-footer">
-            <span>Cuenca Río Hacha · Coordenadas reales OpenStreetMap</span>
+          <div class="map-footer-bar">
+            <span>Florencia, Caquetá · Cobertura Campus &amp; Motos Activas</span>
             <span class="mono-text" id="map-coords-readout">Lat 1.6203 N · Lon -75.6042 W</span>
           </div>
-        </section>
+        </div>
 
-        <!-- Barra de Telemetría Institucional -->
+        <!-- Barra de Telemetría Operativa -->
         <section class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
           <article class="kpi-card">
             <div class="kpi-head">
@@ -197,178 +235,374 @@
             <div class="kpi-value mono-text" id="metric-ingresos">$0</div>
           </article>
         </section>
-      </div>
+      </section>
 
-      <!-- COLUMNA DERECHA (40%): WORKSPACE OPERACIONAL DUAL -->
-      <div class="col-ops">
-        <!-- VISTA PASAJERO -->
-        <section id="panel-pasajero" class="ops-stack">
-          <div class="card">
-            <div class="card-header-compact">
-              <div>
-                <h2>Solicitar Viaje · Pasajero</h2>
-                <p class="muted-sub">Tarifa transparente regulada para comunidad Uniamazonia</p>
-              </div>
-              <span class="chip-mono chip-verified">ACTIVO</span>
-            </div>
+      <!-- COLUMNA DERECHA: BOTTOM SHEET / DOCK ESTILO DIDI -->
+      <section class="sheet-column">
+        <div class="didi-sheet">
+          <!-- Cinta superior azul estilo DiDi: "Detección continua, más protección" -->
+          <div class="safety-ribbon" id="safety-banner">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14l-3.5-3.5 1.41-1.41L11 13.17l4.59-4.59L17 10l-6 6z" />
+            </svg>
+            <span>Detección continua, más protección · Protocolo SOAT y PIN Uniamazonia</span>
+          </div>
 
-            <form id="form-solicitar" class="form-stack">
-              <div class="field-group">
-                <label for="select-estudiante">Estudiante solicitante</label>
-                <select id="select-estudiante" required></select>
-              </div>
+          <div class="sheet-surface">
+            <div class="sheet-handle" aria-hidden="true"></div>
 
-              <div class="route-selectors">
-                <div class="field-group">
-                  <label for="select-origen">Origen institucional</label>
-                  <select id="select-origen" required></select>
+            <!-- VISTA PASAJERO ESTILO DIDI -->
+            <section id="panel-pasajero" class="ops-stack">
+              <!-- Tarjeta de Seguimiento en Tiempo Real (visible cuando existe un viaje activo) -->
+              <div id="live-tracking-card" class="live-tracking-card hidden">
+                <div class="tracking-head">
+                  <div>
+                    <span class="tracking-stage-pill" id="tracking-stage-badge">BUSCANDO MOTORISTA</span>
+                    <h2 id="tracking-title">Buscando moto verificada...</h2>
+                    <p class="muted-sub" id="tracking-subtitle">Notificando a motoristas cercanos en Florencia</p>
+                  </div>
+                  <div class="pin-security-box" title="Entrega este PIN de 4 dígitos al motorista al subir">
+                    <span>PIN SEGURIDAD</span>
+                    <strong class="mono-text" id="tracking-pin">0000</strong>
+                  </div>
                 </div>
 
-                <div class="swap-row">
+                <div class="tracking-progress-wrap">
+                  <div class="tracking-progress-track">
+                    <div class="tracking-progress-fill" id="tracking-progress-bar" style="width: 0%"></div>
+                  </div>
+                  <div class="tracking-progress-meta mono-text">
+                    <span id="tracking-progress-pct">0% del tramo</span>
+                    <span id="tracking-eta-live">ETA -- min</span>
+                  </div>
+                </div>
+
+                <div id="tracking-driver-box" class="tracking-driver-box hidden">
+                  <div class="driver-identity">
+                    <div class="driver-avatar-circle" id="tracking-driver-initials">JS</div>
+                    <div>
+                      <strong id="tracking-driver-name">Motorista TucanGo</strong>
+                      <p class="muted-sub" id="tracking-moto-desc">Suzuki GN 125 · SOAT Vigente</p>
+                    </div>
+                  </div>
+                  <div class="colombia-plate" id="tracking-moto-plate">GNX-45F</div>
+                </div>
+
+                <div class="tracking-actions" id="tracking-actions-row"></div>
+              </div>
+
+              <!-- Buscador DiDi: ¿A dónde vamos? -->
+              <div class="didi-search-box" id="didi-search-trigger" role="button" tabindex="0">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <div class="search-text-group">
+                  <span class="search-placeholder">¿A dónde vamos?</span>
+                  <small id="search-active-summary">Campus Porvenir → Sede Centro · Moto Estudiantil</small>
+                </div>
+                <span class="search-moto-chip">MOTO</span>
+              </div>
+
+              <!-- Banner de tarifa inteligente estilo DiDi -->
+              <button type="button" class="didi-smart-banner" id="btn-tarifa-inteligente">
+                <div class="smart-left">
+                  <span class="smart-ai-badge">IA</span>
+                  <span>Deja que Tarifa Inteligente optimice tu viaje</span>
+                </div>
+                <span class="smart-arrow">&rsaquo;</span>
+              </button>
+
+              <!-- Accesos rápidos horizontales estilo DiDi (Casa / Campus / Elegir cuenta) -->
+              <div class="didi-shortcuts-row" aria-label="Destinos rápidos">
+                <button type="button" class="shortcut-pill" data-quick-dest="LA_VEGA">
+                  <span>🏠</span> La Vega
+                </button>
+                <button type="button" class="shortcut-pill" data-quick-dest="PORVENIR">
+                  <span>🎓</span> Porvenir
+                </button>
+                <button type="button" class="shortcut-pill" data-quick-dest="CENTRO">
+                  <span>🏛️</span> Centro
+                </button>
+                <button type="button" class="shortcut-pill" data-quick-dest="BALCANES">
+                  <span>🌾</span> Balcanes
+                </button>
+                <button type="button" class="shortcut-pill" id="btn-elegir-cuenta">
+                  <span>👤</span> Cuenta
+                </button>
+              </div>
+
+              <!-- Destinos recientes estilo DiDi con ícono de reloj -->
+              <div class="recent-places-list">
+                <button type="button" class="recent-place-item" data-recent-route="PORVENIR|TERMINAL">
+                  <span class="clock-badge" aria-hidden="true">🕒</span>
+                  <div>
+                    <strong>Terminal de Transportes de Florencia</strong>
+                    <small>Av. Circunvalar Sur · ~3 min en moto</small>
+                  </div>
+                </button>
+                <button type="button" class="recent-place-item" data-recent-route="PORVENIR|PLAZA_PIZARRO">
+                  <span class="clock-badge" aria-hidden="true">🕒</span>
+                  <div>
+                    <strong>Plaza Pizarro / Centro Comercial</strong>
+                    <small>Parque Santander · Zona comercial Florencia</small>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Configurador completo de viaje y estrategias -->
+              <form id="form-solicitar" class="form-stack didi-quote-panel">
+                <div class="field-group">
+                  <label for="select-estudiante">Pasajero Uniamazonia conectado</label>
+                  <select id="select-estudiante" required></select>
+                </div>
+
+                <div class="route-selectors">
+                  <div class="field-group">
+                    <label for="select-origen">Punto de recogida (Origen)</label>
+                    <select id="select-origen" required></select>
+                  </div>
+
+                  <div class="swap-row">
+                    <button
+                      type="button"
+                      id="btn-intercambiar-ruta"
+                      class="btn-swap"
+                      title="Intercambiar origen y destino"
+                      aria-label="Intercambiar origen y destino"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M7 16V4M7 4L3 8M7 4l4 4" />
+                        <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
+                      </svg>
+                    </button>
+                    <span class="route-meta-chip mono-text" id="preview-ruta-km">1.15 km · 3 min</span>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="select-destino">Destino campus / sector</label>
+                    <select id="select-destino" required></select>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label>Modalidad DiDi Moto / Estrategia tarifaria</label>
+                  <div class="strategy-grid">
+                    <label class="strategy-option">
+                      <input type="radio" name="tarifa" value="estudiantil" checked />
+                      <span class="strategy-body">
+                        <strong>TucanGo Moto Fija</strong>
+                        <small class="mono-text">$2.500 COP</small>
+                      </span>
+                    </label>
+                    <label class="strategy-option">
+                      <input type="radio" name="tarifa" value="distancia" />
+                      <span class="strategy-body">
+                        <strong>Por Kilómetro</strong>
+                        <small class="mono-text">$800 / km + base</small>
+                      </span>
+                    </label>
+                    <label class="strategy-option">
+                      <input type="radio" name="tarifa" value="lluvia" />
+                      <span class="strategy-body">
+                        <strong>Dinámica Lluvia</strong>
+                        <small class="mono-text">+$1.200 recargo</small>
+                      </span>
+                    </label>
+                    <label class="strategy-option">
+                      <input type="radio" name="tarifa" value="nocturna" />
+                      <span class="strategy-body">
+                        <strong>Nocturna</strong>
+                        <small class="mono-text">+$1.500 seguridad</small>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label>Método de pago</label>
+                  <div class="payment-grid" role="radiogroup" aria-label="Método de pago">
+                    <label class="payment-option">
+                      <input type="radio" name="metodoPago" value="EFECTIVO" checked />
+                      <span>Efectivo</span>
+                    </label>
+                    <label class="payment-option">
+                      <input type="radio" name="metodoPago" value="NEQUI" />
+                      <span>Nequi</span>
+                    </label>
+                    <label class="payment-option">
+                      <input type="radio" name="metodoPago" value="DAVIPLATA" />
+                      <span>Daviplata</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="fare-summary-box">
+                  <div>
+                    <span class="fare-caption">Tarifa estimada del trayecto</span>
+                    <strong class="fare-subnote">Incluye PIN de abordaje, trazabilidad GPS y SOAT</strong>
+                  </div>
+                  <div class="fare-amount mono-text" id="preview-tarifa-cop">$2.500 COP</div>
+                </div>
+
+                <button type="submit" id="btn-solicitar-viaje" class="btn-didi-cta">
+                  Pedir Moto TucanGo Ahora
+                </button>
+              </form>
+
+              <!-- Tarjetas promocionales estilo DiDi adaptadas a Uniamazonia -->
+              <div class="didi-promo-grid" id="didi-promo-cards">
+                <article class="promo-card promo-orange">
+                  <span class="promo-tag">TucanGo Campus</span>
+                  <strong>Tarifa plana estudiantil $2.500</strong>
+                  <small>Corredor Porvenir ↔ Centro sin recargos ocultos</small>
+                </article>
+                <article class="promo-card promo-gold">
+                  <span class="promo-tag">Protección Activa</span>
+                  <strong>PIN 4 dígitos + SOAT verificado</strong>
+                  <small>Seguimiento GPS continuo hasta llegar a portería</small>
+                </article>
+              </div>
+            </section>
+
+            <!-- VISTA MOTORISTA (DIDI MOTO CONDUCTOR HUD) -->
+            <section id="panel-motorista" class="ops-stack hidden">
+              <div class="driver-hud-card">
+                <div class="card-header-compact">
+                  <div>
+                    <h2>DiDi Moto HUD · Motorista</h2>
+                    <p class="muted-sub">Radar en tiempo real y navegación hacia el pasajero</p>
+                  </div>
+                  <span class="chip-mono chip-verified" id="driver-soat-badge">SOAT VIGENTE</span>
+                </div>
+
+                <div class="driver-online-bar">
+                  <div>
+                    <strong id="driver-online-status-label">En línea · Recibiendo pedidos</strong>
+                    <small class="mono-text" id="driver-coords-chip">Lat 1.6192 · Lon -75.6058</small>
+                  </div>
                   <button
                     type="button"
-                    id="btn-intercambiar-ruta"
-                    class="btn-swap"
-                    title="Intercambiar origen y destino"
-                    aria-label="Intercambiar origen y destino"
+                    id="btn-toggle-disponibilidad"
+                    class="toggle-online-btn active"
+                    aria-pressed="true"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M7 16V4M7 4L3 8M7 4l4 4" />
-                      <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
-                    </svg>
+                    <span class="toggle-dot"></span>
+                    <span id="toggle-disponibilidad-text">En línea</span>
                   </button>
-                  <span class="route-meta-chip mono-text" id="preview-ruta-km">1.15 km · 3 min</span>
                 </div>
 
                 <div class="field-group">
-                  <label for="select-destino">Destino campus / sector</label>
-                  <select id="select-destino" required></select>
+                  <label for="select-motorista">Motorista en servicio</label>
+                  <select id="select-motorista"></select>
+                  <p class="driver-moto-summary mono-text" id="driver-moto-info"></p>
+                </div>
+
+                <div id="driver-active-box" class="driver-active-box hidden">
+                  <div class="driver-active-head">
+                    <span class="chip-mono chip-neutral" id="driver-trip-code">TUC-000</span>
+                    <span class="chip-mono chip-ochre-soft" id="driver-trip-state">ACEPTADO</span>
+                    <span class="chip-mono chip-verified" id="driver-trip-pin">PIN: 0000</span>
+                  </div>
+                  <p class="driver-stage-copy" id="driver-tracking-stage-text">Dirígete al punto de recogida del estudiante</p>
+                  <p id="driver-trip-pax"></p>
+                  <p id="driver-trip-route"></p>
+                  <p id="driver-trip-price" class="mono-text"></p>
+                  <div class="driver-progress-wrap">
+                    <div class="tracking-progress-track">
+                      <div class="tracking-progress-fill" id="driver-progress-bar" style="width: 0%"></div>
+                    </div>
+                  </div>
+                  <button type="button" id="btn-driver-simular-paso" class="btn-secondary btn-full">
+                    📍 Avanzar / Simular Recorrido GPS (+25%)
+                  </button>
+                  <div class="driver-action-row">
+                    <button type="button" id="btn-iniciar-viaje" class="btn-primary">Iniciar Trayecto</button>
+                    <button type="button" id="btn-finalizar-viaje" class="btn-leaf">Finalizar y Cobrar</button>
+                  </div>
+                </div>
+
+                <div class="radar-section">
+                  <div class="radar-header">
+                    <h3>Radar de Solicitudes Cercanas</h3>
+                    <span class="chip-mono chip-crimson-soft" id="radar-count">0 pendientes</span>
+                  </div>
+                  <div id="radar-solicitudes-list" class="rides-list"></div>
                 </div>
               </div>
+            </section>
 
-              <div class="field-group">
-                <label>Estrategia tarifaria (Strategy Pattern)</label>
-                <div class="strategy-grid">
-                  <label class="strategy-option">
-                    <input type="radio" name="tarifa" value="estudiantil" checked />
-                    <span class="strategy-body">
-                      <strong>Estudiantil Fija</strong>
-                      <small class="mono-text">$2.500 COP</small>
-                    </span>
-                  </label>
-                  <label class="strategy-option">
-                    <input type="radio" name="tarifa" value="distancia" />
-                    <span class="strategy-body">
-                      <strong>Por Kilómetro</strong>
-                      <small class="mono-text">$800 / km + base</small>
-                    </span>
-                  </label>
-                  <label class="strategy-option">
-                    <input type="radio" name="tarifa" value="lluvia" />
-                    <span class="strategy-body">
-                      <strong>Dinámica Lluvia</strong>
-                      <small class="mono-text">+$1.200 recargo</small>
-                    </span>
-                  </label>
-                  <label class="strategy-option">
-                    <input type="radio" name="tarifa" value="nocturna" />
-                    <span class="strategy-body">
-                      <strong>Nocturna</strong>
-                      <small class="mono-text">+$1.500 seguridad</small>
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label>Método de pago</label>
-                <div class="payment-grid" role="radiogroup" aria-label="Método de pago">
-                  <label class="payment-option">
-                    <input type="radio" name="metodoPago" value="EFECTIVO" checked />
-                    <span>Efectivo</span>
-                  </label>
-                  <label class="payment-option">
-                    <input type="radio" name="metodoPago" value="NEQUI" />
-                    <span>Nequi</span>
-                  </label>
-                  <label class="payment-option">
-                    <input type="radio" name="metodoPago" value="DAVIPLATA" />
-                    <span>Daviplata</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="fare-summary-box">
+            <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD -->
+            <section class="feed-section">
+              <div class="card-header-compact">
                 <div>
-                  <span class="fare-caption">Tarifa estimada del trayecto</span>
-                  <strong class="fare-subnote">Incluye trazabilidad y verificación de placa</strong>
+                  <h3>Viajes y Trazabilidad GPS</h3>
+                  <p class="muted-sub">Historial persistente SQLite WAL y confirmación de llegada segura</p>
                 </div>
-                <div class="fare-amount mono-text" id="preview-tarifa-cop">$2.500 COP</div>
+                <span class="chip-mono chip-neutral" id="feed-count">0 REGISTROS</span>
               </div>
 
-              <button type="submit" id="btn-solicitar-viaje" class="btn-primary">
-                Solicitar Viaje en Campus
-              </button>
-            </form>
+              <div id="viajes-feed" class="rides-list"></div>
+            </section>
           </div>
-        </section>
-
-        <!-- VISTA MOTORISTA -->
-        <section id="panel-motorista" class="ops-stack hidden">
-          <div class="card">
-            <div class="card-header-compact">
-              <div>
-                <h2>Panel del Motorista · Flota Verificada</h2>
-                <p class="muted-sub">Control de estado y solicitudes activas en tiempo real</p>
-              </div>
-              <span class="chip-mono chip-verified" id="driver-soat-badge">SOAT VIGENTE</span>
-            </div>
-
-            <div class="field-group">
-              <label for="select-motorista">Motorista en servicio</label>
-              <select id="select-motorista"></select>
-              <p class="driver-moto-summary mono-text" id="driver-moto-info"></p>
-            </div>
-
-            <div id="driver-active-box" class="driver-active-box hidden">
-              <div class="driver-active-head">
-                <span class="chip-mono" id="driver-trip-code">TUC-000</span>
-                <span class="chip-mono chip-status" id="driver-trip-state">ACEPTADO</span>
-              </div>
-              <p id="driver-trip-pax"></p>
-              <p id="driver-trip-route"></p>
-              <p id="driver-trip-price" class="mono-text"></p>
-              <div class="driver-action-row">
-                <button type="button" id="btn-iniciar-viaje" class="btn-primary">Iniciar Trayecto</button>
-                <button type="button" id="btn-finalizar-viaje" class="btn-leaf">Finalizar y Cobrar</button>
-              </div>
-            </div>
-
-            <div class="radar-section">
-              <div class="radar-header">
-                <h3>Radar de Solicitudes en Cola</h3>
-                <span class="chip-mono chip-crimson-soft" id="radar-count">0 pendientes</span>
-              </div>
-              <div id="radar-solicitudes-list" class="rides-list"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD -->
-        <section class="card">
-          <div class="card-header-compact">
-            <div>
-              <h2>Viajes Activos y Trazabilidad</h2>
-              <p class="muted-sub">Historial persistente en campus y confirmación de llegada segura</p>
-            </div>
-            <span class="chip-mono chip-neutral" id="feed-count">0 REGISTROS</span>
-          </div>
-
-          <div id="viajes-feed" class="rides-list"></div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   </main>
+
+  <!-- MODAL DE LOGIN / CUENTA Y CONFIG GOOGLE MAPS -->
+  <div id="modal-login" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-login-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-login-title">Acceso TucanGo · Sesión &amp; Mapas</h3>
+          <p class="muted-sub">Ingresa como Estudiante o Motorista con 1 clic o por credencial</p>
+        </div>
+        <button type="button" class="btn-close" id="btn-cerrar-login" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <div class="modal-tabs modal-tabs-3">
+        <button type="button" class="modal-tab active" data-login-tab="rapido">Acceso Rápido</button>
+        <button type="button" class="modal-tab" data-login-tab="credenciales">Login Manual</button>
+        <button type="button" class="modal-tab" data-login-tab="googlemaps">APIs Google Maps</button>
+      </div>
+
+      <div id="login-tab-rapido" class="form-stack">
+        <p class="muted-sub">Cuentas verificadas Uniamazonia listas para probar el flujo completo:</p>
+        <div class="quick-accounts-list" id="quick-accounts-list"></div>
+      </div>
+
+      <form id="form-login" class="form-stack hidden">
+        <div class="field-group">
+          <label for="login-rol">Perfil</label>
+          <select id="login-rol">
+            <option value="pasajero">Pasajero (Estudiante Uniamazonia)</option>
+            <option value="motorista">Motorista (Conductor + Moto SOAT)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label for="login-identificador">Cédula, Código Estudiantil, Placa o Correo</label>
+          <input id="login-identificador" type="text" required placeholder="Ej. 1001 o c.rivera@uniamazonia.edu.co o GNX-45F" />
+        </div>
+        <button type="submit" class="btn-didi-cta">Iniciar Sesión en TucanGo</button>
+      </form>
+
+      <div id="login-tab-googlemaps" class="form-stack hidden">
+        <div class="gmaps-info-box">
+          <strong>Motor actual: <span id="gmaps-status-badge" class="mono-text">Carto Voyager + OSRM</span></strong>
+          <p class="muted-sub">
+            Recrea la apariencia vectorial de DiDi y traza rutas calle-por-calle sin costo. Para activar renderizado nativo con Google Maps Platform, define <code>GOOGLE_MAPS_API_KEY</code> en el entorno y habilita estas 4 APIs en Google Cloud:
+          </p>
+          <ul class="gmaps-api-list">
+            <li>Maps JavaScript API (lienzo vectorial y marcadores)</li>
+            <li>Routes / Directions API (rutas calle-por-calle y ETA con tráfico)</li>
+            <li>Places API (autocompletado "¿A dónde vamos?")</li>
+            <li>Roads API — Snap to Roads (ajuste GPS de moto a la vía)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL DE REGISTRO DE USUARIO -->
   <div id="modal-registro" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-reg-title">

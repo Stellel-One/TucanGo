@@ -1,6 +1,7 @@
 import { Estudiante } from "../domain/model/Estudiante.ts";
 import { Motorista } from "../domain/model/Motorista.ts";
 import { Moto } from "../domain/model/Moto.ts";
+import { Coordenada } from "../domain/model/Coordenada.ts";
 import { Calificacion } from "../domain/model/Calificacion.ts";
 import { MetodoPago, Pago, EstadoPago } from "../domain/model/Pago.ts";
 import {
@@ -81,6 +82,8 @@ export class TucanGoFacade {
     destino: SectorCampus;
     distanciaKm: number;
     tiempoEstimadoMin: number;
+    polilinea: Array<{ latitud: number; longitud: number }>;
+    direccionInicialGrados: number;
   } {
     const origen = buscarSectorPorId(origenId);
     const destino = buscarSectorPorId(destinoId);
@@ -94,8 +97,98 @@ export class TucanGoFacade {
     const distanciaKm = origen.coordenada.distanciaKmHacia(destino.coordenada);
     const tiempoEstimadoMin =
       distanciaKm === 0 ? 0 : Math.max(3, Math.round((distanciaKm / 24) * 60));
+    const polilinea = TucanGoFacade.construirPolilinea(origen.coordenada, destino.coordenada, 10);
+    const p0 = polilinea[0];
+    const p1 = polilinea[1] ?? p0;
+    const direccionInicialGrados = TucanGoFacade.calcularRumbo(
+      p0.latitud,
+      p0.longitud,
+      p1.latitud,
+      p1.longitud
+    );
 
-    return { origen, destino, distanciaKm, tiempoEstimadoMin };
+    return {
+      origen,
+      destino,
+      distanciaKm,
+      tiempoEstimadoMin,
+      polilinea,
+      direccionInicialGrados
+    };
+  }
+
+  private static calcularRumbo(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    if (lat1 === lat2 && lng1 === lng2) return 0;
+    const rLat1 = (lat1 * Math.PI) / 180;
+    const rLat2 = (lat2 * Math.PI) / 180;
+    const dLon = ((lng2 - lng1) * Math.PI) / 180;
+    const y = Math.sin(dLon) * Math.cos(rLat2);
+    const x =
+      Math.cos(rLat1) * Math.sin(rLat2) -
+      Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLon);
+    return Math.round((((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360);
+  }
+
+  private static construirPolilinea(
+    origen: Coordenada,
+    destino: Coordenada,
+    pasos: number = 10
+  ): Array<{ latitud: number; longitud: number }> {
+    const puntos: Array<{ latitud: number; longitud: number }> = [];
+    const dLat = destino.latitud - origen.latitud;
+    const dLng = destino.longitud - origen.longitud;
+    if (dLat === 0 && dLng === 0) {
+      return [{ latitud: origen.latitud, longitud: origen.longitud }];
+    }
+
+    const longitudVector = Math.hypot(dLat, dLng) || 1;
+    const perpLat = -dLng / longitudVector;
+    const perpLng = dLat / longitudVector;
+    const curvaturaMax = Math.min(0.0022, longitudVector * 0.14);
+
+    for (let i = 0; i <= pasos; i++) {
+      const t = i / pasos;
+      const offset = Math.sin(Math.PI * t) * curvaturaMax;
+      puntos.push({
+        latitud: Number((origen.latitud + dLat * t + perpLat * offset).toFixed(6)),
+        longitud: Number((origen.longitud + dLng * t + perpLng * offset).toFixed(6))
+      });
+    }
+    return puntos;
+  }
+
+  private static interpolarSobrePolilinea(
+    puntos: Array<{ latitud: number; longitud: number }>,
+    progreso: number
+  ): { latitud: number; longitud: number; direccionGrados: number } {
+    if (puntos.length === 0) {
+      return { latitud: 1.6203, longitud: -75.6042, direccionGrados: 0 };
+    }
+    if (puntos.length === 1) {
+      return { latitud: puntos[0].latitud, longitud: puntos[0].longitud, direccionGrados: 0 };
+    }
+    const clamped = Math.max(0, Math.min(100, progreso)) / 100;
+    const segFloat = clamped * (puntos.length - 1);
+    const idx = Math.min(puntos.length - 2, Math.floor(segFloat));
+    const localT = segFloat - idx;
+    const a = puntos[idx];
+    const b = puntos[idx + 1];
+    const latitud = Number((a.latitud + (b.latitud - a.latitud) * localT).toFixed(6));
+    const longitud = Number((a.longitud + (b.longitud - a.longitud) * localT).toFixed(6));
+    const direccionGrados = TucanGoFacade.calcularRumbo(a.latitud, a.longitud, b.latitud, b.longitud);
+    return { latitud, longitud, direccionGrados };
+  }
+
+  private resolverSectorPorTexto(valor: string, fallbackId: string): SectorCampus {
+    const norm = (valor || "").trim().toLowerCase();
+    const match = SECTORES_FLORENCIA.find(
+      (s) =>
+        s.id.toLowerCase() === norm ||
+        s.nombre.toLowerCase() === norm ||
+        norm.includes(s.id.toLowerCase().replace("_", " ")) ||
+        s.nombre.toLowerCase().includes(norm)
+    );
+    return match ?? buscarSectorPorId(fallbackId) ?? SECTORES_FLORENCIA[0];
   }
 
   public cotizarTarifa(distanciaKm: number, tipoTarifa: string = "estudiantil"): number {
@@ -133,6 +226,9 @@ export class TucanGoFacade {
         telefono: m.telefono,
         correoInstitucional: m.correoInstitucional,
         disponible: m.disponible,
+        latitud: m.ubicacionActual.latitud,
+        longitud: m.ubicacionActual.longitud,
+        direccionGrados: m.direccionGrados,
         motos: m.motos.map((moto) => ({
           placa: moto.placa,
           marca: moto.marca,
@@ -157,6 +253,12 @@ export class TucanGoFacade {
         fechaCreacion: v.fechaCreacion.toISOString(),
         llegadaSeguraConfirmada: v.llegadaSeguraConfirmada,
         fechaLlegadaSegura: v.fechaLlegadaSegura?.toISOString(),
+        pinSeguridad: v.pinSeguridad,
+        progresoRuta: v.progresoRuta,
+        etapaTracking: v.etapaTracking,
+        ubicacionMotoristaLat: v.ubicacionMotoristaLat,
+        ubicacionMotoristaLng: v.ubicacionMotoristaLng,
+        direccionMotoristaGrados: v.direccionMotoristaGrados,
         pago: {
           monto: v.pago.monto,
           metodo: v.pago.metodo,
@@ -198,12 +300,18 @@ export class TucanGoFacade {
     }
 
     for (const motSnap of snapshot.motoristas) {
+      const ubicacion =
+        typeof motSnap.latitud === "number" && typeof motSnap.longitud === "number"
+          ? new Coordenada(motSnap.latitud, motSnap.longitud)
+          : undefined;
       const mot = new Motorista(
         motSnap.identificacion,
         motSnap.nombre,
         motSnap.telefono,
         motSnap.correoInstitucional,
-        motSnap.disponible
+        motSnap.disponible,
+        ubicacion,
+        motSnap.direccionGrados ?? 0
       );
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
@@ -251,6 +359,12 @@ export class TucanGoFacade {
         fechaCreacion: vSnap.fechaCreacion,
         llegadaSeguraConfirmada: Boolean(vSnap.llegadaSeguraConfirmada),
         fechaLlegadaSegura: vSnap.fechaLlegadaSegura,
+        pinSeguridad: vSnap.pinSeguridad,
+        progresoRuta: vSnap.progresoRuta,
+        etapaTracking: vSnap.etapaTracking,
+        ubicacionMotoristaLat: vSnap.ubicacionMotoristaLat,
+        ubicacionMotoristaLng: vSnap.ubicacionMotoristaLng,
+        direccionMotoristaGrados: vSnap.direccionMotoristaGrados,
         calificaciones
       });
       this._viajes.set(viaje.codigoViaje, viaje);
@@ -279,12 +393,15 @@ export class TucanGoFacade {
     this._estudiantes.set(est1.identificacion, est1);
     this._estudiantes.set(est2.identificacion, est2);
 
-    // 2 Motoristas con sus motos
+    // 3 Motoristas con sus motos geolocalizadas en Florencia
     const mot1 = new Motorista(
       "2001",
       "Jhonatan 'El Tucán' Silva",
       "3201234567",
-      "j.silva@uniamazonia.edu.co"
+      "j.silva@uniamazonia.edu.co",
+      true,
+      new Coordenada(1.6192, -75.6058),
+      215
     );
     const moto1 = new Moto("GNX-45F", "Suzuki", "GN 125", 125, true);
     mot1.registrarMoto(moto1);
@@ -293,13 +410,29 @@ export class TucanGoFacade {
       "2002",
       "Diana Marcela Castro",
       "3109876543",
-      "d.castro@uniamazonia.edu.co"
+      "d.castro@uniamazonia.edu.co",
+      true,
+      new Coordenada(1.6151, -75.6115),
+      45
     );
     const moto2 = new Moto("TUK-89D", "Yamaha", "Crypton FI", 115, true);
     mot2.registrarMoto(moto2);
 
+    const mot3 = new Motorista(
+      "2003",
+      "Miguel Ángel Parra",
+      "3154442211",
+      "m.parra@uniamazonia.edu.co",
+      true,
+      new Coordenada(1.6229, -75.6112),
+      135
+    );
+    const moto3 = new Moto("FLR-92H", "Bajaj", "Pulsar NS 160", 160, true, true, "SOAT-2026-PUL");
+    mot3.registrarMoto(moto3);
+
     this._motoristas.set(mot1.identificacion, mot1);
     this._motoristas.set(mot2.identificacion, mot2);
+    this._motoristas.set(mot3.identificacion, mot3);
   }
 
   // --- Casos de Uso: Estudiantes y Motoristas ---
@@ -525,6 +658,209 @@ export class TucanGoFacade {
       codigo: viaje.codigoViaje,
       puntuacion,
       autorId
+    });
+    return viaje;
+  }
+
+  public autenticarUsuario(
+    identificador: string,
+    rolPreferido?: "pasajero" | "motorista"
+  ): {
+    rol: "pasajero" | "motorista";
+    identificacion: string;
+    nombre: string;
+    correo: string;
+    telefono: string;
+    detalle: string;
+  } {
+    const clave = (identificador || "").trim().toLowerCase();
+    if (!clave) {
+      throw new Error("Ingresa tu cédula, código estudiantil o correo institucional.");
+    }
+
+    const buscarEst = () =>
+      this.obtenerEstudiantes().find(
+        (e) =>
+          e.identificacion.toLowerCase() === clave ||
+          e.correoInstitucional.toLowerCase() === clave ||
+          e.telefono.toLowerCase() === clave ||
+          e.codigoEstudiantil.toLowerCase() === clave
+      );
+
+    const buscarMot = () =>
+      this.obtenerMotoristas().find(
+        (m) =>
+          m.identificacion.toLowerCase() === clave ||
+          m.correoInstitucional.toLowerCase() === clave ||
+          m.telefono.toLowerCase() === clave ||
+          (m.obtenerMotoActiva()?.placa || "").toLowerCase() === clave
+      );
+
+    if (rolPreferido !== "motorista") {
+      const est = buscarEst();
+      if (est) {
+        this.emitirEvento("USUARIO_AUTENTICADO", {
+          rol: "pasajero",
+          identificacion: est.identificacion,
+          nombre: est.nombre
+        });
+        return {
+          rol: "pasajero",
+          identificacion: est.identificacion,
+          nombre: est.nombre,
+          correo: est.correoInstitucional,
+          telefono: est.telefono,
+          detalle: `${est.carrera} · ${est.codigoEstudiantil}`
+        };
+      }
+      if (rolPreferido === "pasajero") {
+        throw new Error(`No existe un estudiante registrado con '${identificador}'.`);
+      }
+    }
+
+    const mot = buscarMot();
+    if (mot) {
+      const moto = mot.obtenerMotoActiva();
+      this.emitirEvento("USUARIO_AUTENTICADO", {
+        rol: "motorista",
+        identificacion: mot.identificacion,
+        nombre: mot.nombre
+      });
+      return {
+        rol: "motorista",
+        identificacion: mot.identificacion,
+        nombre: mot.nombre,
+        correo: mot.correoInstitucional,
+        telefono: mot.telefono,
+        detalle: moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo"
+      };
+    }
+
+    throw new Error(`No se encontró ningún usuario registrado para '${identificador}'.`);
+  }
+
+  public cambiarDisponibilidadMotorista(motoristaId: string, disponible: boolean): Motorista {
+    const motorista = this._motoristas.get(motoristaId);
+    if (!motorista) {
+      throw new Error(`Motorista con ID ${motoristaId} no encontrado.`);
+    }
+    const viajeActivo = this.obtenerTodosLosViajes().find(
+      (v) =>
+        v.motorista?.identificacion === motoristaId &&
+        (v.estado.nombre === "ACEPTADO" || v.estado.nombre === "EN_CURSO")
+    );
+    if (!disponible && viajeActivo) {
+      throw new Error(`No puedes desconectarte mientras atiendes el viaje ${viajeActivo.codigoViaje}.`);
+    }
+    motorista.disponible = Boolean(disponible);
+    this.persistir();
+    this.emitirEvento("MOTORISTA_DISPONIBILIDAD_CAMBIADA", {
+      motoristaId: motorista.identificacion,
+      disponible: motorista.disponible
+    });
+    return motorista;
+  }
+
+  public actualizarUbicacionMotorista(
+    motoristaId: string,
+    latitud: number,
+    longitud: number,
+    direccionGrados?: number
+  ): Motorista {
+    const motorista = this._motoristas.get(motoristaId);
+    if (!motorista) {
+      throw new Error(`Motorista con ID ${motoristaId} no encontrado.`);
+    }
+    const coord = new Coordenada(latitud, longitud);
+    motorista.actualizarUbicacion(coord, direccionGrados);
+
+    const viajeActivo = this.obtenerTodosLosViajes().find(
+      (v) =>
+        v.motorista?.identificacion === motoristaId &&
+        (v.estado.nombre === "ACEPTADO" || v.estado.nombre === "EN_CURSO")
+    );
+    if (viajeActivo) {
+      viajeActivo.actualizarTracking(
+        viajeActivo.progresoRuta,
+        coord.latitud,
+        coord.longitud,
+        motorista.direccionGrados
+      );
+    }
+
+    this.persistir();
+    this.emitirEvento("UBICACION_MOTORISTA_ACTUALIZADA", {
+      motoristaId: motorista.identificacion,
+      latitud: coord.latitud,
+      longitud: coord.longitud,
+      direccionGrados: motorista.direccionGrados
+    });
+    return motorista;
+  }
+
+  public avanzarSimulacionViaje(codigoViaje: string, incrementoProgreso: number = 25): Viaje {
+    const viaje = this._viajes.get(codigoViaje);
+    if (!viaje) {
+      throw new Error(`Viaje con código ${codigoViaje} no existe.`);
+    }
+    if (!viaje.motorista) {
+      throw new Error(`El viaje ${codigoViaje} aún no tiene un motorista asignado.`);
+    }
+    const estado = viaje.estado.nombre;
+    if (estado !== "ACEPTADO" && estado !== "EN_CURSO") {
+      throw new Error(`El viaje ${codigoViaje} en estado ${estado} no admite seguimiento en ruta.`);
+    }
+
+    const sectorOrigen = this.resolverSectorPorTexto(viaje.origen, "PORVENIR");
+    const sectorDestino = this.resolverSectorPorTexto(viaje.destino, "CENTRO");
+    const paso = Math.max(1, Math.min(100, Number(incrementoProgreso) || 25));
+    const progresoActual = viaje.progresoRuta;
+    const nuevoProgreso = Math.min(100, progresoActual + paso);
+
+    let lat = sectorOrigen.coordenada.latitud;
+    let lng = sectorOrigen.coordenada.longitud;
+    let rumbo = viaje.motorista.direccionGrados;
+
+    if (estado === "ACEPTADO") {
+      const actualLat = viaje.ubicacionMotoristaLat ?? viaje.motorista.ubicacionActual.latitud;
+      const actualLng = viaje.ubicacionMotoristaLng ?? viaje.motorista.ubicacionActual.longitud;
+      const restante = Math.max(1, 100 - progresoActual);
+      const fraccionPaso = Math.min(1, paso / restante);
+      lat = Number(
+        (actualLat + (sectorOrigen.coordenada.latitud - actualLat) * fraccionPaso).toFixed(6)
+      );
+      lng = Number(
+        (actualLng + (sectorOrigen.coordenada.longitud - actualLng) * fraccionPaso).toFixed(6)
+      );
+      rumbo = TucanGoFacade.calcularRumbo(
+        actualLat,
+        actualLng,
+        sectorOrigen.coordenada.latitud,
+        sectorOrigen.coordenada.longitud
+      );
+    } else {
+      const polilinea = TucanGoFacade.construirPolilinea(
+        sectorOrigen.coordenada,
+        sectorDestino.coordenada,
+        12
+      );
+      const pos = TucanGoFacade.interpolarSobrePolilinea(polilinea, nuevoProgreso);
+      lat = pos.latitud;
+      lng = pos.longitud;
+      rumbo = pos.direccionGrados;
+    }
+
+    viaje.actualizarTracking(nuevoProgreso, lat, lng, rumbo);
+    viaje.motorista.actualizarUbicacion(new Coordenada(lat, lng), rumbo);
+    this.persistir();
+    this.emitirEvento("TRACKING_VIAJE_ACTUALIZADO", {
+      codigo: viaje.codigoViaje,
+      etapaTracking: viaje.etapaTracking,
+      progresoRuta: viaje.progresoRuta,
+      latitud: lat,
+      longitud: lng,
+      direccionGrados: rumbo,
+      motoristaId: viaje.motorista.identificacion
     });
     return viaje;
   }
