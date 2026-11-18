@@ -1586,6 +1586,16 @@ export function crearServidor(
         const auth = requerirRol(req, res, facade, "motorista");
         if (!auth) return;
 
+        // El PIN tiene 9.000 combinaciones: se limita el intento por conductor.
+        const ratePin = verificarRateLimit(`pin:${auth.identificacion}`, 5, 60000);
+        if (!ratePin.permitido) {
+          sendJson(res, 429, {
+            error: `Demasiados intentos de PIN. Espera ${ratePin.retryAfterSegundos} segundos.`
+          });
+          return;
+        }
+        registrarFalloRateLimit(`pin:${auth.identificacion}`, 5, 60000);
+
         const body = await parseJsonBody<{ codigoViaje: string; pinSeguridad?: string }>(req);
         if (!body.pinSeguridad || !body.pinSeguridad.trim()) {
           sendJson(res, 422, {
@@ -1596,6 +1606,7 @@ export function crearServidor(
         if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "motorista")) return;
 
         const viaje = facade.iniciarViaje(body.codigoViaje, body.pinSeguridad);
+        resetearRateLimit(`pin:${auth.identificacion}`);
         sendJson(res, 200, {
           mensaje: "Viaje en marcha",
           codigo: viaje.codigoViaje,

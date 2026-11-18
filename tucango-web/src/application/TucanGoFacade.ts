@@ -1893,6 +1893,7 @@ export class TucanGoFacade {
     }
     this.emitirEvento("UBICACION_MOTORISTA_ACTUALIZADA", {
       motoristaId: motorista.identificacion,
+      estudianteId: viajeActivo?.estudiante.identificacion ?? null,
       latitud: coord.latitud,
       longitud: coord.longitud,
       direccionGrados: motorista.direccionGrados
