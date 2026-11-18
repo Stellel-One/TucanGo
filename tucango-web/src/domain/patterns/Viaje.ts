@@ -312,7 +312,7 @@ export class Viaje {
     viaje._fechaLlegadaSegura = params.fechaLlegadaSegura
       ? new Date(params.fechaLlegadaSegura)
       : undefined;
-    viaje._pinSeguridad = params.pinSeguridad || generarPinDesdeCodigo(params.codigoViaje);
+    viaje._pinSeguridad = params.pinSeguridad || generarPinSeguridad();
     viaje._progresoRuta =
       typeof params.progresoRuta === "number" ? Math.max(0, Math.min(100, params.progresoRuta)) : 0;
     viaje._ubicacionMotoristaLat = params.ubicacionMotoristaLat;

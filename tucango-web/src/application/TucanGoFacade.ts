@@ -1020,7 +1020,6 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_SOLICITADO", {
       codigo,
-      estudianteId: viaje.estudiante.identificacion,
       origen: viaje.origen,
       destino: viaje.destino,
       tarifa: viaje.tarifa

@@ -733,13 +733,15 @@ function eventoVisiblePara(cliente: ClienteSse, evento: EventoDominio): boolean 
     case "TUCAN_RECHAZADO":
     case "PERFIL_ACTUALIZADO":
     case "PASSWORD_CAMBIADO":
-    case "UBICACION_FRECUENTE_ACTUALIZADA":
       return esPropio;
+    case "UBICACION_FRECUENTE_ACTUALIZADA":
+      return esEstudiante;
     case "MOTORISTA_DISPONIBILIDAD_CAMBIADA":
       return esMotorista;
     case "VIAJE_SOLICITADO":
-      // La cola de solicitudes no contiene datos del estudiante.
-      return esEstudiante || cliente.rol === "motorista";
+      // La cola de solicitudes la consumen los Tucanes y no incluye datos
+      // personales del estudiante.
+      return cliente.rol === "motorista";
     case "VIAJE_ACEPTADO":
     case "VIAJE_INICIADO":
     case "VIAJE_FINALIZADO":

@@ -2691,10 +2691,8 @@ els.formSolicitar?.addEventListener("submit", async (e) => {
     const tipoTarifa = document.querySelector('input[name="tarifa"]:checked')?.value || "estudiantil";
     const metodoPago = document.querySelector('input[name="metodoPago"]:checked')?.value || "EFECTIVO";
     const res = await postJson("/api/viajes/solicitar", {
-      estudianteId: els.selectEstudiante.value,
-      origen: origenText,
-      destino: destinoText,
-      distanciaKm: state.routeKm,
+      origenId: els.selectOrigen.value,
+      destinoId: els.selectDestino.value,
       tipoTarifa,
       metodoPago
     });
