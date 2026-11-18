@@ -369,6 +369,10 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.match(html, /tucango-story-reel/);
       assert.match(html, /tucango-moto-logo\.svg/);
 
+      const faviconRes = await fetch(`${baseUrl}/favicon.ico`);
+      assert.equal(faviconRes.status, 200);
+      assert.match(faviconRes.headers.get("content-type") || "", /image\/svg\+xml/);
+
       const anonMeRes = await fetch(`${baseUrl}/api/auth/me`);
       assert.equal(anonMeRes.status, 200);
       const anonMe = (await anonMeRes.json()) as { autenticado: boolean };
@@ -397,6 +401,64 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(authMe.autenticado, true);
       assert.equal(authMe.usuario?.rol, "pasajero");
       assert.equal(authMe.usuario?.identificacion, "1001");
+
+      // Consulta y edición de perfil autenticado (GET & POST /api/auth/perfil)
+      const getPerfilRes = await fetch(`${baseUrl}/api/auth/perfil`, {
+        headers: { Cookie: cookiePair }
+      });
+      assert.equal(getPerfilRes.status, 200);
+      const getPerfil = (await getPerfilRes.json()) as {
+        ok: boolean;
+        perfil: { identificacion: string; rol: string; nombre: string };
+      };
+      assert.equal(getPerfil.ok, true);
+      assert.equal(getPerfil.perfil.identificacion, "1001");
+
+      const updatePerfilRes = await fetch(`${baseUrl}/api/auth/perfil`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: cookiePair },
+        body: JSON.stringify({
+          nombre: "Carlos Rivera Actualizado",
+          telefono: "3159998877",
+          carrera: "Ingeniería Agroecológica",
+          contactoEmergencia: "Marta Rivera · 3101112233",
+          sedeFavorita: "CENTRO"
+        })
+      });
+      assert.equal(updatePerfilRes.status, 200);
+      const updatedPerfil = (await updatePerfilRes.json()) as {
+        ok: boolean;
+        perfil: {
+          nombre: string;
+          telefono: string;
+          carrera: string;
+          contactoEmergencia: string;
+          sedeFavorita: string;
+        };
+      };
+      assert.equal(updatedPerfil.ok, true);
+      assert.equal(updatedPerfil.perfil.nombre, "Carlos Rivera Actualizado");
+      assert.equal(updatedPerfil.perfil.telefono, "3159998877");
+      assert.equal(updatedPerfil.perfil.carrera, "Ingeniería Agroecológica");
+      assert.equal(updatedPerfil.perfil.contactoEmergencia, "Marta Rivera · 3101112233");
+      assert.equal(updatedPerfil.perfil.sedeFavorita, "CENTRO");
+
+      const afterUpdateMeRes = await fetch(`${baseUrl}/api/auth/me`, {
+        headers: { Cookie: cookiePair }
+      });
+      const afterUpdateMe = (await afterUpdateMeRes.json()) as {
+        usuario?: { nombre: string; telefono: string };
+      };
+      assert.equal(afterUpdateMe.usuario?.nombre, "Carlos Rivera Actualizado");
+      assert.equal(afterUpdateMe.usuario?.telefono, "3159998877");
+
+      const estadoRes = await fetch(`${baseUrl}/api/estado`);
+      const estadoJson = (await estadoRes.json()) as {
+        estudiantes: Array<{ identificacion: string; nombre: string; carrera: string }>;
+      };
+      const estActualizado = estadoJson.estudiantes.find((e) => e.identificacion === "1001");
+      assert.equal(estActualizado?.nombre, "Carlos Rivera Actualizado");
+      assert.equal(estActualizado?.carrera, "Ingeniería Agroecológica");
 
       const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
         method: "POST",

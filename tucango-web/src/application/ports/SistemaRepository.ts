@@ -8,6 +8,8 @@ export interface AdministradorSnapshot {
   cargo: string;
   passwordHash: string;
   debeCambiarPassword?: boolean;
+  contactoEmergencia?: string;
+  sedeFavorita?: string;
 }
 
 export interface EstudianteSnapshot {
@@ -19,6 +21,8 @@ export interface EstudianteSnapshot {
   carrera: string;
   passwordHash?: string;
   debeCambiarPassword?: boolean;
+  contactoEmergencia?: string;
+  sedeFavorita?: string;
 }
 
 export interface MotoSnapshot {
@@ -51,6 +55,8 @@ export interface MotoristaSnapshot {
   motivoRechazo?: string;
   fechaAprobacion?: string;
   correoBienvenidaEnviado?: boolean;
+  contactoEmergencia?: string;
+  sedeFavorita?: string;
   motos: MotoSnapshot[];
 }
 

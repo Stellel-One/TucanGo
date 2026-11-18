@@ -35,6 +35,36 @@ export class Estudiante extends Persona {
     return this._carrera;
   }
 
+  public actualizarPerfil(datos: {
+    nombre?: string;
+    telefono?: string;
+    correoInstitucional?: string;
+    codigoEstudiantil?: string;
+    carrera?: string;
+    contactoEmergencia?: string;
+    sedeFavorita?: string;
+  }): void {
+    this.actualizarDatosBasicos(
+      datos.nombre ?? this.nombre,
+      datos.telefono ?? this.telefono,
+      datos.correoInstitucional ?? this.correoInstitucional,
+      datos.contactoEmergencia,
+      datos.sedeFavorita
+    );
+    if (datos.codigoEstudiantil !== undefined) {
+      if (datos.codigoEstudiantil.trim().length === 0) {
+        throw new Error("El código estudiantil es obligatorio.");
+      }
+      this._codigoEstudiantil = datos.codigoEstudiantil.trim();
+    }
+    if (datos.carrera !== undefined) {
+      if (datos.carrera.trim().length === 0) {
+        throw new Error("La carrera es obligatoria.");
+      }
+      this._carrera = datos.carrera.trim();
+    }
+  }
+
   public override obtenerRol(): string {
     return "ESTUDIANTE";
   }

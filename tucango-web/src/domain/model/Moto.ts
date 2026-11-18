@@ -76,4 +76,43 @@ export class Moto {
   public get descripcionCorta(): string {
     return `${this._marca} ${this._modelo} (${this._cilindraje}cc) - Placa: ${this._placa}`;
   }
+
+  public actualizarDatos(datos: {
+    placa?: string;
+    marca?: string;
+    modelo?: string;
+    cilindraje?: number;
+    numeroSoat?: string;
+  }): void {
+    if (datos.placa !== undefined) {
+      if (datos.placa.trim().length === 0) {
+        throw new Error("La placa de la moto es obligatoria.");
+      }
+      this._placa = datos.placa.trim().toUpperCase();
+    }
+    if (datos.marca !== undefined) {
+      if (datos.marca.trim().length === 0) {
+        throw new Error("La marca de la moto es obligatoria.");
+      }
+      this._marca = datos.marca.trim();
+    }
+    if (datos.modelo !== undefined) {
+      if (datos.modelo.trim().length === 0) {
+        throw new Error("El modelo de la moto es obligatorio.");
+      }
+      this._modelo = datos.modelo.trim();
+    }
+    if (datos.cilindraje !== undefined) {
+      if (!Number.isFinite(datos.cilindraje) || datos.cilindraje <= 0) {
+        throw new Error("El cilindraje debe ser mayor a cero.");
+      }
+      this._cilindraje = Math.round(datos.cilindraje);
+    }
+    if (datos.numeroSoat !== undefined) {
+      if (datos.numeroSoat.trim().length < 6) {
+        throw new Error("El número de póliza SOAT debe contener al menos 6 caracteres válidos.");
+      }
+      this._numeroSoat = datos.numeroSoat.trim().toUpperCase();
+    }
+  }
 }

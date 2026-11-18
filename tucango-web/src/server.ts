@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { TucanGoFacade } from "./application/TucanGoFacade.ts";
+import { TucanGoFacade, type ActualizarPerfilDTO } from "./application/TucanGoFacade.ts";
 import { SqliteSistemaRepository } from "./infrastructure/SqliteSistemaRepository.ts";
 import type { SectorCampus } from "./domain/model/SectorCampus.ts";
 import type { EventoDominio } from "./domain/patterns/EventBus.ts";
@@ -74,7 +74,8 @@ const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".webp": "image/webp",
   ".gif": "image/gif",
-  ".svg": "image/svg+xml"
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon"
 };
 
 // B16: Cabeceras de seguridad universales
@@ -323,7 +324,9 @@ function serveStatic(
     }
 
     const defaultCache =
-      contentType === "text/html"
+      contentType === "text/html" ||
+      contentType === "text/css" ||
+      contentType === "text/javascript"
         ? "no-cache, must-revalidate"
         : "public, max-age=3600";
 
@@ -526,7 +529,9 @@ function resolverArchivoPublico(publicDir: string, pathname: string): string | n
       ? "index.html"
       : pathname === "/login" || pathname === "/login/"
         ? "login.html"
-        : pathname.replace(/^\/+/, "");
+        : pathname === "/favicon.ico" || pathname === "/favicon.svg"
+          ? "assets/brand/tucango-moto-logo.svg"
+          : pathname.replace(/^\/+/, "");
   const candidato = path.resolve(baseResuelta, limpio);
   if (candidato !== baseResuelta && !candidato.startsWith(baseResuelta + path.sep)) {
     return null;
@@ -780,6 +785,65 @@ export function crearServidor(
           { ok: true },
           { "Set-Cookie": construirSetCookie(req, "", 0) }
         );
+        return;
+      }
+
+      if (pathname === "/api/auth/perfil" && req.method === "GET") {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (!sesion) {
+          sendJson(res, 401, { error: "Debes iniciar sesión para consultar tu perfil." });
+          return;
+        }
+        let rolEfectivo: "pasajero" | "motorista" | "admin" = sesion.rol;
+        let idEfectivo = sesion.identificacion;
+        if (sesion.rol === "admin") {
+          const targetRol = url.searchParams.get("rol");
+          const targetId = url.searchParams.get("identificacion");
+          if (
+            (targetRol === "pasajero" || targetRol === "motorista" || targetRol === "admin") &&
+            targetId
+          ) {
+            rolEfectivo = targetRol;
+            idEfectivo = targetId;
+          }
+        }
+        const perfil = facade.obtenerPerfilUsuario(rolEfectivo, idEfectivo);
+        sendJson(res, 200, { ok: true, perfil });
+        return;
+      }
+
+      if (pathname === "/api/auth/perfil" && (req.method === "POST" || req.method === "PUT")) {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (!sesion) {
+          sendJson(res, 401, { error: "Debes iniciar sesión para editar tu perfil." });
+          return;
+        }
+        const body = await parseJsonBody<
+          ActualizarPerfilDTO & {
+            passwordActual?: string;
+            passwordNueva?: string;
+            targetRol?: string;
+            targetId?: string;
+          }
+        >(req);
+
+        let rolEfectivo: "pasajero" | "motorista" | "admin" = sesion.rol;
+        let idEfectivo = sesion.identificacion;
+        if (
+          sesion.rol === "admin" &&
+          (body.targetRol === "pasajero" || body.targetRol === "motorista" || body.targetRol === "admin") &&
+          body.targetId
+        ) {
+          rolEfectivo = body.targetRol;
+          idEfectivo = body.targetId;
+        }
+
+        if (body.passwordActual && body.passwordNueva) {
+          await facade.cambiarPassword(idEfectivo, rolEfectivo, body.passwordActual, body.passwordNueva);
+        }
+
+        const perfil = facade.actualizarPerfilUsuario(rolEfectivo, idEfectivo, body);
+        sendJson(res, 200, { ok: true, perfil });
         return;
       }
 

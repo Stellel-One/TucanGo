@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TucanGo · Movilidad Moto Estilo DiDi · Uniamazonia</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/brand/tucango-moto-logo.svg" />
+  <link rel="alternate icon" type="image/png" href="/assets/brand/tucango-brandmark-geometric.png" />
+  <link rel="apple-touch-icon" href="/assets/brand/tucango-brandmark-geometric.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -11,7 +14,7 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css?v=1.9.4" />
-  <link rel="stylesheet" href="styles.css?v=4.0" />
+  <link rel="stylesheet" href="/styles.css?v=4.2" />
 </head>
 <body>
   <header class="topbar">
@@ -184,6 +187,10 @@
               <button type="button" class="sheet-tab-btn" data-tab="actividad" role="tab">
                 <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-activity"/></svg>
                 <span>Actividad</span>
+              </button>
+              <button type="button" class="sheet-tab-btn" data-tab="perfil" role="tab">
+                <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-profile"/></svg>
+                <span>Perfil</span>
               </button>
             </div>
 
@@ -428,6 +435,20 @@
 
             <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD (PESTAÑA ACTIVIDAD) -->
             <section id="section-actividad" class="feed-section hidden">
+              <div class="activity-brand-banner">
+                <img
+                  src="/assets/brand/tucango-rutas-sedes-florencia.png"
+                  alt="Mapa editorial de rutas entre Sede Porvenir y Centro IDEMA en Florencia"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="activity-banner-overlay">
+                  <span class="activity-banner-pill">GPS FLORENCIA · CAQUETÁ</span>
+                  <strong>Trazabilidad GPS &amp; Historial Campus</strong>
+                  <span>Monitoreo en vivo entre Sede Porvenir, Centro IDEMA y Santo Domingo</span>
+                </div>
+              </div>
+
               <div id="section-telemetria" class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
                 <article class="kpi-card">
                   <div class="kpi-head">
@@ -469,6 +490,184 @@
 
               <div id="viajes-feed" class="rides-list"></div>
             </section>
+
+            <!-- PESTAÑA MI PERFIL EDITABLE Y CARNET UNIVERSITARIO -->
+            <section id="section-perfil" class="feed-section hidden" aria-label="Mi Perfil Universitario">
+              <article class="profile-id-card">
+                <div class="profile-card-cover">
+                  <img
+                    src="/assets/brand/tucango-web-hero-campus.png"
+                    alt="Portada Campus Universidad de la Amazonia TucanGo"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div class="profile-card-body">
+                  <div class="profile-avatar-row">
+                    <div class="profile-avatar-circle" id="perfil-card-avatar">TG</div>
+                    <img
+                      src="/assets/brand/tucango-moto-logo.svg"
+                      alt="Sello TucanGo"
+                      class="profile-mini-seal"
+                      width="36"
+                      height="36"
+                    />
+                  </div>
+                  <div class="profile-identity-meta">
+                    <span class="profile-role-badge mono-text" id="perfil-card-rol">PASAJERO</span>
+                    <h2 id="perfil-card-nombre">Cargando perfil...</h2>
+                    <p class="muted-sub" id="perfil-card-detalle">Uniamazonia · Florencia, Caquetá</p>
+                    <span class="chip-mono chip-neutral" id="perfil-card-id">ID: --</span>
+                  </div>
+                  <div class="profile-stats-strip">
+                    <div class="profile-stat-box">
+                      <span>Viajes</span>
+                      <strong class="mono-text" id="perfil-stat-viajes">0</strong>
+                    </div>
+                    <div class="profile-stat-box">
+                      <span>Calificación</span>
+                      <strong class="mono-text" id="perfil-stat-rating">5.0</strong>
+                    </div>
+                    <div class="profile-stat-box">
+                      <span>Movilidad</span>
+                      <strong class="mono-text" id="perfil-stat-ahorro">$0 COP</strong>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <form id="form-perfil-usuario" class="profile-edit-form">
+                <div class="card-header-compact">
+                  <div>
+                    <h3>Información Personal</h3>
+                    <p class="muted-sub">Actualiza tus datos institucionales y preferencias de seguridad</p>
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="field-group">
+                    <label for="perfil-input-id">Cédula / ID (fijo)</label>
+                    <input id="perfil-input-id" type="text" readonly class="input-readonly mono-text" />
+                  </div>
+                  <div class="field-group">
+                    <label for="perfil-input-telefono">Teléfono móvil / WhatsApp</label>
+                    <input id="perfil-input-telefono" type="tel" required placeholder="Ej. 3110000000" />
+                  </div>
+                </div>
+
+                <div class="field-group">
+                  <label for="perfil-input-nombre">Nombre completo</label>
+                  <input id="perfil-input-nombre" type="text" required placeholder="Tu nombre y apellidos" />
+                </div>
+
+                <div class="field-group">
+                  <label for="perfil-input-correo">Correo institucional</label>
+                  <input id="perfil-input-correo" type="email" required placeholder="nombre@uniamazonia.edu.co" />
+                </div>
+
+                <div id="perfil-fields-estudiante" class="form-row-2">
+                  <div class="field-group">
+                    <label for="perfil-input-codigo">Código estudiantil</label>
+                    <input id="perfil-input-codigo" type="text" placeholder="Ej. EST-2024-001" />
+                  </div>
+                  <div class="field-group">
+                    <label for="perfil-input-carrera">Programa académico</label>
+                    <input id="perfil-input-carrera" type="text" placeholder="Ej. Ingeniería de Sistemas" />
+                  </div>
+                </div>
+
+                <div id="perfil-fields-motorista" class="profile-moto-group hidden">
+                  <div class="form-row-3">
+                    <div class="field-group">
+                      <label for="perfil-input-placa">Placa</label>
+                      <input id="perfil-input-placa" type="text" placeholder="GNX-45F" />
+                    </div>
+                    <div class="field-group">
+                      <label for="perfil-input-marca">Marca</label>
+                      <input id="perfil-input-marca" type="text" placeholder="Suzuki" />
+                    </div>
+                    <div class="field-group">
+                      <label for="perfil-input-cc">Cilindraje (cc)</label>
+                      <input id="perfil-input-cc" type="number" min="50" placeholder="125" />
+                    </div>
+                  </div>
+                  <div class="form-row-2">
+                    <div class="field-group">
+                      <label for="perfil-input-modelo">Línea / Modelo</label>
+                      <input id="perfil-input-modelo" type="text" placeholder="GN 125" />
+                    </div>
+                    <div class="field-group">
+                      <label for="perfil-input-soat">Póliza SOAT vigente</label>
+                      <input id="perfil-input-soat" type="text" placeholder="SOAT-2026-FLR" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="field-group">
+                    <label for="perfil-input-sos">Contacto de emergencia SOS</label>
+                    <input id="perfil-input-sos" type="text" placeholder="Nombre y teléfono de respaldo" />
+                  </div>
+                  <div class="field-group">
+                    <label for="perfil-select-sede-fav">Sede frecuente favorita</label>
+                    <select id="perfil-select-sede-fav">
+                      <option value="PORVENIR">Sede Porvenir (Principal)</option>
+                      <option value="CENTRO">Sede Centro (IDEMA)</option>
+                      <option value="SANTO_DOMINGO">Granja Santo Domingo</option>
+                      <option value="TERMINAL">Terminal Florencia</option>
+                    </select>
+                  </div>
+                </div>
+
+                <details class="profile-password-details">
+                  <summary>
+                    <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-lock"/></svg>
+                    <span>Cambiar contraseña de acceso (opcional)</span>
+                  </summary>
+                  <div class="form-row-2 profile-pass-grid">
+                    <div class="field-group">
+                      <label for="perfil-input-pass-actual">Contraseña actual</label>
+                      <input id="perfil-input-pass-actual" type="password" autocomplete="current-password" placeholder="••••••" />
+                    </div>
+                    <div class="field-group">
+                      <label for="perfil-input-pass-nueva">Nueva contraseña (mín. 10 chars)</label>
+                      <input id="perfil-input-pass-nueva" type="password" autocomplete="new-password" placeholder="Mínimo 10 caracteres" />
+                    </div>
+                  </div>
+                </details>
+
+                <button type="submit" id="btn-guardar-perfil" class="btn-didi-cta">
+                  Guardar Cambios en Mi Perfil
+                </button>
+              </form>
+
+              <div class="profile-brand-cards">
+                <article class="profile-brand-card">
+                  <img
+                    src="/assets/brand/tucango-seguridad-pin-soat.png"
+                    alt="Seguridad con PIN de 4 dígitos y SOAT auditado"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="profile-brand-copy">
+                    <strong>PIN de 4 dígitos y SOAT Auditado</strong>
+                    <span>Abordaje verificado en cada trayecto universitario.</span>
+                  </div>
+                </article>
+                <article class="profile-brand-card">
+                  <img
+                    src="/assets/brand/tucango-tarifa-pagos-moviles.png"
+                    alt="Tarifa fija estudiantil y pagos digitales"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="profile-brand-copy">
+                    <strong>Tarifa Fija Estudiantil $2.500 COP</strong>
+                    <span>Paga fácil en Efectivo, Nequi o Daviplata.</span>
+                  </div>
+                </article>
+              </div>
+            </section>
           </div>
 
           <nav class="mobile-bottom-nav" aria-label="Navegación rápida móvil">
@@ -497,6 +696,12 @@
               </svg>
               <span>Actividad</span>
             </button>
+            <button type="button" class="mobile-tab-btn" data-mobile-tab="perfil">
+              <svg class="tg-icon tg-icon-md" aria-hidden="true">
+                <use href="/assets/icons/iconly-sprite.svg#iconly-profile" />
+              </svg>
+              <span>Perfil</span>
+            </button>
           </nav>
         </div>
       </section>
@@ -520,10 +725,49 @@
       </div>
 
       <div id="login-tab-rapido" class="form-stack">
+        <div class="menu-hero-banner">
+          <img
+            src="/assets/brand/tucango-web-hero-campus.png"
+            alt="Campus Universidad de la Amazonia · Movilidad TucanGo"
+            class="menu-hero-bg"
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="menu-hero-overlay">
+            <img
+              src="/assets/brand/tucango-moto-logo.svg"
+              alt="Logo TucanGo"
+              class="menu-hero-logo"
+              width="44"
+              height="44"
+            />
+            <div>
+              <strong>Comunidad TucanGo</strong>
+              <span>Movilidad segura Uniamazonia</span>
+            </div>
+          </div>
+        </div>
+
         <div class="account-session-card">
           <strong id="modal-account-name">Usuario TucanGo</strong>
           <p class="muted-sub mono-text" id="modal-account-meta">ROL · DETALLE</p>
         </div>
+
+        <div class="menu-visual-grid">
+          <button type="button" class="menu-visual-item" id="btn-modal-ir-perfil" data-menu-goto="perfil">
+            <img src="/assets/brand/tucango-logo-moto-estudiante.png" alt="Mi Perfil TucanGo" loading="lazy" decoding="async" />
+            <span>Mi Perfil Editable</span>
+          </button>
+          <button type="button" class="menu-visual-item" data-menu-goto="actividad">
+            <img src="/assets/brand/tucango-rutas-sedes-florencia.png" alt="Actividad y Rutas GPS" loading="lazy" decoding="async" />
+            <span>Actividad y Rutas</span>
+          </button>
+          <button type="button" class="menu-visual-item" data-menu-goto="simulador">
+            <img src="/assets/brand/tucango-seguridad-pin-soat.png" alt="Simulador DiDi y Seguridad" loading="lazy" decoding="async" />
+            <span>Simulador &amp; PIN</span>
+          </button>
+        </div>
+
         <button type="button" id="btn-modal-logout" class="btn-didi-cta">
           Cerrar Sesión y Volver a /login
         </button>
@@ -826,6 +1070,6 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
-  <script src="app.js?v=4.0"></script>
+  <script src="/app.js?v=4.2"></script>
 </body>
 </html>

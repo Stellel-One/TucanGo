@@ -214,6 +214,37 @@ export class Motorista extends Persona {
     return this._motos.find((m) => m.activa);
   }
 
+  public actualizarPerfil(datos: {
+    nombre?: string;
+    telefono?: string;
+    correoInstitucional?: string;
+    placa?: string;
+    marca?: string;
+    modelo?: string;
+    cilindraje?: number;
+    numeroSoat?: string;
+    contactoEmergencia?: string;
+    sedeFavorita?: string;
+  }): void {
+    this.actualizarDatosBasicos(
+      datos.nombre ?? this.nombre,
+      datos.telefono ?? this.telefono,
+      datos.correoInstitucional ?? this.correoInstitucional,
+      datos.contactoEmergencia,
+      datos.sedeFavorita
+    );
+    const motoActiva = this.obtenerMotoActiva();
+    if (motoActiva) {
+      motoActiva.actualizarDatos({
+        placa: datos.placa,
+        marca: datos.marca,
+        modelo: datos.modelo,
+        cilindraje: datos.cilindraje,
+        numeroSoat: datos.numeroSoat
+      });
+    }
+  }
+
   public override obtenerRol(): string {
     return "MOTORISTA";
   }

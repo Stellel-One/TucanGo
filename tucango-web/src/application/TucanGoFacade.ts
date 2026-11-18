@@ -71,6 +71,22 @@ export interface RegistrarMotoristaDTO {
   compromisoAceptado?: boolean;
 }
 
+export interface ActualizarPerfilDTO {
+  nombre?: string;
+  telefono?: string;
+  correoInstitucional?: string;
+  codigoEstudiantil?: string;
+  carrera?: string;
+  placa?: string;
+  marca?: string;
+  modelo?: string;
+  cilindraje?: number;
+  numeroSoat?: string;
+  cargo?: string;
+  contactoEmergencia?: string;
+  sedeFavorita?: string;
+}
+
 export class TucanGoFacade {
   private _administradores: Map<string, Administrador> = new Map();
   private _estudiantes: Map<string, Estudiante> = new Map();
@@ -255,7 +271,9 @@ export class TucanGoFacade {
         correoInstitucional: a.correoInstitucional,
         cargo: a.cargo,
         passwordHash: a.passwordHash,
-        debeCambiarPassword: a.debeCambiarPassword
+        debeCambiarPassword: a.debeCambiarPassword,
+        contactoEmergencia: a.contactoEmergencia,
+        sedeFavorita: a.sedeFavorita
       })),
       estudiantes: this.obtenerEstudiantes().map((e) => ({
         identificacion: e.identificacion,
@@ -265,7 +283,9 @@ export class TucanGoFacade {
         codigoEstudiantil: e.codigoEstudiantil,
         carrera: e.carrera,
         passwordHash: e.passwordHash,
-        debeCambiarPassword: e.debeCambiarPassword
+        debeCambiarPassword: e.debeCambiarPassword,
+        contactoEmergencia: e.contactoEmergencia,
+        sedeFavorita: e.sedeFavorita
       })),
       motoristas: this.obtenerMotoristas().map((m) => ({
         identificacion: m.identificacion,
@@ -287,6 +307,8 @@ export class TucanGoFacade {
         motivoRechazo: m.motivoRechazo,
         fechaAprobacion: m.fechaAprobacion?.toISOString(),
         correoBienvenidaEnviado: m.correoBienvenidaEnviado,
+        contactoEmergencia: m.contactoEmergencia,
+        sedeFavorita: m.sedeFavorita,
         motos: m.motos.map((moto) => ({
           placa: moto.placa,
           marca: moto.marca,
@@ -361,6 +383,8 @@ export class TucanGoFacade {
           aSnap.passwordHash,
           Boolean(aSnap.debeCambiarPassword)
         );
+        if (aSnap.contactoEmergencia) admin.contactoEmergencia = aSnap.contactoEmergencia;
+        if (aSnap.sedeFavorita) admin.sedeFavorita = aSnap.sedeFavorita;
         this._administradores.set(admin.identificacion, admin);
       }
     } else {
@@ -388,6 +412,8 @@ export class TucanGoFacade {
         estSnap.passwordHash || hashPasswordSync(process.env.SEED_STUDENT_PASSWORD || "EstudianteSeguro*2026"),
         Boolean(estSnap.debeCambiarPassword)
       );
+      if (estSnap.contactoEmergencia) est.contactoEmergencia = estSnap.contactoEmergencia;
+      if (estSnap.sedeFavorita) est.sedeFavorita = estSnap.sedeFavorita;
       this._estudiantes.set(est.identificacion, est);
     }
 
@@ -416,6 +442,8 @@ export class TucanGoFacade {
         motSnap.fechaAprobacion ? new Date(motSnap.fechaAprobacion) : undefined,
         Boolean(motSnap.correoBienvenidaEnviado)
       );
+      if (motSnap.contactoEmergencia) mot.contactoEmergencia = motSnap.contactoEmergencia;
+      if (motSnap.sedeFavorita) mot.sedeFavorita = motSnap.sedeFavorita;
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
           motoSnap.placa,
@@ -1111,6 +1139,179 @@ export class TucanGoFacade {
     persona.debeCambiarPassword = false;
     this.persistir();
     this.emitirEvento("PASSWORD_CAMBIADO", { identificacion, rol });
+  }
+
+  public obtenerPerfilUsuario(
+    rol: "pasajero" | "motorista" | "admin",
+    identificacion: string
+  ) {
+    const id = (identificacion || "").trim().toLowerCase();
+    const todosViajes = this.obtenerTodosLosViajes();
+
+    if (rol === "admin") {
+      const admin = this.obtenerAdministradores().find((a) => a.identificacion.toLowerCase() === id);
+      if (!admin) throw new NoAutenticadoError("Administrador no encontrado.");
+      const metricas = this.obtenerMetricas();
+      return {
+        rol: "admin" as const,
+        identificacion: admin.identificacion,
+        nombre: admin.nombre,
+        telefono: admin.telefono,
+        correo: admin.correoInstitucional,
+        cargo: admin.cargo,
+        detalle: `ADMIN · ${admin.cargo}`,
+        contactoEmergencia: admin.contactoEmergencia,
+        sedeFavorita: admin.sedeFavorita,
+        estadisticas: {
+          totalViajesUsuario: metricas.totalViajes,
+          viajesCompletados: metricas.finalizados,
+          gastoOAhorroCop: metricas.ingresosGenerados,
+          calificacionPromedio: 5.0
+        }
+      };
+    }
+
+    if (rol === "motorista") {
+      const mot = this.obtenerMotoristas().find((m) => m.identificacion.toLowerCase() === id);
+      if (!mot) throw new NoAutenticadoError("Motorista no encontrado.");
+      const moto = mot.obtenerMotoActiva();
+      const viajesMot = todosViajes.filter((v) => v.motorista?.identificacion === mot.identificacion);
+      const completados = viajesMot.filter((v) => v.estado.nombre === "FINALIZADO");
+      const ingresos = completados.reduce((acc, v) => acc + v.tarifa, 0);
+      const ratings = completados.flatMap((v) => v.calificaciones.map((c) => c.puntuacion));
+      const ratingProm =
+        ratings.length > 0
+          ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1))
+          : 5.0;
+      return {
+        rol: "motorista" as const,
+        identificacion: mot.identificacion,
+        nombre: mot.nombre,
+        telefono: mot.telefono,
+        correo: mot.correoInstitucional,
+        detalle: moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo",
+        estadoAprobacion: mot.estadoAprobacion,
+        contactoEmergencia: mot.contactoEmergencia,
+        sedeFavorita: mot.sedeFavorita,
+        moto: moto
+          ? {
+              placa: moto.placa,
+              marca: moto.marca,
+              modelo: moto.modelo,
+              cilindraje: moto.cilindraje,
+              numeroSoat: moto.numeroSoat,
+              soatVigente: moto.soatVigente
+            }
+          : null,
+        estadisticas: {
+          totalViajesUsuario: viajesMot.length,
+          viajesCompletados: completados.length,
+          gastoOAhorroCop: ingresos,
+          calificacionPromedio: ratingProm
+        }
+      };
+    }
+
+    const est = this.obtenerEstudiantes().find((e) => e.identificacion.toLowerCase() === id);
+    if (!est) throw new NoAutenticadoError("Estudiante no encontrado.");
+    const viajesEst = todosViajes.filter((v) => v.estudiante.identificacion === est.identificacion);
+    const completados = viajesEst.filter((v) => v.estado.nombre === "FINALIZADO");
+    const invertido = completados.reduce((acc, v) => acc + v.tarifa, 0);
+    const ratings = completados.flatMap((v) => v.calificaciones.map((c) => c.puntuacion));
+    const ratingProm =
+      ratings.length > 0
+        ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1))
+        : 5.0;
+
+    return {
+      rol: "pasajero" as const,
+      identificacion: est.identificacion,
+      nombre: est.nombre,
+      telefono: est.telefono,
+      correo: est.correoInstitucional,
+      codigoEstudiantil: est.codigoEstudiantil,
+      carrera: est.carrera,
+      detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
+      contactoEmergencia: est.contactoEmergencia,
+      sedeFavorita: est.sedeFavorita,
+      estadisticas: {
+        totalViajesUsuario: viajesEst.length,
+        viajesCompletados: completados.length,
+        gastoOAhorroCop: invertido,
+        calificacionPromedio: ratingProm
+      }
+    };
+  }
+
+  public actualizarPerfilUsuario(
+    rol: "pasajero" | "motorista" | "admin",
+    identificacion: string,
+    dto: ActualizarPerfilDTO
+  ) {
+    if (dto.correoInstitucional !== undefined) {
+      const email = dto.correoInstitucional.trim().toLowerCase();
+      const dominiosValidos =
+        rol === "admin"
+          ? ["@uniamazonia.edu.co", "@udla.edu.co", "@tucango.edu.co"]
+          : ["@uniamazonia.edu.co", "@udla.edu.co"];
+      if (!dominiosValidos.some((dom) => email.endsWith(dom))) {
+        throw new ValidacionError(
+          rol === "admin"
+            ? "El correo del administrador debe pertenecer al dominio institucional o @tucango.edu.co."
+            : "El correo debe ser institucional (@uniamazonia.edu.co o @udla.edu.co)."
+        );
+      }
+    }
+
+    const id = (identificacion || "").trim().toLowerCase();
+    if (rol === "admin") {
+      const admin = this.obtenerAdministradores().find((a) => a.identificacion.toLowerCase() === id);
+      if (!admin) throw new NoAutenticadoError("Administrador no encontrado.");
+      admin.actualizarPerfil({
+        nombre: dto.nombre,
+        telefono: dto.telefono,
+        correoInstitucional: dto.correoInstitucional,
+        cargo: dto.cargo,
+        contactoEmergencia: dto.contactoEmergencia,
+        sedeFavorita: dto.sedeFavorita
+      });
+    } else if (rol === "motorista") {
+      const mot = this.obtenerMotoristas().find((m) => m.identificacion.toLowerCase() === id);
+      if (!mot) throw new NoAutenticadoError("Motorista no encontrado.");
+      mot.actualizarPerfil({
+        nombre: dto.nombre,
+        telefono: dto.telefono,
+        correoInstitucional: dto.correoInstitucional,
+        placa: dto.placa,
+        marca: dto.marca,
+        modelo: dto.modelo,
+        cilindraje: dto.cilindraje !== undefined ? Number(dto.cilindraje) : undefined,
+        numeroSoat: dto.numeroSoat,
+        contactoEmergencia: dto.contactoEmergencia,
+        sedeFavorita: dto.sedeFavorita
+      });
+    } else {
+      const est = this.obtenerEstudiantes().find((e) => e.identificacion.toLowerCase() === id);
+      if (!est) throw new NoAutenticadoError("Estudiante no encontrado.");
+      est.actualizarPerfil({
+        nombre: dto.nombre,
+        telefono: dto.telefono,
+        correoInstitucional: dto.correoInstitucional,
+        codigoEstudiantil: dto.codigoEstudiantil,
+        carrera: dto.carrera,
+        contactoEmergencia: dto.contactoEmergencia,
+        sedeFavorita: dto.sedeFavorita
+      });
+    }
+
+    this.persistir();
+    const perfil = this.obtenerPerfilUsuario(rol, identificacion);
+    this.emitirEvento("PERFIL_ACTUALIZADO", {
+      rol,
+      identificacion: perfil.identificacion,
+      nombre: perfil.nombre
+    });
+    return perfil;
   }
 
   // Compatibilidad hacia atrás para tests unitarios sincrónicos

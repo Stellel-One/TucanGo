@@ -129,6 +129,34 @@ const els = {
   btnToggleSheet: document.getElementById("btn-toggle-sheet"),
   sheetToggleHint: document.getElementById("sheet-toggle-hint"),
   sectionActividad: document.getElementById("section-actividad"),
+  sectionPerfil: document.getElementById("section-perfil"),
+  perfilCardAvatar: document.getElementById("perfil-card-avatar"),
+  perfilCardRol: document.getElementById("perfil-card-rol"),
+  perfilCardNombre: document.getElementById("perfil-card-nombre"),
+  perfilCardDetalle: document.getElementById("perfil-card-detalle"),
+  perfilCardId: document.getElementById("perfil-card-id"),
+  perfilStatViajes: document.getElementById("perfil-stat-viajes"),
+  perfilStatRating: document.getElementById("perfil-stat-rating"),
+  perfilStatAhorro: document.getElementById("perfil-stat-ahorro"),
+  formPerfilUsuario: document.getElementById("form-perfil-usuario"),
+  perfilInputId: document.getElementById("perfil-input-id"),
+  perfilInputNombre: document.getElementById("perfil-input-nombre"),
+  perfilInputTelefono: document.getElementById("perfil-input-telefono"),
+  perfilInputCorreo: document.getElementById("perfil-input-correo"),
+  perfilFieldsEstudiante: document.getElementById("perfil-fields-estudiante"),
+  perfilInputCodigo: document.getElementById("perfil-input-codigo"),
+  perfilInputCarrera: document.getElementById("perfil-input-carrera"),
+  perfilFieldsMotorista: document.getElementById("perfil-fields-motorista"),
+  perfilInputPlaca: document.getElementById("perfil-input-placa"),
+  perfilInputMarca: document.getElementById("perfil-input-marca"),
+  perfilInputModelo: document.getElementById("perfil-input-modelo"),
+  perfilInputCc: document.getElementById("perfil-input-cc"),
+  perfilInputSoat: document.getElementById("perfil-input-soat"),
+  perfilInputSos: document.getElementById("perfil-input-sos"),
+  perfilSelectSedeFav: document.getElementById("perfil-select-sede-fav"),
+  perfilInputPassActual: document.getElementById("perfil-input-pass-actual"),
+  perfilInputPassNueva: document.getElementById("perfil-input-pass-nueva"),
+  btnGuardarPerfil: document.getElementById("btn-guardar-perfil"),
   mobileTabBtns: document.querySelectorAll("[data-mobile-tab]"),
   mobileTrackingDot: document.getElementById("mobile-tracking-dot"),
   btnAbrirSimulador: document.getElementById("btn-abrir-simulador"),
@@ -208,8 +236,9 @@ async function postJson(url, payload) {
 function actualizarBannerSesion() {
   if (!state.data) return;
   if (state.authUser?.rol === "admin") {
-    els.sessionUserName.textContent = "TucanGo Admin";
-    els.sessionAvatarInitials.textContent = "TA";
+    const nombreAdmin = state.authUser.nombre || "TucanGo Admin";
+    els.sessionUserName.textContent = nombreAdmin;
+    els.sessionAvatarInitials.textContent = iniciales(nombreAdmin);
     return;
   }
   if (state.role === "motorista") {
@@ -237,11 +266,17 @@ function switchTab(tabName) {
 
   const esMotorista = tabName === "motorista";
   const esActividad = tabName === "actividad";
+  const esPerfil = tabName === "perfil";
   const esViajar = tabName === "viajar" || tabName === "tracking";
 
   if (els.panelPasajero) els.panelPasajero.classList.toggle("hidden", !esViajar);
   if (els.panelMotorista) els.panelMotorista.classList.toggle("hidden", !esMotorista);
   if (els.sectionActividad) els.sectionActividad.classList.toggle("hidden", !esActividad);
+  if (els.sectionPerfil) els.sectionPerfil.classList.toggle("hidden", !esPerfil);
+
+  if (esPerfil) {
+    cargarPerfilUsuario();
+  }
 
   if (tabName === "tracking") {
     if (els.liveTrackingCard && !els.liveTrackingCard.classList.contains("hidden")) {
@@ -1735,6 +1770,139 @@ els.btnCerrarLogin?.addEventListener("click", () => els.modalLogin.classList.add
 
 document.querySelectorAll("[data-login-tab]").forEach((tab) => {
   tab.addEventListener("click", () => abrirModalLogin(tab.dataset.loginTab));
+});
+
+document.querySelectorAll("[data-menu-goto]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const destino = btn.dataset.menuGoto;
+    els.modalLogin?.classList.add("hidden");
+    if (els.didiStage?.classList.contains("sheet-peek")) {
+      els.didiStage.classList.remove("sheet-peek");
+      if (els.btnToggleSheet) els.btnToggleSheet.setAttribute("aria-expanded", "true");
+    }
+    if (destino === "simulador") {
+      els.btnAbrirSimulador?.click();
+      return;
+    }
+    if (destino) {
+      switchTab(destino);
+    }
+  });
+});
+
+function pintarPerfilEnVista(perfil) {
+  if (!perfil) return;
+  state.perfilActual = perfil;
+
+  if (els.perfilCardAvatar) els.perfilCardAvatar.textContent = iniciales(perfil.nombre);
+  if (els.perfilCardRol) {
+    els.perfilCardRol.textContent =
+      perfil.rol === "admin" ? "ADMINISTRADOR" : perfil.rol === "motorista" ? "MOTORISTA TUCÁN" : "ESTUDIANTE PASAJERO";
+  }
+  if (els.perfilCardNombre) els.perfilCardNombre.textContent = perfil.nombre || "Usuario TucanGo";
+  if (els.perfilCardDetalle) els.perfilCardDetalle.textContent = perfil.detalle || "Uniamazonia · Florencia";
+  if (els.perfilCardId) els.perfilCardId.textContent = `ID: ${perfil.identificacion}`;
+
+  const stats = perfil.estadisticas || {};
+  if (els.perfilStatViajes) els.perfilStatViajes.textContent = String(stats.totalViajesUsuario ?? 0);
+  if (els.perfilStatRating) {
+    els.perfilStatRating.textContent = `${Number(stats.calificacionPromedio ?? 5).toFixed(1)} ★`;
+  }
+  if (els.perfilStatAhorro) els.perfilStatAhorro.textContent = formatoCop(stats.gastoOAhorroCop ?? 0);
+
+  if (els.perfilInputId) els.perfilInputId.value = perfil.identificacion || "";
+  if (els.perfilInputNombre) els.perfilInputNombre.value = perfil.nombre || "";
+  if (els.perfilInputTelefono) els.perfilInputTelefono.value = perfil.telefono || "";
+  if (els.perfilInputCorreo) els.perfilInputCorreo.value = perfil.correo || "";
+  if (els.perfilInputSos) els.perfilInputSos.value = perfil.contactoEmergencia || "";
+  if (els.perfilSelectSedeFav) els.perfilSelectSedeFav.value = perfil.sedeFavorita || "PORVENIR";
+
+  const esPasajero = perfil.rol === "pasajero";
+  const esMotorista = perfil.rol === "motorista";
+  els.perfilFieldsEstudiante?.classList.toggle("hidden", !esPasajero);
+  els.perfilFieldsMotorista?.classList.toggle("hidden", !esMotorista);
+
+  if (esPasajero) {
+    if (els.perfilInputCodigo) els.perfilInputCodigo.value = perfil.codigoEstudiantil || "";
+    if (els.perfilInputCarrera) els.perfilInputCarrera.value = perfil.carrera || "";
+  }
+  if (esMotorista && perfil.moto) {
+    if (els.perfilInputPlaca) els.perfilInputPlaca.value = perfil.moto.placa || "";
+    if (els.perfilInputMarca) els.perfilInputMarca.value = perfil.moto.marca || "";
+    if (els.perfilInputModelo) els.perfilInputModelo.value = perfil.moto.modelo || "";
+    if (els.perfilInputCc) els.perfilInputCc.value = String(perfil.moto.cilindraje || 125);
+    if (els.perfilInputSoat) els.perfilInputSoat.value = perfil.moto.numeroSoat || "";
+  }
+}
+
+async function cargarPerfilUsuario() {
+  try {
+    const res = await fetch("/api/auth/perfil", { credentials: "same-origin", cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data?.perfil) {
+      pintarPerfilEnVista(data.perfil);
+    }
+  } catch {
+    // Silencioso en caso de interrupción momentánea de red
+  }
+}
+
+els.formPerfilUsuario?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const rol = state.perfilActual?.rol || state.authUser?.rol || "pasajero";
+  const payload = {
+    nombre: els.perfilInputNombre?.value.trim(),
+    telefono: els.perfilInputTelefono?.value.trim(),
+    correoInstitucional: els.perfilInputCorreo?.value.trim(),
+    contactoEmergencia: els.perfilInputSos?.value.trim() || "",
+    sedeFavorita: els.perfilSelectSedeFav?.value || "PORVENIR"
+  };
+
+  if (rol === "pasajero") {
+    payload.codigoEstudiantil = els.perfilInputCodigo?.value.trim();
+    payload.carrera = els.perfilInputCarrera?.value.trim();
+  } else if (rol === "motorista") {
+    payload.placa = els.perfilInputPlaca?.value.trim();
+    payload.marca = els.perfilInputMarca?.value.trim();
+    payload.modelo = els.perfilInputModelo?.value.trim();
+    payload.cilindraje = Number(els.perfilInputCc?.value || 125);
+    payload.numeroSoat = els.perfilInputSoat?.value.trim();
+  }
+
+  const passActual = els.perfilInputPassActual?.value || "";
+  const passNueva = els.perfilInputPassNueva?.value || "";
+  if (passActual || passNueva) {
+    if (!passActual || !passNueva) {
+      showToast("Para cambiar la contraseña debes ingresar tanto la actual como la nueva.", "error");
+      return;
+    }
+    payload.passwordActual = passActual;
+    payload.passwordNueva = passNueva;
+  }
+
+  try {
+    if (els.btnGuardarPerfil) els.btnGuardarPerfil.disabled = true;
+    const res = await postJson("/api/auth/perfil", payload);
+    if (res?.perfil) {
+      pintarPerfilEnVista(res.perfil);
+      if (state.authUser) {
+        state.authUser.nombre = res.perfil.nombre;
+        state.authUser.correo = res.perfil.correo;
+        state.authUser.telefono = res.perfil.telefono;
+        state.authUser.detalle = res.perfil.detalle;
+      }
+      if (els.perfilInputPassActual) els.perfilInputPassActual.value = "";
+      if (els.perfilInputPassNueva) els.perfilInputPassNueva.value = "";
+    }
+    await cargarEstado(false);
+    actualizarBannerSesion();
+    showToast("Perfil actualizado y guardado en SQLite", "success");
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    if (els.btnGuardarPerfil) els.btnGuardarPerfil.disabled = false;
+  }
 });
 
 document.querySelectorAll("[data-quick-dest]").forEach((btn) => {
