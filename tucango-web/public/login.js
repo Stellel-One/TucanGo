@@ -494,29 +494,6 @@
         }
       }
 
-      if (els.formWizardTucan) {
-        els.formWizardTucan.querySelectorAll("input.ios-input-field").forEach((inputEl) => {
-          inputEl.addEventListener("blur", () => {
-            inputEl.dataset.dirty = "true";
-            validarCampoEnTiempoReal(inputEl);
-          });
-          inputEl.addEventListener("input", () => {
-            if (inputEl.id === "reg-tucan-password") {
-              actualizarMedidorFuerza(inputEl.value);
-              if (els.regTucanPasswordConfirm?.dataset.dirty === "true") {
-                validarCampoEnTiempoReal(els.regTucanPasswordConfirm);
-              }
-            }
-            if (inputEl.id === "reg-tucan-placa") {
-              inputEl.value = inputEl.value.toUpperCase();
-            }
-            if (inputEl.dataset.dirty === "true" || inputEl.classList.contains("is-invalid")) {
-              validarCampoEnTiempoReal(inputEl);
-            }
-          });
-        });
-      }
-
       if (pasoActual === 1) {
         const camposPaso1 = [
           els.regTucanId,
@@ -568,6 +545,29 @@
         }
       }
       return true;
+    }
+
+    if (els.formWizardTucan) {
+      els.formWizardTucan.querySelectorAll("input.ios-input-field").forEach((inputEl) => {
+        inputEl.addEventListener("blur", () => {
+          inputEl.dataset.dirty = "true";
+          validarCampoEnTiempoReal(inputEl);
+        });
+        inputEl.addEventListener("input", () => {
+          if (inputEl.id === "reg-tucan-password") {
+            actualizarMedidorFuerza(inputEl.value);
+            if (els.regTucanPasswordConfirm?.dataset.dirty === "true") {
+              validarCampoEnTiempoReal(els.regTucanPasswordConfirm);
+            }
+          }
+          if (inputEl.id === "reg-tucan-placa") {
+            inputEl.value = inputEl.value.toUpperCase();
+          }
+          if (inputEl.dataset.dirty === "true" || inputEl.classList.contains("is-invalid")) {
+            validarCampoEnTiempoReal(inputEl);
+          }
+        });
+      });
     }
 
     document.querySelectorAll(".btn-next-step").forEach((btn) => {
