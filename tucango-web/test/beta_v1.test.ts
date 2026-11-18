@@ -243,6 +243,45 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     }
   });
 
+  it("Migra el número de licencia que versiones anteriores guardaban en fotoLicenciaUrl", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-licencia-"));
+    const dbPath = path.join(tmpDir, "tucango.db");
+
+    try {
+      const repo1 = new SqliteSistemaRepository(dbPath);
+      const facade1 = new TucanGoFacade(repo1);
+
+      // Datos con la forma antigua: el número viajaba en el campo de imagen
+      facade1.registrarMotoristaConMoto({
+        identificacion: "2002",
+        nombre: "Tucán Legado",
+        telefono: "3205556677",
+        correoInstitucional: "tucan.legado@gmail.com",
+        placa: "ABC-12D",
+        marca: "Bajaj",
+        modelo: "Boxer CT 100",
+        cilindraje: 100,
+        soatVigente: true,
+        numeroSoat: "SOAT-2025-LEG",
+        fotoLicenciaUrl: "LIC-LEGACY-777"
+      });
+      repo1.cerrar();
+
+      const repo2 = new SqliteSistemaRepository(dbPath);
+      const facade2 = new TucanGoFacade(repo2);
+      const recuperado = facade2
+        .obtenerMotoristas()
+        .find((m) => m.identificacion === "2002");
+
+      assert.ok(recuperado, "El Tucán legado debe persistir tras reiniciar");
+      assert.equal(recuperado.numeroLicencia, "LIC-LEGACY-777");
+      assert.equal(recuperado.fotoLicenciaUrl, "");
+      repo2.cerrar();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("Soporta login por rol/placa, disponibilidad de motorista, polilínea y tracking GPS con PIN estilo DiDi", () => {
     const bus = new EventBus();
     const tipos: string[] = [];

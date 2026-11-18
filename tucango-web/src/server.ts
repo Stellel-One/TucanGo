@@ -104,6 +104,20 @@ function obtenerClienteIp(req: http.IncomingMessage): string {
   return req.socket.remoteAddress || "127.0.0.1";
 }
 
+const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co"];
+
+/**
+ * El correo institucional es exclusivo de estudiantes y egresados. El Tucán
+ * se registra con correo personal, porque no pertenece a la comunidad académica.
+ */
+function esCorreoInstitucional(valor: string | undefined): boolean {
+  const correo = (valor || "").trim().toLowerCase();
+  const arroba = correo.lastIndexOf("@");
+  if (arroba === -1) return false;
+  const dominio = correo.slice(arroba + 1);
+  return DOMINIOS_INSTITUCIONALES.includes(dominio);
+}
+
 function verificarRateLimit(
   clave: string,
   maxIntentos = 5,
@@ -645,6 +659,7 @@ function construirEstadoDTO(
             fotoMotoUrl: m.fotoMotoUrl,
             fotoSoatUrl: m.fotoSoatUrl,
             fotoLicenciaUrl: m.fotoLicenciaUrl,
+            numeroLicencia: m.numeroLicencia,
             compromisoAceptado: m.compromisoAceptado,
             fechaAprobacion: m.fechaAprobacion?.toISOString() ?? null,
             moto: m.obtenerMotoActiva()
@@ -673,6 +688,7 @@ function construirEstadoDTO(
             fotoMotoUrl: m.fotoMotoUrl,
             fotoSoatUrl: m.fotoSoatUrl,
             fotoLicenciaUrl: m.fotoLicenciaUrl,
+            numeroLicencia: m.numeroLicencia,
             compromisoAceptado: m.compromisoAceptado,
             fechaAprobacion: m.fechaAprobacion?.toISOString() ?? null,
             correoBienvenidaEnviado: m.correoBienvenidaEnviado,
@@ -1235,6 +1251,7 @@ export function crearServidor(
           fotoMotoUrl?: string;
           fotoSoatUrl?: string;
           fotoLicenciaUrl?: string;
+          numeroLicencia?: string;
           compromisoAceptado?: boolean;
           estadoAprobacion?: "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
         }>(req, esRutaTucanes ? 2 * 1024 * 1024 : MAX_BODY_BYTES);
@@ -1249,6 +1266,36 @@ export function crearServidor(
             error: "Debes aceptar solemnemente cumplir las políticas y normas de movilidad de la Universidad de la Amazonia para postular tu Licencia Tucán."
           });
           return;
+        }
+
+        // El Tucán no es estudiante: su correo de contacto debe ser personal.
+        if (esRutaTucanes && esCorreoInstitucional(body.correoInstitucional)) {
+          sendJson(res, 422, {
+            error:
+              "El correo del Tucán debe ser personal. El correo @uniamazonia.edu.co es exclusivo de estudiantes."
+          });
+          return;
+        }
+
+        // Sin estos documentos el Administrador no puede auditar la hoja de vida.
+        if (esRutaTucanes) {
+          const documentosRequeridos: Array<[string, string]> = [
+            [body.fotoRostroUrl || "", "la selfie de reconocimiento facial"],
+            [body.fotoCedulaUrl || "", "la fotografía de la cédula"],
+            [body.fotoMotoUrl || "", "la fotografía de la motocicleta"],
+            [body.fotoSoatUrl || "", "la fotografía de la póliza SOAT"],
+            [body.fotoLicenciaUrl || "", "la fotografía de la licencia de conducción"],
+            [body.numeroLicencia || "", "el número de la licencia de conducción"]
+          ];
+          const faltantes = documentosRequeridos
+            .filter(([valor]) => !valor.trim())
+            .map(([, etiqueta]) => etiqueta);
+          if (faltantes.length > 0) {
+            sendJson(res, 422, {
+              error: `Faltan documentos obligatorios para tu hoja de vida: ${faltantes.join(", ")}.`
+            });
+            return;
+          }
         }
 
         const estadoAprobacion = esRutaTucanes
@@ -1288,6 +1335,7 @@ export function crearServidor(
           fotoMotoUrl: m.fotoMotoUrl,
           fotoSoatUrl: m.fotoSoatUrl,
           fotoLicenciaUrl: m.fotoLicenciaUrl,
+          numeroLicencia: m.numeroLicencia,
           compromisoAceptado: m.compromisoAceptado,
           moto: m.obtenerMotoActiva()
             ? {

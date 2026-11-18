@@ -1881,6 +1881,67 @@ function renderFeed(data) {
     .join("");
 }
 
+function esUrlImagen(valor) {
+  return typeof valor === "string" && /^(data:image\/|https?:\/\/|\/)/.test(valor.trim());
+}
+
+function construirMiniaturaDocumento(url, etiqueta, nombreTitular) {
+  if (!esUrlImagen(url)) {
+    return `<figure class="audit-doc">
+      <div class="audit-doc-missing">Sin adjuntar</div>
+      <figcaption>${esc(etiqueta)}</figcaption>
+    </figure>`;
+  }
+  return `<figure class="audit-doc">
+    <img src="${esc(url)}" alt="${esc(etiqueta)} de ${esc(nombreTitular)}" class="audit-doc-thumb" data-doc-zoom="true" />
+    <figcaption>${esc(etiqueta)} · <span class="audit-doc-hint">ampliar</span></figcaption>
+  </figure>`;
+}
+
+function abrirVisorDocumento(src, alt) {
+  let overlay = document.getElementById("visor-documento");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "visor-documento";
+    overlay.className = "doc-viewer hidden";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "Vista ampliada del documento");
+    overlay.innerHTML = `
+      <button type="button" class="doc-viewer-close" aria-label="Cerrar vista ampliada">&times;</button>
+      <img id="visor-documento-img" alt="" />`;
+    document.body.appendChild(overlay);
+  }
+  const img = overlay.querySelector("#visor-documento-img");
+  if (img) {
+    img.src = src;
+    img.alt = alt || "Documento ampliado";
+  }
+  overlay.classList.remove("hidden");
+  overlay.querySelector(".doc-viewer-close")?.focus();
+}
+
+function cerrarVisorDocumento() {
+  document.getElementById("visor-documento")?.classList.add("hidden");
+}
+
+document.addEventListener("click", (e) => {
+  const thumb = e.target.closest?.("img[data-doc-zoom]");
+  if (thumb) {
+    abrirVisorDocumento(thumb.src, thumb.alt);
+    return;
+  }
+  const overlay = document.getElementById("visor-documento");
+  if (!overlay || overlay.classList.contains("hidden")) return;
+  if (e.target === overlay || e.target.closest?.(".doc-viewer-close")) {
+    cerrarVisorDocumento();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") cerrarVisorDocumento();
+});
+
 function construirHtmlTarjetasExpedienteTucan(lista, conAcciones = true, emptyTitulo = "Sin solicitudes pendientes", emptyDesc = "Todos los aspirantes a Tucán han sido auditados.") {
   if (!lista || lista.length === 0) {
     return renderEmptyState(emptyTitulo, emptyDesc);
@@ -1893,12 +1954,12 @@ function construirHtmlTarjetasExpedienteTucan(lista, conAcciones = true, emptyTi
           encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#EAF1ED"/><text x="40" y="48" font-size="28" text-anchor="middle" fill="#006837">${esc(inicialesNombre(t.nombre))}</text></svg>`
           );
-      const cedulaImg = t.fotoCedulaUrl
-        ? `<img src="${esc(t.fotoCedulaUrl)}" alt="Cédula de ${esc(t.nombre)}" class="audit-moto-preview" />`
-        : `<div class="audit-moto-preview" style="display:grid;place-items:center;color:#555;font-size:11px;">Cédula verificada</div>`;
-      const motoImg = t.fotoMotoUrl
-        ? `<img src="${esc(t.fotoMotoUrl)}" alt="Moto de ${esc(t.nombre)}" class="audit-moto-preview" />`
-        : `<div class="audit-moto-preview" style="display:grid;place-items:center;color:#555;font-size:11px;">Sin foto de moto</div>`;
+      const galeriaDocumentos = `
+        ${construirMiniaturaDocumento(t.fotoCedulaUrl, "Cédula", t.nombre)}
+        ${construirMiniaturaDocumento(t.fotoSoatUrl, "SOAT", t.nombre)}
+        ${construirMiniaturaDocumento(t.fotoLicenciaUrl, "Licencia A2", t.nombre)}
+        ${construirMiniaturaDocumento(t.fotoMotoUrl, "Motocicleta", t.nombre)}
+      `;
 
       const estadoChip =
         t.estadoAprobacion === "ACTIVO"
@@ -1937,18 +1998,13 @@ function construirHtmlTarjetasExpedienteTucan(lista, conAcciones = true, emptyTi
             </div>
             <div>
               <strong>${tgIcon("iconly-document")} Marco Legal (Hoja de Vida):</strong><br/>
-              <span>SOAT: <strong>${esc(t.moto?.numeroSoat || "N/A")}</strong></span><br/>
-              <span>Licencia: <strong>${esc(t.fotoLicenciaUrl || "Verificada A2")}</strong></span><br/>
+              <span>SOAT: <strong>${esc(t.moto?.numeroSoat || "N/A")}</strong> · ${esUrlImagen(t.fotoSoatUrl) ? "documento adjunto" : "sin documento"}</span><br/>
+              <span>Licencia A2: <strong>${esc(t.numeroLicencia || "N/A")}</strong> · ${esUrlImagen(t.fotoLicenciaUrl) ? "documento adjunto" : "sin documento"}</span><br/>
               <span>Compromiso Honor: <strong style="color:#006837;">${t.compromisoAceptado ? `${tgIcon("iconly-tick-square")} Aceptado` : "Pendiente"}</strong></span>
             </div>
-            <div>
-              <span style="font-size:10.5px;font-weight:700;color:#4C695A;">Escaneo Cédula:</span>
-              ${cedulaImg}
-            </div>
-            <div>
-              <span style="font-size:10.5px;font-weight:700;color:#4C695A;">Foto Moto:</span>
-              ${motoImg}
-            </div>
+          </div>
+          <div class="audit-doc-gallery">
+            ${galeriaDocumentos}
           </div>
           ${accionesHtml}
         </article>`;

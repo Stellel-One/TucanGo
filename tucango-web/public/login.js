@@ -72,7 +72,9 @@
   let wizardPhotos = {
     face: "",
     cedula: "",
-    moto: ""
+    moto: "",
+    soat: "",
+    licencia: ""
   };
 
   function mostrarToast(mensaje, tipo = "info") {
@@ -425,6 +427,17 @@
       "reg-tucan-licencia": "Ingresa un número de licencia de conducción válido (mínimo 5 caracteres)."
     };
 
+    // El Tucán no es estudiante: su correo de contacto debe ser personal.
+    const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co"];
+
+    function esCorreoInstitucional(valor) {
+      const correo = (valor || "").trim().toLowerCase();
+      const arroba = correo.lastIndexOf("@");
+      if (arroba === -1) return false;
+      const dominio = correo.slice(arroba + 1);
+      return DOMINIOS_INSTITUCIONALES.some((d) => dominio === d);
+    }
+
     function obtenerMensajeErrorCampo(inputEl) {
       if (!inputEl) return "";
       const v = inputEl.validity;
@@ -433,6 +446,9 @@
         const val = inputEl.value.trim();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
           return customMessages["reg-tucan-correo"];
+        }
+        if (esCorreoInstitucional(val)) {
+          return "Usa tu correo personal: el correo @uniamazonia.edu.co es exclusivo de estudiantes.";
         }
       }
       if (inputEl.id === "reg-tucan-password-confirm") {
@@ -545,6 +561,10 @@
           primerInvalido.focus();
           return false;
         }
+        if (!wizardPhotos.moto) {
+          mostrarAlertaInline("Adjunta una fotografía lateral de tu motocicleta.", "error");
+          return false;
+        }
       }
       return true;
     }
@@ -596,8 +616,19 @@
       btn.classList.toggle("hidden", !esDispositivoMovil);
     });
 
-    // Compresión ligera en <canvas> para fotos de documentos/cámara (~30-45 KB)
-    function comprimirImagenFile(file, maxWidth = 560, quality = 0.72) {
+    // Calidad por tipo de foto: la selfie se comprime fuerte, pero los documentos
+    // (cédula, SOAT, licencia) necesitan resolución suficiente para que el
+    // Administrador pueda leer el número y verificar la vigencia.
+    const CALIDAD_FOTO = {
+      face: { maxWidth: 640, quality: 0.72 },
+      cedula: { maxWidth: 1280, quality: 0.82 },
+      moto: { maxWidth: 1024, quality: 0.78 },
+      soat: { maxWidth: 1280, quality: 0.82 },
+      licencia: { maxWidth: 1280, quality: 0.82 }
+    };
+
+    // Compresión en <canvas> antes de enviar la imagen como data URL
+    function comprimirImagenFile(file, { maxWidth = 960, quality = 0.75 } = {}) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = () => reject(new Error("Error leyendo la imagen"));
@@ -641,7 +672,7 @@
         const file = e.target.files?.[0];
         if (!file) return;
         try {
-          const compressed = await comprimirImagenFile(file);
+          const compressed = await comprimirImagenFile(file, CALIDAD_FOTO[keyName]);
           applyPreview(compressed);
         } catch (err) {
           mostrarAlertaInline(err.message, "error");
@@ -657,6 +688,15 @@
     setupPhotoUpload("btn-trigger-face", "btn-camera-face", "input-file-face", "input-camera-face", "img-preview-face", "placeholder-face", "face");
     setupPhotoUpload("btn-trigger-cedula", "btn-camera-cedula", "input-file-cedula", "input-camera-cedula", "img-preview-cedula", "placeholder-cedula", "cedula");
     setupPhotoUpload("btn-trigger-moto", "btn-camera-moto", "input-file-moto", "input-camera-moto", "img-preview-moto", "placeholder-moto", "moto");
+    setupPhotoUpload("btn-trigger-soat", "btn-camera-soat", "input-file-soat", "input-camera-soat", "img-preview-soat", "placeholder-soat", "soat");
+    setupPhotoUpload("btn-trigger-licencia", "btn-camera-licencia", "input-file-licencia", "input-camera-licencia", "img-preview-licencia", "placeholder-licencia", "licencia");
+
+    // En móvil el selector abre la galería; el botón debe decirlo sin ambigüedad
+    if (esDispositivoMovil) {
+      document.querySelectorAll(".btn-gallery-label").forEach((label) => {
+        label.textContent = "Elegir de la galería";
+      });
+    }
 
     if (els.formWizardTucan) {
       els.formWizardTucan.addEventListener("submit", async (e) => {
@@ -673,6 +713,14 @@
         if (!soatValido || !licValida) {
           mostrarAlertaInline("Verifica el número de póliza SOAT y tu licencia de conducción.", "error");
           (!soatValido ? els.regTucanSoat : els.regTucanLicencia)?.focus();
+          return;
+        }
+
+        if (!wizardPhotos.soat || !wizardPhotos.licencia) {
+          mostrarAlertaInline(
+            "Adjunta una foto legible de tu póliza SOAT y de tu licencia de conducción para completar tu hoja de vida.",
+            "error"
+          );
           return;
         }
 
@@ -694,10 +742,12 @@
           cilindraje: parseInt(els.regTucanCc?.value.trim() || "150", 10),
           numeroSoat: els.regTucanSoat?.value.trim() || "",
           soatVigente: true,
+          numeroLicencia: els.regTucanLicencia?.value.trim() || "",
           fotoRostroUrl: wizardPhotos.face,
           fotoCedulaUrl: wizardPhotos.cedula,
           fotoMotoUrl: wizardPhotos.moto,
-          fotoLicenciaUrl: els.regTucanLicencia?.value.trim() || "",
+          fotoSoatUrl: wizardPhotos.soat,
+          fotoLicenciaUrl: wizardPhotos.licencia,
           compromisoAceptado: true
         };
 
@@ -727,9 +777,28 @@
       });
     }
 
+    function reiniciarFotosWizard() {
+      wizardPhotos = { face: "", cedula: "", moto: "", soat: "", licencia: "" };
+      [
+        ["img-preview-face", "placeholder-face"],
+        ["img-preview-cedula", "placeholder-cedula"],
+        ["img-preview-moto", "placeholder-moto"],
+        ["img-preview-soat", "placeholder-soat"],
+        ["img-preview-licencia", "placeholder-licencia"]
+      ].forEach(([imgId, placeholderId]) => {
+        const imgEl = document.getElementById(imgId);
+        const placeholderEl = document.getElementById(placeholderId);
+        if (imgEl) {
+          imgEl.src = "";
+          imgEl.classList.add("hidden");
+        }
+        if (placeholderEl) placeholderEl.classList.remove("hidden");
+      });
+    }
+
     els.btnPendingGoLogin?.addEventListener("click", () => {
       els.formWizardTucan?.reset();
-      wizardPhotos = { face: "", cedula: "", moto: "" };
+      reiniciarFotosWizard();
       irAPasoWizard(1);
       cambiarModoAuth("login");
     });

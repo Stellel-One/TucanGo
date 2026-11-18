@@ -71,6 +71,7 @@ export interface RegistrarMotoristaDTO {
   fotoSoatUrl?: string;
   fotoLicenciaUrl?: string;
   fotoCedulaUrl?: string;
+  numeroLicencia?: string;
   compromisoAceptado?: boolean;
 }
 
@@ -338,6 +339,7 @@ export class TucanGoFacade {
         fotoSoatUrl: m.fotoSoatUrl,
         fotoLicenciaUrl: m.fotoLicenciaUrl,
         fotoCedulaUrl: m.fotoCedulaUrl,
+        numeroLicencia: m.numeroLicencia,
         compromisoAceptado: m.compromisoAceptado,
         motivoRechazo: m.motivoRechazo,
         fechaAprobacion: m.fechaAprobacion?.toISOString(),
@@ -459,6 +461,13 @@ export class TucanGoFacade {
         typeof motSnap.latitud === "number" && typeof motSnap.longitud === "number"
           ? new Coordenada(motSnap.latitud, motSnap.longitud)
           : undefined;
+      // Versiones anteriores guardaban el número de licencia dentro de
+      // fotoLicenciaUrl, que es un campo de imagen. Se separa al rehidratar.
+      const licenciaGuardada = (motSnap.fotoLicenciaUrl ?? "").trim();
+      const licenciaEsImagen = /^(data:image\/|https?:\/\/|\/)/.test(licenciaGuardada);
+      const fotoLicenciaUrl = licenciaEsImagen ? licenciaGuardada : "";
+      const numeroLicencia =
+        motSnap.numeroLicencia || (licenciaEsImagen ? "" : licenciaGuardada);
       const mot = new Motorista(
         motSnap.identificacion,
         motSnap.nombre,
@@ -473,12 +482,13 @@ export class TucanGoFacade {
         motSnap.fotoRostroUrl ?? "",
         motSnap.fotoMotoUrl ?? "",
         motSnap.fotoSoatUrl ?? "",
-        motSnap.fotoLicenciaUrl ?? "",
+        fotoLicenciaUrl,
         motSnap.compromisoAceptado ?? true,
         motSnap.motivoRechazo,
         motSnap.fechaAprobacion ? new Date(motSnap.fechaAprobacion) : undefined,
         Boolean(motSnap.correoBienvenidaEnviado),
-        motSnap.fotoCedulaUrl ?? ""
+        motSnap.fotoCedulaUrl ?? "",
+        numeroLicencia
       );
       if (motSnap.contactoEmergencia) mot.contactoEmergencia = motSnap.contactoEmergencia;
       if (motSnap.sedeFavorita) mot.sedeFavorita = motSnap.sedeFavorita;
@@ -683,7 +693,8 @@ export class TucanGoFacade {
       undefined,
       undefined,
       false,
-      dto.fotoCedulaUrl || ""
+      dto.fotoCedulaUrl || "",
+      dto.numeroLicencia || ""
     );
     if (dto.password) {
       motorista.asignarPasswordHash(hashPasswordSync(dto.password));

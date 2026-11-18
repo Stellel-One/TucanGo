@@ -515,7 +515,7 @@
                     </button>
                     <button type="button" class="btn-subtle" id="btn-trigger-face">
                       <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
-                      Subir foto de perfil
+                      <span class="btn-gallery-label">Subir foto de perfil</span>
                     </button>
                   </div>
                 </div>
@@ -535,8 +535,8 @@
                     <button type="button" class="btn-subtle btn-mobile-camera hidden" id="btn-camera-cedula">
                       📷 Escanear Cédula
                     </button>
-                    <button type="button" class="btn-subtle" id="btn-trigger-cedula">
-                      📁 Subir imagen de cédula
+                    <button type="button" class="btn-subtle btn-gallery-trigger" id="btn-trigger-cedula">
+                      <span class="btn-gallery-label">📁 Subir imagen de cédula</span>
                     </button>
                   </div>
                 </div>
@@ -641,9 +641,9 @@
                     <button type="button" class="btn-subtle btn-mobile-camera hidden" id="btn-camera-moto">
                       📷 Tomar foto de moto
                     </button>
-                    <button type="button" class="btn-subtle" id="btn-trigger-moto">
+                    <button type="button" class="btn-subtle btn-gallery-trigger" id="btn-trigger-moto">
                       <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
-                      Subir fotografía de la moto
+                      <span class="btn-gallery-label">Subir fotografía de la moto</span>
                     </button>
                   </div>
                 </div>
@@ -698,6 +698,55 @@
                   </div>
                 </div>
 
+                <!-- 4A: CAPTURA DE LA PÓLIZA SOAT -->
+                <div class="photo-upload-box">
+                  <span class="upload-label">Fotografía de la póliza SOAT vigente:</span>
+                  <div class="photo-preview-rect" id="preview-box-soat">
+                    <img id="img-preview-soat" src="" alt="Vista previa póliza SOAT" class="hidden" />
+                    <div class="photo-placeholder" id="placeholder-soat">
+                      <span>📄 Foto legible del SOAT (frente del documento)</span>
+                    </div>
+                  </div>
+                  <input type="file" id="input-camera-soat" accept="image/*" capture="environment" class="hidden" />
+                  <input type="file" id="input-file-soat" accept="image/*" class="hidden" />
+                  <div class="photo-btn-row">
+                    <button type="button" class="btn-subtle btn-mobile-camera hidden" id="btn-camera-soat">
+                      📷 Fotografiar SOAT
+                    </button>
+                    <button type="button" class="btn-subtle btn-gallery-trigger" id="btn-trigger-soat">
+                      <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
+                      <span class="btn-gallery-label">Subir foto del SOAT</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 4B: CAPTURA DE LA LICENCIA DE CONDUCCIÓN -->
+                <div class="photo-upload-box">
+                  <span class="upload-label">Fotografía de la Licencia de Conducción (Categoría A2):</span>
+                  <div class="photo-preview-rect" id="preview-box-licencia">
+                    <img id="img-preview-licencia" src="" alt="Vista previa licencia de conducción" class="hidden" />
+                    <div class="photo-placeholder" id="placeholder-licencia">
+                      <span>🪪 Foto legible de tu licencia (frente y categoría)</span>
+                    </div>
+                  </div>
+                  <input type="file" id="input-camera-licencia" accept="image/*" capture="environment" class="hidden" />
+                  <input type="file" id="input-file-licencia" accept="image/*" class="hidden" />
+                  <div class="photo-btn-row">
+                    <button type="button" class="btn-subtle btn-mobile-camera hidden" id="btn-camera-licencia">
+                      📷 Fotografiar Licencia
+                    </button>
+                    <button type="button" class="btn-subtle btn-gallery-trigger" id="btn-trigger-licencia">
+                      <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
+                      <span class="btn-gallery-label">Subir foto de la licencia</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="wizard-info-note">
+                  <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-lock"/></svg>
+                  El SOAT y la licencia se adjuntan a tu hoja de vida y solo los revisa el Administrador. Sin estos documentos la solicitud no puede aprobarse.
+                </div>
+
                 <!-- COMPROMISO DE HONOR, POLÍTICA DE DATOS Y ACUERDOS -->
                 <div class="honor-commitment-card">
                   <div class="honor-header">
@@ -708,6 +757,8 @@
                     Prometo y me comprometo solemnemente a cumplir las políticas institucionales, normas de convivencia y el límite de velocidad máxima (20 km/h) en el campus de la Universidad de la Amazonia, garantizando siempre el uso de casco reglamentario.
                     <br /><br />
                     <strong>Advertencia de cumplimiento:</strong> Entiendo y acepto expresamente que cualquier infracción, conducta riesgosa o incumplimiento conllevará la <em>revocación inmediata e irrevocable de mi Licencia Tucán</em> y la expulsión definitiva del servicio.
+                    <br /><br />
+                    <strong>Contacto oficial:</strong> Autorizo que la Universidad se comunique conmigo por <strong>correo electrónico</strong> o <strong>WhatsApp</strong> al número registrado para completar la verificación de mis documentos y notificar el resultado de mi solicitud.
                   </p>
                   <a href="/politicas" target="_blank" rel="noopener noreferrer" class="policy-link-btn">
                     📄 Leer Política de Privacidad de Datos, Consentimientos y Acuerdos TucanGo ↗
@@ -782,6 +833,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=4.5"></script>
+  <script src="/login.js?v=4.6"></script>
 </body>
 </html>

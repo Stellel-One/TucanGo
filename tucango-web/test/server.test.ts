@@ -9,6 +9,10 @@ import { SqliteSistemaRepository } from "../src/infrastructure/SqliteSistemaRepo
 import { TucanGoFacade } from "../src/application/TucanGoFacade.ts";
 import { crearServidor } from "../src/server.ts";
 
+// Documento mínimo válido para los expedientes de prueba (PNG 1x1)
+const DOC_FOTO =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
 describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => {
   it("Expone salud, sectores, cálculo de ruta, registro SOAT, llegada segura y eventos SSE en tiempo real", async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-http-"));
@@ -657,6 +661,56 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(motSolicitaRes.status, 403);
 
       // Onboarding Tucán: registro con compromiso obligatorio, retención 403 en revisión y aprobación por Admin
+      // El correo institucional es exclusivo de estudiantes: el Tucán debe usar uno personal
+      const regTucanCorreoInstitucionalRes = await fetch(`${baseUrl}/api/tucanes/registro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "7002",
+          nombre: "Aspirante Con Correo Institucional",
+          telefono: "3119998878",
+          correoInstitucional: "c.aspirante@uniamazonia.edu.co",
+          placa: "TUC-71G",
+          marca: "Yamaha",
+          modelo: "FZ 250",
+          cilindraje: 250,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-TUC71",
+          numeroLicencia: "LIC-7002-A2",
+          password: "CarlosTucan*2026",
+          fotoRostroUrl: DOC_FOTO,
+          fotoCedulaUrl: DOC_FOTO,
+          fotoMotoUrl: DOC_FOTO,
+          fotoSoatUrl: DOC_FOTO,
+          fotoLicenciaUrl: DOC_FOTO,
+          compromisoAceptado: true
+        })
+      });
+      assert.equal(regTucanCorreoInstitucionalRes.status, 422);
+      const regTucanCorreoInstitucionalJson = (await regTucanCorreoInstitucionalRes.json()) as any;
+      assert.match(regTucanCorreoInstitucionalJson.error, /debe ser personal/i);
+
+      // Un expediente sin documentos no puede entrar a auditoría
+      const regTucanSinDocumentosRes = await fetch(`${baseUrl}/api/tucanes/registro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "7003",
+          nombre: "Aspirante Sin Documentos",
+          telefono: "3119998879",
+          correoInstitucional: "aspirante.sin.docs@gmail.com",
+          placa: "TUC-72G",
+          marca: "Yamaha",
+          modelo: "FZ 250",
+          cilindraje: 250,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-TUC72",
+          password: "CarlosTucan*2026",
+          compromisoAceptado: true
+        })
+      });
+      assert.equal(regTucanSinDocumentosRes.status, 422);
+
       const regTucanRes = await fetch(`${baseUrl}/api/tucanes/registro`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -664,14 +718,20 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           identificacion: "7001",
           nombre: "Carlos Aspirante Tucán",
           telefono: "3119998877",
-          correoInstitucional: "c.aspirante@uniamazonia.edu.co",
+          correoInstitucional: "carlos.aspirante@gmail.com",
           placa: "TUC-70G",
           marca: "Yamaha",
           modelo: "FZ 250",
           cilindraje: 250,
           soatVigente: true,
           numeroSoat: "SOAT-2026-TUC70",
+          numeroLicencia: "LIC-7001-A2",
           password: "CarlosTucan*2026",
+          fotoRostroUrl: DOC_FOTO,
+          fotoCedulaUrl: DOC_FOTO,
+          fotoMotoUrl: DOC_FOTO,
+          fotoSoatUrl: DOC_FOTO,
+          fotoLicenciaUrl: DOC_FOTO,
           compromisoAceptado: true
         })
       });
@@ -704,6 +764,12 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(pendientesRes.status, 200);
       const pendientesJson = (await pendientesRes.json()) as any;
       assert.ok(pendientesJson.pendientes.some((p: any) => p.identificacion === "7001"));
+
+      // La hoja de vida llega completa al Administrador: número de licencia y documentos
+      const tucanPendiente = pendientesJson.pendientes.find((p: any) => p.identificacion === "7001");
+      assert.equal(tucanPendiente.numeroLicencia, "LIC-7001-A2");
+      assert.equal(tucanPendiente.fotoSoatUrl, DOC_FOTO);
+      assert.equal(tucanPendiente.fotoLicenciaUrl, DOC_FOTO);
 
       // Admin consulta analítica institucional (Ley 1581 - agregación por barrios y corredores)
       const analiticaRes = await fetch(`${baseUrl}/api/admin/analitica`, {
