@@ -210,6 +210,10 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const cfg = (await resConfig.json()) as any;
       assert.equal(typeof cfg.tileUrlDidi, "string");
       assert.equal(Array.isArray(cfg.googleApisRequeridas), true);
+      if (process.env.GOOGLE_MAPS_API_KEY) {
+        assert.equal(cfg.proveedorActivo, "google_maps");
+        assert.equal(typeof cfg.googleMapsMapId, "string");
+      }
 
       const resRuta = await fetch(`${baseUrl}/api/ruta?origenId=PORVENIR&destinoId=CENTRO`);
       assert.equal(resRuta.status, 200);

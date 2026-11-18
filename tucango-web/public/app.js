@@ -12,12 +12,19 @@ const state = {
     nocturna: 4000
   },
   map: null,
+  mapEngine: "leaflet",
+  gmapsLoaded: false,
   mapConfig: null,
   markers: new Map(),
   driverMarkers: new Map(),
   driverHeadings: new Map(),
   userGpsMarker: null,
+  realGpsMarker: null,
+  realGps: null,
+  gpsWatchId: null,
+  lastGpsPostTs: 0,
   routeLine: null,
+  routeLineCasing: null,
   nextPinTarget: "destino",
   lastOsrmKey: "",
   lastPolilinea: [],
@@ -311,13 +318,143 @@ async function cargarConfigMapa() {
     const res = await fetch("/api/mapa/config");
     if (!res.ok) return;
     state.mapConfig = await res.json();
-    const esGoogle = state.mapConfig.proveedorActivo === "google_maps";
-    const texto = esGoogle ? "Google Maps API Activa" : "Mapa Vial · OSRM";
+    const esGoogle =
+      state.mapConfig.proveedorActivo === "google_maps" &&
+      Boolean(state.mapConfig.googleMapsApiKey);
+
+    if (esGoogle) {
+      const ok = await cargarScriptGoogleMaps(state.mapConfig.googleMapsApiKey);
+      state.mapEngine = ok ? "google" : "leaflet";
+    } else {
+      state.mapEngine = "leaflet";
+    }
+
+    const texto =
+      state.mapEngine === "google" ? "Google Maps API Activa" : "Mapa Vial · OSRM";
     if (els.mapEngineLabel) els.mapEngineLabel.textContent = texto;
     if (els.gmapsStatusBadge) els.gmapsStatusBadge.textContent = texto;
   } catch {
-    // Fallback silencioso
+    state.mapEngine = "leaflet";
   }
+}
+
+function cargarScriptGoogleMaps(apiKey) {
+  if (window.google && window.google.maps && window.google.maps.Map) {
+    state.gmapsLoaded = true;
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      state.gmapsLoaded = ok;
+      resolve(ok);
+    };
+
+    window.gm_authFailure = () => {
+      console.warn("Google Maps API reportó gm_authFailure; activando respaldo Leaflet.");
+      if (els.mapEngineLabel) els.mapEngineLabel.textContent = "Respaldo Vial · OSRM";
+      showToast("Aviso de clave Google Maps: usando respaldo cartográfico", "info");
+      finish(false);
+    };
+
+    const callbackName = "__tucangoGmapsInit";
+    window[callbackName] = () => {
+      finish(Boolean(window.google && window.google.maps && window.google.maps.Map));
+    };
+
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&libraries=marker,places,geometry&callback=${callbackName}`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => finish(false);
+    document.head.appendChild(script);
+
+    setTimeout(() => finish(Boolean(window.google && window.google.maps)), 6500);
+  });
+}
+
+function crearHtmlOverlayGoogle(map, lat, lng, html, onClick = null, zIndex = 100) {
+  class TucanHtmlOverlay extends window.google.maps.OverlayView {
+    constructor() {
+      super();
+      this.lat = lat;
+      this.lng = lng;
+      this.html = html;
+      this.div = null;
+      this.animFrame = null;
+    }
+    onAdd() {
+      const div = document.createElement("div");
+      div.style.position = "absolute";
+      div.style.transform = "translate(-50%, -50%)";
+      div.style.zIndex = String(zIndex);
+      div.style.cursor = onClick ? "pointer" : "default";
+      div.innerHTML = this.html;
+      if (onClick) {
+        div.addEventListener("click", (e) => {
+          e.stopPropagation();
+          onClick();
+        });
+      }
+      this.div = div;
+      const panes = this.getPanes();
+      panes?.overlayMouseTarget.appendChild(div);
+    }
+    draw() {
+      if (!this.div) return;
+      const projection = this.getProjection();
+      if (!projection) return;
+      const pos = projection.fromLatLngToDivPixel(
+        new window.google.maps.LatLng(this.lat, this.lng)
+      );
+      if (pos) {
+        this.div.style.left = `${pos.x}px`;
+        this.div.style.top = `${pos.y}px`;
+      }
+    }
+    onRemove() {
+      if (this.animFrame) cancelAnimationFrame(this.animFrame);
+      if (this.div && this.div.parentNode) {
+        this.div.parentNode.removeChild(this.div);
+      }
+      this.div = null;
+    }
+    setLatLng([newLat, newLng], animate = true) {
+      if (!animate || typeof window.requestAnimationFrame === "undefined") {
+        this.lat = newLat;
+        this.lng = newLng;
+        this.draw();
+        return;
+      }
+      if (this.animFrame) cancelAnimationFrame(this.animFrame);
+      const startLat = this.lat;
+      const startLng = this.lng;
+      const startTime = performance.now();
+      const duration = 520;
+      const step = (now) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        const ease = t * (2 - t);
+        this.lat = startLat + (newLat - startLat) * ease;
+        this.lng = startLng + (newLng - startLng) * ease;
+        this.draw();
+        if (t < 1) {
+          this.animFrame = requestAnimationFrame(step);
+        }
+      };
+      this.animFrame = requestAnimationFrame(step);
+    }
+    getElement() {
+      return this.div;
+    }
+    remove() {
+      this.setMap(null);
+    }
+  }
+  const overlay = new TucanHtmlOverlay();
+  overlay.setMap(map);
+  return overlay;
 }
 
 // Delimitación geográfica estricta: Florencia, Caquetá (Suroccidente Balcanes km 17 -> Nororiente La Vega / Aeropuerto)
@@ -325,10 +462,136 @@ const FLORENCIA_BOUNDS_COORDS = [
   [1.5200, -75.6800],
   [1.6600, -75.5400]
 ];
-const FLORENCIA_CENTRO = [1.6144, -75.6062];
+const FLORENCIA_CENTRO = [1.6139, -75.6052];
+const SEDES_POI_ACTIVOS = new Set(["PORVENIR", "CENTRO"]);
+
+function obtenerSedesActivas(sectores) {
+  const filtradas = (sectores || []).filter((s) => SEDES_POI_ACTIVOS.has(s.id));
+  return filtradas.length > 0 ? filtradas : sectores || [];
+}
 
 function initMap(sectores) {
-  if (typeof window.L === "undefined" || state.map) return;
+  if (state.map) return;
+  const sedesMapa = obtenerSedesActivas(sectores);
+
+  if (state.mapEngine === "google" && window.google && window.google.maps) {
+    const container = document.getElementById("campus-map");
+    const mapOptions = {
+      center: { lat: FLORENCIA_CENTRO[0], lng: FLORENCIA_CENTRO[1] },
+      zoom: 15,
+      minZoom: 12,
+      maxZoom: 20,
+      restriction: {
+        latLngBounds: {
+          south: 1.5000,
+          west: -75.7000,
+          north: 1.6800,
+          east: -75.5200
+        },
+        strictBounds: false
+      },
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      zoomControl: true,
+      clickableIcons: true,
+      gestureHandling: "greedy"
+    };
+    if (state.mapConfig?.googleMapsMapId) {
+      mapOptions.mapId = state.mapConfig.googleMapsMapId;
+    }
+
+    const gmap = new window.google.maps.Map(container, mapOptions);
+    const infoWindow = new window.google.maps.InfoWindow();
+    state.infoWindow = infoWindow;
+
+    // Métodos puente para compatibilidad transparente con el resto de la UI
+    gmap.invalidateSize = () => {
+      if (window.google?.maps?.event) {
+        window.google.maps.event.trigger(gmap, "resize");
+      }
+    };
+    gmap.setView = ([lat, lng], zoom) => {
+      gmap.panTo({ lat: Number(lat), lng: Number(lng) });
+      if (zoom) gmap.setZoom(zoom);
+    };
+    gmap.fitBoundsCompat = (coordsList, maxZoom = 16) => {
+      if (!coordsList || coordsList.length === 0) return;
+      const gBounds = new window.google.maps.LatLngBounds();
+      for (const c of coordsList) {
+        const lat = Array.isArray(c) ? c[0] : c.latitud;
+        const lng = Array.isArray(c) ? c[1] : c.longitud;
+        if (typeof lat === "number" && typeof lng === "number") {
+          gBounds.extend({ lat, lng });
+        }
+      }
+      gmap.fitBounds(gBounds, 64);
+      window.google.maps.event.addListenerOnce(gmap, "idle", () => {
+        if (gmap.getZoom() > maxZoom) gmap.setZoom(maxZoom);
+      });
+    };
+
+    const AdvancedMarker = window.google.maps.marker?.AdvancedMarkerElement;
+    const PinElement = window.google.maps.marker?.PinElement;
+
+    for (const sec of sedesMapa) {
+      const pos = { lat: sec.latitud, lng: sec.longitud };
+      const infoHtml = `
+        <div style="font-family:sans-serif;padding:2px 4px;max-width:220px;">
+          <strong style="color:#0F6B36;font-size:13px;">${esc(sec.nombre)}</strong><br/>
+          <span style="color:#4B5563;font-size:11px;">${esc(sec.referencia || "Universidad de la Amazonia")}</span>
+        </div>`;
+
+      if (AdvancedMarker && PinElement && mapOptions.mapId) {
+        const pin = new PinElement({
+          background: sec.id === "PORVENIR" ? "#0F6B36" : "#1D4ED8",
+          borderColor: "#FFFFFF",
+          glyphColor: "#FFFFFF",
+          scale: 1.15
+        });
+        const advMarker = new AdvancedMarker({
+          map: gmap,
+          position: pos,
+          title: sec.nombre,
+          content: pin.element
+        });
+        advMarker.addListener("click", () => {
+          infoWindow.setContent(infoHtml);
+          infoWindow.open({ anchor: advMarker, map: gmap });
+          seleccionarSectorEnMapa(sec.id);
+        });
+        state.markers.set(sec.id, advMarker);
+      } else {
+        const stdMarker = new window.google.maps.Marker({
+          map: gmap,
+          position: pos,
+          title: sec.nombre,
+          label: {
+            text: sec.id === "PORVENIR" ? "P" : "C",
+            color: "#FFFFFF",
+            fontWeight: "700"
+          }
+        });
+        stdMarker.addListener("click", () => {
+          infoWindow.setContent(infoHtml);
+          infoWindow.open({ anchor: stdMarker, map: gmap });
+          seleccionarSectorEnMapa(sec.id);
+        });
+        state.markers.set(sec.id, stdMarker);
+      }
+    }
+
+    state.map = gmap;
+
+    if (sedesMapa.length > 0) {
+      gmap.fitBoundsCompat(sedesMapa.map((s) => [s.latitud, s.longitud]), 15);
+    }
+
+    iniciarGeolocalizacionTiempoReal();
+    return;
+  }
+
+  if (typeof window.L === "undefined") return;
 
   const bounds = window.L.latLngBounds(
     FLORENCIA_BOUNDS_COORDS[0],
@@ -342,7 +605,7 @@ function initMap(sectores) {
     maxZoom: 19,
     maxBounds: bounds,
     maxBoundsViscosity: 1.0
-  }).setView(FLORENCIA_CENTRO, 14);
+  }).setView(FLORENCIA_CENTRO, 15);
 
   map.setMaxBounds(bounds);
 
@@ -368,30 +631,26 @@ function initMap(sectores) {
     }
   });
 
-  for (const sec of sectores) {
-    const icon = window.L.divIcon({
-      className: "",
-      html: `<div class="tucan-pin ${sec.esCampusUniamazonia ? "" : "external"}" data-pin="${esc(sec.id)}">${esc(sec.id)}</div>`,
-      iconSize: [null, 24],
-      iconAnchor: [30, 12]
-    });
-    const marker = window.L.marker([sec.latitud, sec.longitud], { icon }).addTo(map);
-    marker.bindTooltip(`${sec.nombre}`, { direction: "top" });
+  for (const sec of sedesMapa) {
+    const marker = window.L.marker([sec.latitud, sec.longitud]).addTo(map);
+    marker.bindPopup(`<strong>${esc(sec.nombre)}</strong><br/><small>${esc(sec.referencia || "")}</small>`);
     marker.on("click", () => seleccionarSectorEnMapa(sec.id));
     state.markers.set(sec.id, marker);
   }
 
   state.map = map;
 
-  if (sectores && sectores.length > 0) {
-    const latLngs = sectores.map((s) => [s.latitud, s.longitud]);
+  if (sedesMapa.length > 0) {
+    const latLngs = sedesMapa.map((s) => [s.latitud, s.longitud]);
     const secBounds = window.L.latLngBounds(latLngs);
-    map.fitBounds(secBounds, { padding: [36, 36], maxZoom: 15 });
+    map.fitBounds(secBounds, { padding: [48, 48], maxZoom: 15 });
   }
 
   setTimeout(() => {
     if (state.map) state.map.invalidateSize();
   }, 250);
+
+  iniciarGeolocalizacionTiempoReal();
 }
 
 function normalizarAnguloContinuo(motoristaId, targetDeg) {
@@ -408,57 +667,142 @@ function normalizarAnguloContinuo(motoristaId, targetDeg) {
   return unwrapped;
 }
 
-function renderMarcadoresEnVivo(data) {
-  if (!state.map || typeof window.L === "undefined") return;
+function estaDentroDeFlorencia(lat, lng) {
+  return (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    lat >= FLORENCIA_BOUNDS_COORDS[0][0] &&
+    lat <= FLORENCIA_BOUNDS_COORDS[1][0] &&
+    lng >= FLORENCIA_BOUNDS_COORDS[0][1] &&
+    lng <= FLORENCIA_BOUNDS_COORDS[1][1]
+  );
+}
 
-  const sectores = data.sectores || [];
-  const sectorOrigen = sectores.find((s) => s.id === els.selectOrigen.value);
-  if (sectorOrigen) {
-    if (!state.userGpsMarker) {
-      const gpsIcon = window.L.divIcon({
-        className: "",
-        html: `<div class="user-gps-marker" title="Tu ubicación de recogida"><div class="user-gps-cone"></div><div class="user-gps-dot"></div></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-      });
-      state.userGpsMarker = window.L.marker([sectorOrigen.latitud, sectorOrigen.longitud], {
-        icon: gpsIcon,
-        zIndexOffset: 700
-      }).addTo(state.map);
-    } else {
-      state.userGpsMarker.setLatLng([sectorOrigen.latitud, sectorOrigen.longitud]);
-    }
+function iniciarGeolocalizacionTiempoReal(forzarCentrado = false) {
+  if (typeof navigator === "undefined" || !navigator.geolocation) return;
+
+  if (els.coordsReadout) {
+    els.coordsReadout.classList.remove("hidden");
   }
 
-  for (const mot of data.motoristas || []) {
-    if (typeof mot.latitud !== "number" || typeof mot.longitud !== "number") continue;
-    const ocupada = !mot.disponible;
-    const placa = mot.motoActiva ? mot.motoActiva.placa : "MOTO";
-    const rumboContinuo = normalizarAnguloContinuo(mot.identificacion, mot.direccionGrados);
-    const html = `${crearSvgMotoCenital(ocupada, rumboContinuo)}<div class="moto-badge-tag">${esc(placa)}</div>`;
-    const existing = state.driverMarkers.get(mot.identificacion);
-    if (existing) {
-      existing.setLatLng([mot.latitud, mot.longitud]);
-      const iconEl = existing.getElement();
-      if (iconEl) {
-        const rotEl = iconEl.querySelector(".moto-svg-rotator");
-        if (rotEl) {
-          rotEl.style.transform = `rotate(${rumboContinuo}deg)`;
-        }
+  const onPos = (pos) => {
+    const lat = Number(pos.coords.latitude);
+    const lng = Number(pos.coords.longitude);
+    const acc = Math.round(Number(pos.coords.accuracy || 15));
+    const heading = Number.isFinite(pos.coords.heading) ? Number(pos.coords.heading) : undefined;
+
+    state.realGps = { latitud: lat, longitud: lng, accuracy: acc, heading, ts: Date.now() };
+    const enFlorencia = estaDentroDeFlorencia(lat, lng);
+
+    if (els.coordsReadout) {
+      els.coordsReadout.textContent = `📡 GPS Real: ${lat.toFixed(4)}, ${lng.toFixed(4)} (±${acc}m)${enFlorencia ? " · Florencia" : " · Fuera de campus"}`;
+    }
+
+    if (state.data) {
+      renderMarcadoresEnVivo(state.data);
+    }
+
+    // Si el usuario tiene rol motorista y su GPS está en Florencia, sincroniza telemetría en vivo
+    if (
+      enFlorencia &&
+      state.role === "motorista" &&
+      Date.now() - state.lastGpsPostTs > 4000
+    ) {
+      state.lastGpsPostTs = Date.now();
+      postJson("/api/motoristas/ubicacion", {
+        motoristaId: els.selectMotorista?.value,
+        latitud: lat,
+        longitud: lng,
+        direccionGrados: heading
+      }).catch(() => {});
+    }
+
+    if (forzarCentrado && state.map) {
+      if (enFlorencia) {
+        state.map.setView([lat, lng], 16);
+        showToast(`GPS en tiempo real activo (±${acc}m en Florencia)`, "success");
+      } else {
+        showToast(
+          `GPS real detectado (${lat.toFixed(3)}, ${lng.toFixed(3)} ±${acc}m) · Mostrando campus Florencia`,
+          "info"
+        );
+      }
+    }
+  };
+
+  const onErr = () => {
+    if (forzarCentrado) {
+      showToast("Permiso de ubicación no concedido; centrando en ruta del campus", "info");
+    }
+  };
+
+  navigator.geolocation.getCurrentPosition(onPos, onErr, {
+    enableHighAccuracy: true,
+    timeout: 6000,
+    maximumAge: 5000
+  });
+
+  if (state.gpsWatchId === null) {
+    state.gpsWatchId = navigator.geolocation.watchPosition(onPos, () => {}, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 3000
+    });
+  }
+}
+
+function renderMarcadoresEnVivo(data) {
+  if (!state.map) return;
+
+  const esGoogle = state.mapEngine === "google" && window.google?.maps;
+  if (!esGoogle && typeof window.L === "undefined") return;
+
+  // Limpiar cualquier marcador previo de motoristas (se implementarán más adelante)
+  if (state.driverMarkers.size > 0) {
+    for (const marker of state.driverMarkers.values()) {
+      if (typeof marker.setMap === "function") marker.setMap(null);
+      else if (typeof marker.remove === "function") marker.remove();
+    }
+    state.driverMarkers.clear();
+  }
+
+  // Mostrar únicamente la ubicación GPS en tiempo real del usuario (con componentes nativos de Google Maps)
+  if (state.realGps && typeof state.realGps.latitud === "number" && typeof state.realGps.longitud === "number") {
+    const gpsLat = state.realGps.latitud;
+    const gpsLng = state.realGps.longitud;
+
+    if (esGoogle) {
+      const pos = { lat: gpsLat, lng: gpsLng };
+      if (!state.userGpsMarker) {
+        state.userGpsMarker = new window.google.maps.Marker({
+          map: state.map,
+          position: pos,
+          title: "Tu ubicación GPS en tiempo real",
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 7,
+            fillColor: "#2563EB",
+            fillOpacity: 1,
+            strokeColor: "#FFFFFF",
+            strokeWeight: 2.5
+          },
+          zIndex: 700
+        });
+      } else if (typeof state.userGpsMarker.setPosition === "function") {
+        state.userGpsMarker.setPosition(pos);
       }
     } else {
-      const motoIcon = window.L.divIcon({
-        className: "",
-        html,
-        iconSize: [44, 48],
-        iconAnchor: [22, 20]
-      });
-      const marker = window.L.marker([mot.latitud, mot.longitud], {
-        icon: motoIcon,
-        zIndexOffset: 800
-      }).addTo(state.map);
-      marker.bindTooltip(`${mot.nombre} (${placa})`, { direction: "top" });
-      state.driverMarkers.set(mot.identificacion, marker);
+      if (!state.userGpsMarker) {
+        state.userGpsMarker = window.L.circleMarker([gpsLat, gpsLng], {
+          radius: 7,
+          color: "#FFFFFF",
+          weight: 2.5,
+          fillColor: "#2563EB",
+          fillOpacity: 1
+        }).addTo(state.map);
+      } else if (typeof state.userGpsMarker.setLatLng === "function") {
+        state.userGpsMarker.setLatLng([gpsLat, gpsLng]);
+      }
     }
   }
 }
@@ -475,14 +819,49 @@ function seleccionarSectorEnMapa(sectorId) {
 }
 
 function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
-  if (!state.map || typeof window.L === "undefined") return;
+  if (!state.map) return;
+  const esGoogle = state.mapEngine === "google" && window.google?.maps;
+  if (!esGoogle && typeof window.L === "undefined") return;
+
   if (state.routeLine) {
-    state.routeLine.remove();
+    if (typeof state.routeLine.setMap === "function") state.routeLine.setMap(null);
+    else if (typeof state.routeLine.remove === "function") state.routeLine.remove();
     state.routeLine = null;
+  }
+  if (state.routeLineCasing) {
+    if (typeof state.routeLineCasing.setMap === "function") state.routeLineCasing.setMap(null);
+    state.routeLineCasing = null;
   }
   if (!puntos || puntos.length === 0) return;
 
   const latLngs = puntos.map((p) => (Array.isArray(p) ? p : [p.latitud, p.longitud]));
+
+  if (esGoogle) {
+    const path = latLngs.map(([lat, lng]) => ({ lat: Number(lat), lng: Number(lng) }));
+    state.routeLineCasing = new window.google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: "#06371B",
+      strokeOpacity: 0.35,
+      strokeWeight: 9,
+      map: state.map,
+      zIndex: 40
+    });
+    state.routeLine = new window.google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: "#0F6B36",
+      strokeOpacity: 0.96,
+      strokeWeight: 5,
+      map: state.map,
+      zIndex: 45
+    });
+    if (ajustarEncuadre && latLngs.length >= 2 && typeof state.map.fitBoundsCompat === "function") {
+      state.map.fitBoundsCompat(latLngs, 15);
+    }
+    return;
+  }
+
   state.routeLine = window.L.polyline(latLngs, {
     color: "#0F6B36",
     weight: 5,
@@ -517,15 +896,46 @@ function pintarRutaEnMapa(ajustarEncuadre = true) {
             [destino.latitud, destino.longitud]
           ];
     dibujarPolilineaEnMapa(puntos, ajustarEncuadre);
-    els.coordsReadout.textContent = `Lat ${origen.latitud.toFixed(4)} N · Lon ${origen.longitud.toFixed(4)} W`;
-  } else if (ajustarEncuadre && state.florenciaBounds) {
-    state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
+    if (!state.realGps && els.coordsReadout) {
+      els.coordsReadout.textContent = `Lat ${origen.latitud.toFixed(4)} N · Lon ${origen.longitud.toFixed(4)} W`;
+    }
+  } else if (ajustarEncuadre) {
+    if (state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
+      state.map.fitBoundsCompat(FLORENCIA_BOUNDS_COORDS, 15);
+    } else if (state.florenciaBounds && typeof state.map.fitBounds === "function") {
+      state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
+    }
   }
   renderMarcadoresEnVivo(state.data);
 }
 
 async function intentarOsrmRuta(origen, destino, key) {
-  if (origen.id === destino.id || typeof AbortController === "undefined") return;
+  if (origen.id === destino.id) return;
+
+  // Si Google Maps está activo, intentamos primero DirectionsService oficial calle por calle
+  if (state.mapEngine === "google" && window.google?.maps?.DirectionsService) {
+    try {
+      const ds = new window.google.maps.DirectionsService();
+      const result = await ds.route({
+        origin: { lat: origen.latitud, lng: origen.longitud },
+        destination: { lat: destino.latitud, lng: destino.longitud },
+        travelMode: window.google.maps.TravelMode.DRIVING
+      });
+      const overview = result?.routes?.[0]?.overview_path;
+      if (Array.isArray(overview) && overview.length >= 2 && state.lastOsrmKey === key) {
+        state.lastPolilinea = overview.map((pt) => ({
+          latitud: pt.lat(),
+          longitud: pt.lng()
+        }));
+        pintarRutaEnMapa(true);
+        return;
+      }
+    } catch {
+      // Continúa a respaldo OSRM si DirectionsService no tiene permiso o falla
+    }
+  }
+
+  if (typeof AbortController === "undefined") return;
   const baseOsrm = state.mapConfig?.osrmRouteUrl || "https://router.project-osrm.org/route/v1/driving";
   const url = `${baseOsrm}/${origen.longitud},${origen.latitud};${destino.longitud},${destino.latitud}?overview=full&geometries=geojson`;
   const ctrl = new AbortController();
@@ -625,7 +1035,8 @@ function renderSelectores(data) {
     els.selectMotorista.value = prevMot;
   }
 
-  const opcionesSectores = (data.sectores || [])
+  const sedesSelect = obtenerSedesActivas(data.sectores || []);
+  const opcionesSectores = sedesSelect
     .map((s) => `<option value="${esc(s.id)}">${esc(s.nombre)}</option>`)
     .join("");
   if (!els.selectOrigen.innerHTML) {
@@ -1164,9 +1575,12 @@ els.btnIntercambiar.addEventListener("click", () => {
 
 if (els.btnCentrarMapa) {
   els.btnCentrarMapa.addEventListener("click", () => {
+    iniciarGeolocalizacionTiempoReal(true);
     if (state.map) {
       state.map.invalidateSize();
-      if (state.routeLine && state.routeLine.getLatLngs().length >= 2) {
+      if (state.mapEngine === "google") {
+        pintarRutaEnMapa(true);
+      } else if (state.routeLine && typeof state.routeLine.getLatLngs === "function" && state.routeLine.getLatLngs().length >= 2) {
         state.map.fitBounds(state.routeLine.getBounds(), { padding: [54, 54], maxZoom: 15 });
       } else if (state.florenciaBounds) {
         state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });

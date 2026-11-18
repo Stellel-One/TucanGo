@@ -21,6 +21,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_PUBLIC_DIR = path.join(__dirname, "..", "public");
 
+// Cargar variables de entorno desde tucango-web/.env si existe (sin pisar variables ya definidas)
+const ENV_FILE_PATH = path.join(__dirname, "..", ".env");
+if (fs.existsSync(ENV_FILE_PATH)) {
+  try {
+    const rawEnv = fs.readFileSync(ENV_FILE_PATH, "utf8");
+    for (const line of rawEnv.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx <= 0) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, "");
+      if (key && process.env[key] === undefined) {
+        process.env[key] = val;
+      }
+    }
+  } catch {
+    // Continuar si el archivo .env no puede leerse
+  }
+}
+
 const IS_PROD = process.env.NODE_ENV === "production";
 const RAW_SESSION_SECRET = process.env.SESSION_SECRET;
 
@@ -63,7 +84,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "geolocation=(self), camera=(), microphone=()",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://maps.googleapis.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://router.project-osrm.org https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://maps.googleapis.com https://cloudflareinsights.com;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://*.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://*.gstatic.com; img-src 'self' data: blob: https: http:; connect-src 'self' data: blob: https://router.project-osrm.org https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://maps.googleapis.com https://routes.googleapis.com https://*.googleapis.com https://*.gstatic.com https://cloudflareinsights.com;"
 };
 
 // B6: Rate Limiting en memoria con backoff exponencial
@@ -599,6 +620,10 @@ export function crearServidor(
 
       if (pathname === "/api/mapa/config" && req.method === "GET") {
         const googleKey = process.env.GOOGLE_MAPS_API_KEY || null;
+        const googleMapId =
+          process.env.GOOGLE_MAPS_MAP_ID ||
+          process.env.GOOGLE_MAPS_MAP_ID_OR_STYLE_ID ||
+          "828229759a91b5f6f45066f4";
         const cartoKey = process.env.CARTO_API_KEY || null;
         const tileUrlDidi = cartoKey
           ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`
@@ -606,6 +631,7 @@ export function crearServidor(
         sendJson(res, 200, {
           proveedorActivo: googleKey ? "google_maps" : cartoKey ? "carto_osrm" : "osm_osrm",
           googleMapsApiKey: googleKey,
+          googleMapsMapId: googleKey ? googleMapId : null,
           tileUrlDidi,
           osrmRouteUrl: "https://router.project-osrm.org/route/v1/driving",
           googleApisRequeridas: [

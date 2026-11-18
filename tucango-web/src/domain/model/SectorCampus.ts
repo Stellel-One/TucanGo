@@ -52,16 +52,16 @@ export class SectorCampus {
 export const SECTORES_FLORENCIA: readonly SectorCampus[] = Object.freeze([
   new SectorCampus(
     "PORVENIR",
-    "Campus Porvenir - Portería Principal",
-    "Av. Circunvalar, Sede Principal Uniamazonia",
-    new Coordenada(1.6203, -75.6042),
+    "Sede Porvenir - Campus Principal",
+    "Calle 17 Diagonal 17 con Carrera 3F, Barrio Porvenir",
+    new Coordenada(1.6198, -75.6040),
     true
   ),
   new SectorCampus(
     "CENTRO",
-    "Sede Centro - Edificio Administrativo",
-    "Calle 17 Carrera 10, Centro Florencia",
-    new Coordenada(1.6142, -75.6126),
+    "Sede Centro / IDEMA - Uniamazonia",
+    "Carrera 11 No. 5-69, Barrio Juan XXIII (Antiguo IDEMA)",
+    new Coordenada(1.6080, -75.6064),
     true
   ),
   new SectorCampus(

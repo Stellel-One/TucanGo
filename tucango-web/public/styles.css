@@ -1830,6 +1830,23 @@ button:disabled {
   left: 4px;
 }
 
+#map-coords-readout {
+  position: absolute;
+  left: 14px;
+  bottom: 84px;
+  z-index: 620;
+  padding: 5px 10px;
+  border-radius: 9999px;
+  background: rgba(18, 24, 21, 0.84);
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
 /* TOASTS */
 .toast-container {
   position: fixed;
