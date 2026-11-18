@@ -959,6 +959,14 @@ export function crearServidor(
         return;
       }
 
+      if (pathname === "/api/catalogos/programas" && req.method === "GET") {
+        // Oferta oficial de pregrado: dato institucional público.
+        sendJson(res, 200, {
+          programas: facade.obtenerProgramasAcademicos()
+        });
+        return;
+      }
+
       if (pathname === "/api/admin/analitica" && req.method === "GET") {
         const auth = requerirRol(req, res, facade, "admin");
         if (!auth) return;
@@ -1186,6 +1194,7 @@ export function crearServidor(
           codigoEstudiantil: string;
           carrera: string;
           barrioResidencia?: string;
+          usuario?: string;
           password?: string;
         }>(req);
 
@@ -1198,7 +1207,8 @@ export function crearServidor(
         sendJson(res, 201, {
           mensaje: "Estudiante registrado en la comunidad TucanGo",
           identificacion: est.identificacion,
-          nombre: est.nombre
+          nombre: est.nombre,
+          usuario: est.usuario
         });
         return;
       }

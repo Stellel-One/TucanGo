@@ -177,7 +177,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
         telefono: "3104443322",
         correoInstitucional: "m.cuellar@udla.edu.co",
         codigoEstudiantil: "20249988",
-        carrera: "Medicina Veterinaria",
+        carrera: "Medicina Veterinaria y Zootecnia",
         barrioResidencia: "Bello Horizonte"
       });
       facade1.registrarUbicacionEstudiante(nuevoEst.identificacion, {
@@ -301,7 +301,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     assert.equal(facade.obtenerMotoristas().length, 0);
 
     const estudiante = facade.registrarEstudiante({
-      identificacion: "1001",
+      identificacion: "1001001",
       nombre: "Carlos Rivera",
       telefono: "3115551234",
       correoInstitucional: "c.rivera@uniamazonia.edu.co",
@@ -327,7 +327,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     // 1. Login rápido pasajero y motorista (por placa)
     const sesEst = facade.autenticarUsuario("c.rivera@uniamazonia.edu.co", "pasajero");
     assert.equal(sesEst.rol, "pasajero");
-    assert.equal(sesEst.identificacion, "1001");
+    assert.equal(sesEst.identificacion, "1001001");
 
     const sesMot = facade.autenticarUsuario("GNX-45F", "motorista");
     assert.equal(sesMot.rol, "motorista");

@@ -141,7 +141,7 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     assert.equal(facade.obtenerMotoristas().length, 0);
 
     const est = facade.registrarEstudiante({
-      identificacion: "1001",
+      identificacion: "1001001",
       nombre: "Carlos Rivera",
       telefono: "3115551234",
       correoInstitucional: "c.rivera@uniamazonia.edu.co",

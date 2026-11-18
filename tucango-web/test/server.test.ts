@@ -125,12 +125,12 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identificacion: "4001",
+          identificacion: "4001001",
           nombre: "Sofía Muñoz",
           telefono: "3189990011",
           correoInstitucional: "s.munoz@udla.edu.co",
           codigoEstudiantil: "20261001",
-          carrera: "Derecho",
+          carrera: "Derecho (Caquetá)",
           password: "SofiaPassword*2026"
         })
       });
@@ -140,7 +140,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const estLogin = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "4001", password: "SofiaPassword*2026" })
+        body: JSON.stringify({ identificador: "4001001", password: "SofiaPassword*2026" })
       });
       assert.equal(estLogin.status, 200);
       const estCookie = (estLogin.headers.get("set-cookie") || "").split(";")[0];
@@ -254,7 +254,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identificacion: "1001",
+          identificacion: "1001001",
           nombre: "Carlos Rivera",
           telefono: "3115551234",
           correoInstitucional: "c.rivera@uniamazonia.edu.co",
@@ -269,7 +269,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const resLoginOk = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
+        body: JSON.stringify({ identificador: "1001001", password: "EstudianteSeguro*2026" })
       });
       assert.equal(resLoginOk.status, 200);
       const sesion = (await resLoginOk.json()) as any;
@@ -280,7 +280,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const resLoginWrongPass = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "clave-incorrecta" })
+        body: JSON.stringify({ identificador: "1001001", password: "clave-incorrecta" })
       });
       assert.equal(resLoginWrongPass.status, 401);
 
@@ -492,7 +492,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identificacion: "1001",
+          identificacion: "1001001",
           nombre: "Carlos Rivera",
           telefono: "3115551234",
           correoInstitucional: "c.rivera@uniamazonia.edu.co",
@@ -506,7 +506,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
+        body: JSON.stringify({ identificador: "1001001", password: "EstudianteSeguro*2026" })
       });
       assert.equal(loginRes.status, 200);
       const setCookie = loginRes.headers.get("set-cookie") || "";
@@ -525,7 +525,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       };
       assert.equal(authMe.autenticado, true);
       assert.equal(authMe.usuario?.rol, "pasajero");
-      assert.equal(authMe.usuario?.identificacion, "1001");
+      assert.equal(authMe.usuario?.identificacion, "1001001");
 
       // Consulta y edición de perfil autenticado (GET & POST /api/auth/perfil)
       const getPerfilRes = await fetch(`${baseUrl}/api/auth/perfil`, {
@@ -537,7 +537,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         perfil: { identificacion: string; rol: string; nombre: string };
       };
       assert.equal(getPerfil.ok, true);
-      assert.equal(getPerfil.perfil.identificacion, "1001");
+      assert.equal(getPerfil.perfil.identificacion, "1001001");
 
       const updatePerfilRes = await fetch(`${baseUrl}/api/auth/perfil`, {
         method: "POST",
@@ -545,7 +545,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         body: JSON.stringify({
           nombre: "Carlos Rivera Actualizado",
           telefono: "3159998877",
-          carrera: "Ingeniería Agroecológica",
+          carrera: "Ingeniería Agroecológica (Caquetá)",
           contactoEmergencia: "Marta Rivera · 3101112233",
           sedeFavorita: "CENTRO"
         })
@@ -564,7 +564,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(updatedPerfil.ok, true);
       assert.equal(updatedPerfil.perfil.nombre, "Carlos Rivera Actualizado");
       assert.equal(updatedPerfil.perfil.telefono, "3159998877");
-      assert.equal(updatedPerfil.perfil.carrera, "Ingeniería Agroecológica");
+      assert.equal(updatedPerfil.perfil.carrera, "Ingeniería Agroecológica (Caquetá)");
       assert.equal(updatedPerfil.perfil.contactoEmergencia, "Marta Rivera · 3101112233");
       assert.equal(updatedPerfil.perfil.sedeFavorita, "CENTRO");
 
@@ -583,9 +583,9 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const estadoJson = (await estadoRes.json()) as {
         estudiantes: Array<{ identificacion: string; nombre: string; carrera: string }>;
       };
-      const estActualizado = estadoJson.estudiantes.find((e) => e.identificacion === "1001");
+      const estActualizado = estadoJson.estudiantes.find((e) => e.identificacion === "1001001");
       assert.equal(estActualizado?.nombre, "Carlos Rivera Actualizado");
-      assert.equal(estActualizado?.carrera, "Ingeniería Agroecológica");
+      assert.equal(estActualizado?.carrera, "Ingeniería Agroecológica (Caquetá)");
 
       // Estudiante guarda su Casa en lugares frecuentes
       const saveLocRes = await fetch(`${baseUrl}/api/estudiante/ubicaciones`, {
@@ -701,7 +701,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const authPasajeroLogin = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
+        body: JSON.stringify({ identificador: "1001001", password: "EstudianteSeguro*2026" })
       });
       const activeCookie = (authPasajeroLogin.headers.get("set-cookie") || "").split(";")[0];
 
@@ -923,7 +923,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const loginEstRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1001", password: "EstudianteSeguro*2026" })
+        body: JSON.stringify({ identificador: "1001001", password: "EstudianteSeguro*2026" })
       });
       const estCookie = (loginEstRes.headers.get("set-cookie") || "").split(";")[0];
       const savePlaceRes = await fetch(`${baseUrl}/api/estudiante/ubicaciones`, {
@@ -970,7 +970,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          identificacion: "1098",
+          identificacion: "1098001",
           nombre: "Otro Estudiante",
           telefono: "3120001199",
           correoInstitucional: "otro@udla.edu.co",
@@ -983,7 +983,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const loginEst2Res = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identificador: "1098", password: "OtroSeguro*2026" })
+        body: JSON.stringify({ identificador: "1098001", password: "OtroSeguro*2026" })
       });
       const est2Cookie = (loginEst2Res.headers.get("set-cookie") || "").split(";")[0];
       const cancelAjenoRes = await fetch(`${baseUrl}/api/viajes/cancelar`, {
@@ -1023,6 +1023,89 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         body: JSON.stringify({ codigoViaje: solJson.codigo, pinSeguridad: solJson.pinSeguridad })
       });
       assert.equal(pinOkRes.status, 200);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      repo.cerrar();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it("Valida el registro de estudiante: cédula numérica, programa oficial, usuario derivado y login por usuario", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-est-"));
+    const repo = new SqliteSistemaRepository(path.join(tmpDir, "tucango.db"));
+    const facade = new TucanGoFacade(repo);
+    const server = crearServidor(facade, { persistencia: "sqlite" });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
+    const { port } = server.address() as AddressInfo;
+    const baseUrl = `http://127.0.0.1:${port}`;
+
+    const registrar = (campos: Record<string, unknown>) =>
+      fetch(`${baseUrl}/api/estudiantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: "Jorge Ferrer",
+          telefono: "3201234567",
+          codigoEstudiantil: "202612345",
+          carrera: "Ingeniería de Sistemas",
+          password: "Jferrer*2026",
+          ...campos
+        })
+      });
+
+    try {
+      // Una letra en la cédula no entra a la base
+      const cedulaConLetras = await registrar({
+        identificacion: "10A6888",
+        correoInstitucional: "j.ferrer@udla.edu.co"
+      });
+      assert.equal(cedulaConLetras.status, 422);
+
+      // El programa debe pertenecer a la oferta oficial
+      const programaInventado = await registrar({
+        identificacion: "1002003004",
+        correoInstitucional: "j.ferrer@udla.edu.co",
+        carrera: "Ingeniería de Mecatrónica"
+      });
+      assert.equal(programaInventado.status, 422);
+
+      // Registro válido: el usuario se deriva del correo (j.ferrer)
+      const valido = await registrar({
+        identificacion: "1002003004",
+        correoInstitucional: "j.ferrer@udla.edu.co"
+      });
+      assert.equal(valido.status, 201);
+      const validoJson = (await valido.json()) as any;
+      assert.equal(validoJson.usuario, "j.ferrer");
+
+      // El login acepta el usuario además de la cédula, el correo y el código
+      const loginPorUsuario = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "j.ferrer", password: "Jferrer*2026" })
+      });
+      assert.equal(loginPorUsuario.status, 200);
+      const loginJson = (await loginPorUsuario.json()) as any;
+      assert.equal(loginJson.rol, "pasajero");
+      assert.equal(loginJson.usuario, "j.ferrer");
+
+      // Un usuario personalizado se respeta
+      const personalizado = await registrar({
+        identificacion: "1002003005",
+        correoInstitucional: "otro.nombre@udla.edu.co",
+        usuario: "juan.perez"
+      });
+      assert.equal(personalizado.status, 201);
+      const personalizadoJson = (await personalizado.json()) as any;
+      assert.equal(personalizadoJson.usuario, "juan.perez");
+
+      // El mismo usuario no puede quedar en dos cuentas
+      const duplicado = await registrar({
+        identificacion: "1002003006",
+        correoInstitucional: "tercero@udla.edu.co",
+        usuario: "j.ferrer"
+      });
+      assert.equal(duplicado.status, 422);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       repo.cerrar();

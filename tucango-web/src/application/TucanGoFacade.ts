@@ -1,4 +1,10 @@
 import { randomUUID } from "node:crypto";
+import {
+  PROGRAMAS_ACADEMICOS,
+  type ProgramaAcademico,
+  esProgramaAcademicoValido
+} from "../domain/catalog/ProgramasAcademicos.ts";
+import { Persona } from "../domain/model/Persona.ts";
 import { Administrador } from "../domain/model/Administrador.ts";
 import { Estudiante, type UbicacionFrecuente } from "../domain/model/Estudiante.ts";
 import { Motorista, type EstadoAprobacionTucan } from "../domain/model/Motorista.ts";
@@ -49,6 +55,10 @@ const PATRON_CEDULA = /^\d{6,10}$/;
 const PATRON_TELEFONO = /^3\d{9}$/;
 const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PATRON_PLACA = /^[A-Z]{3}-?\d{2}[A-Z0-9]$/;
+const PATRON_CODIGO_ESTUDIANTIL = /^\d{6,12}$/;
+const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{3,80}$/;
+const PATRON_BARRIO = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ' .-]{3,60}$/;
+const DOMINIOS_ESTUDIANTE = ["uniamazonia.edu.co", "udla.edu.co"];
 const ESTADOS_APROBACION: readonly EstadoAprobacionTucan[] = [
   "PENDIENTE_APROBACION",
   "ACTIVO",
@@ -63,6 +73,7 @@ export interface RegistrarEstudianteDTO {
   codigoEstudiantil: string;
   carrera: string;
   barrioResidencia?: string;
+  usuario?: string;
   password?: string;
 }
 
@@ -380,6 +391,7 @@ export class TucanGoFacade {
         correoInstitucional: e.correoInstitucional,
         codigoEstudiantil: e.codigoEstudiantil,
         carrera: e.carrera,
+        usuario: e.usuario,
         passwordHash: e.passwordHash,
         debeCambiarPassword: e.debeCambiarPassword,
         contactoEmergencia: e.contactoEmergencia,
@@ -392,6 +404,7 @@ export class TucanGoFacade {
         nombre: m.nombre,
         telefono: m.telefono,
         correoInstitucional: m.correoInstitucional,
+        usuario: m.usuario,
         disponible: m.disponible,
         latitud: m.ubicacionActual.latitud,
         longitud: m.ubicacionActual.longitud,
@@ -509,6 +522,7 @@ export class TucanGoFacade {
       );
       if (estSnap.contactoEmergencia) est.contactoEmergencia = estSnap.contactoEmergencia;
       if (estSnap.sedeFavorita) est.sedeFavorita = estSnap.sedeFavorita;
+      if (estSnap.usuario) est.usuario = estSnap.usuario;
       this._estudiantes.set(est.identificacion, est);
     }
 
@@ -548,6 +562,7 @@ export class TucanGoFacade {
       );
       if (motSnap.contactoEmergencia) mot.contactoEmergencia = motSnap.contactoEmergencia;
       if (motSnap.sedeFavorita) mot.sedeFavorita = motSnap.sedeFavorita;
+      if (motSnap.usuario) mot.usuario = motSnap.usuario;
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
           motoSnap.placa,
@@ -678,29 +693,95 @@ export class TucanGoFacade {
     }
   }
 
-  public registrarEstudiante(entrada: Estudiante | RegistrarEstudianteDTO): Estudiante {
-    const estudiante =
-      entrada instanceof Estudiante
-        ? entrada
-        : new Estudiante(
-            entrada.identificacion,
-            entrada.nombre,
-            entrada.telefono,
-            entrada.correoInstitucional,
-            entrada.codigoEstudiantil,
-            entrada.carrera,
-            "",
-            false,
-            entrada.barrioResidencia || "Sin especificar",
-            []
-          );
+  /**
+   * Una persona no puede tener dos cuentas: el usuario es único entre roles.
+   */
+  private validarUsuarioDisponible(usuario: string): void {
+    if (!usuario) return;
+    const ocupado = [
+      ...this._administradores.values(),
+      ...this._estudiantes.values(),
+      ...this._motoristas.values()
+    ].some((persona) => persona.usuario.toLowerCase() === usuario.toLowerCase());
+    if (ocupado) {
+      throw new ValidacionError(`El usuario '${usuario}' ya está en uso.`);
+    }
+  }
 
-    if (!(entrada instanceof Estudiante)) {
-      this.validarIdentificacionDisponible(estudiante.identificacion);
-      const email = (entrada.correoInstitucional || "").toLowerCase();
-      if (!email.endsWith("@uniamazonia.edu.co") && !email.endsWith("@udla.edu.co")) {
-        throw new ValidacionError("El correo debe ser institucional (@uniamazonia.edu.co).");
+  public obtenerProgramasAcademicos(): readonly ProgramaAcademico[] {
+    return PROGRAMAS_ACADEMICOS;
+  }
+
+  public registrarEstudiante(entrada: Estudiante | RegistrarEstudianteDTO): Estudiante {
+    let estudiante: Estudiante;
+
+    if (entrada instanceof Estudiante) {
+      estudiante = entrada;
+    } else {
+      const identificacion = (entrada.identificacion || "").trim();
+      if (!PATRON_CEDULA.test(identificacion)) {
+        throw new ValidacionError("La cédula debe tener entre 6 y 10 dígitos numéricos.");
       }
+      this.validarIdentificacionDisponible(identificacion);
+
+      const nombre = (entrada.nombre || "").trim().replace(/\s+/g, " ");
+      if (!PATRON_NOMBRE.test(nombre)) {
+        throw new ValidacionError("El nombre completo debe tener entre 3 y 80 caracteres y solo letras.");
+      }
+
+      const telefono = (entrada.telefono || "").trim();
+      if (!PATRON_TELEFONO.test(telefono)) {
+        throw new ValidacionError("El teléfono debe ser un celular colombiano de 10 dígitos (ej. 3110000000).");
+      }
+
+      const correo = (entrada.correoInstitucional || "").trim().toLowerCase();
+      if (!PATRON_CORREO.test(correo)) {
+        throw new ValidacionError("El correo institucional no tiene un formato válido.");
+      }
+      const dominio = correo.slice(correo.lastIndexOf("@") + 1);
+      if (!DOMINIOS_ESTUDIANTE.includes(dominio)) {
+        throw new ValidacionError("El correo debe ser institucional (@uniamazonia.edu.co o @udla.edu.co).");
+      }
+
+      const codigo = (entrada.codigoEstudiantil || "").trim();
+      if (!PATRON_CODIGO_ESTUDIANTIL.test(codigo)) {
+        throw new ValidacionError("El código estudiantil debe tener entre 6 y 12 dígitos.");
+      }
+
+      const carrera = (entrada.carrera || "").trim();
+      if (!esProgramaAcademicoValido(carrera)) {
+        throw new ValidacionError("Selecciona un programa académico de la oferta oficial.");
+      }
+
+      const barrio = (entrada.barrioResidencia || "").trim();
+      if (barrio && !PATRON_BARRIO.test(barrio)) {
+        throw new ValidacionError("El barrio debe tener entre 3 y 60 caracteres válidos.");
+      }
+
+      const usuario = (entrada.usuario || "").trim()
+        ? Persona.normalizarUsuario(entrada.usuario)
+        : Persona.derivarUsuario(correo);
+      if (!usuario) {
+        throw new ValidacionError(
+          "No pudimos derivar tu usuario del correo. Escribe uno personalizado de al menos 3 caracteres."
+        );
+      }
+      this.validarUsuarioDisponible(usuario);
+
+      estudiante = new Estudiante(
+        identificacion,
+        nombre,
+        telefono,
+        correo,
+        codigo,
+        carrera,
+        "",
+        false,
+        barrio || "Sin especificar",
+        []
+      );
+      estudiante.usuario = usuario;
+
       if (entrada.password) {
         validarPoliticaPassword(entrada.password);
         estudiante.asignarPasswordHash(hashPasswordSync(entrada.password));
@@ -1073,6 +1154,7 @@ export class TucanGoFacade {
     const est = this.obtenerEstudiantes().find(
       (e) =>
         (esAliasEstudiante && (e.identificacion === "1001" || e.identificacion === "estudiante")) ||
+        (e.usuario && e.usuario.toLowerCase() === clave) ||
         e.identificacion.toLowerCase() === clave ||
         e.correoInstitucional.toLowerCase() === clave ||
         e.telefono.toLowerCase() === clave ||
@@ -1094,6 +1176,7 @@ export class TucanGoFacade {
     const mot = this.obtenerMotoristas().find(
       (m) =>
         (esAliasMotorista && (m.identificacion === "2001" || m.identificacion === "motorista")) ||
+        (m.usuario && m.usuario.toLowerCase() === clave) ||
         m.identificacion.toLowerCase() === clave ||
         m.correoInstitucional.toLowerCase() === clave ||
         m.telefono.toLowerCase() === clave ||

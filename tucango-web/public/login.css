@@ -1348,6 +1348,20 @@ body {
   line-height: 1.3;
 }
 
+.field-hint {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: #5B6B62;
+  line-height: 1.3;
+}
+
+select.ios-input-field {
+  width: 100%;
+  background-color: #FFFFFF;
+  cursor: pointer;
+}
+
 .field-error-msg:empty {
   display: none;
 }

@@ -43,6 +43,7 @@
     regEstCorreo: document.getElementById("reg-est-correo"),
     regEstCarrera: document.getElementById("reg-est-carrera"),
     regEstBarrio: document.getElementById("reg-est-barrio"),
+    regEstUsuario: document.getElementById("reg-est-usuario"),
     regEstPassword: document.getElementById("reg-est-password"),
     regEstPasswordConfirm: document.getElementById("reg-est-password-confirm"),
 
@@ -317,47 +318,240 @@
       });
     });
 
-    // F11: Registro de estudiante con confirmación de clave y redirección F12
+    // ==================== REGISTRO DE ESTUDIANTE: VALIDACIÓN POR CAMPO ====================
+    const DOMINIOS_ESTUDIANTE = ["uniamazonia.edu.co", "udla.edu.co"];
+
+    function soloDigitos(valor, maximo) {
+      return (valor || "").replace(/\D/g, "").slice(0, maximo);
+    }
+
+    function derivarUsuarioDesdeCorreo(correo) {
+      const local = (correo || "")
+        .split("@")[0]
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, "");
+      return /^[a-z0-9][a-z0-9._-]{2,29}$/.test(local) ? local : "";
+    }
+
+    function obtenerMensajeErrorEstudiante(input) {
+      if (!input) return "";
+      const valor = (input.value || "").trim();
+
+      switch (input.id) {
+        case "reg-est-id":
+          if (!valor) return "La cédula es obligatoria.";
+          if (!/^\d{6,10}$/.test(valor)) return "La cédula debe tener entre 6 y 10 dígitos, sin letras ni espacios.";
+          return "";
+        case "reg-est-cod":
+          if (!valor) return "El código estudiantil es obligatorio.";
+          if (!/^\d{6,12}$/.test(valor)) return "El código debe tener entre 6 y 12 dígitos.";
+          return "";
+        case "reg-est-nombre":
+          if (!valor) return "El nombre es obligatorio.";
+          if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{3,80}$/.test(valor)) {
+            return "Escribe tu nombre completo: solo letras, espacios, apóstrofes o guiones.";
+          }
+          return "";
+        case "reg-est-tel":
+          if (!valor) return "El teléfono es obligatorio.";
+          if (!/^3\d{9}$/.test(valor)) return "Debe ser un celular colombiano de 10 dígitos que empiece por 3.";
+          return "";
+        case "reg-est-correo": {
+          if (!valor) return "El correo institucional es obligatorio.";
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor)) return "El correo no tiene un formato válido.";
+          const dominio = valor.split("@").pop().toLowerCase();
+          if (!DOMINIOS_ESTUDIANTE.includes(dominio)) {
+            return "Usa tu correo @uniamazonia.edu.co o @udla.edu.co.";
+          }
+          return "";
+        }
+        case "reg-est-usuario":
+          if (!valor) return "El usuario es obligatorio.";
+          if (!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(valor.toLowerCase())) {
+            return "Entre 3 y 30 caracteres: letras, números, punto, guion o guion bajo.";
+          }
+          return "";
+        case "reg-est-carrera":
+          if (!valor) return "Selecciona tu programa académico.";
+          return "";
+        case "reg-est-barrio":
+          if (!valor) return "El barrio o sector es obligatorio.";
+          if (!/^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ' .-]{3,60}$/.test(valor)) {
+            return "El barrio debe tener entre 3 y 60 caracteres válidos.";
+          }
+          return "";
+        case "reg-est-password":
+          if (!valor) return "La contraseña es obligatoria.";
+          if (valor.length < 10) return "La contraseña debe tener al menos 10 caracteres.";
+          if (!/[A-Z]/.test(valor) || !/[a-z]/.test(valor) || !/\d/.test(valor)) {
+            return "Incluye al menos una mayúscula, una minúscula y un número.";
+          }
+          return "";
+        case "reg-est-password-confirm":
+          if (!valor) return "Confirma tu contraseña.";
+          if (valor !== (els.regEstPassword?.value || "")) return "Las contraseñas no coinciden.";
+          return "";
+        default:
+          return "";
+      }
+    }
+
+    function aplicarEstadoEstudiante(input, mostrarError) {
+      if (!input) return true;
+      const mensaje = obtenerMensajeErrorEstudiante(input);
+      const errSpan = document.getElementById(`${input.id}-error`);
+      input.classList.remove("is-valid", "is-invalid");
+
+      if (mensaje && mostrarError) {
+        input.classList.add("is-invalid");
+        input.setAttribute("aria-invalid", "true");
+        if (errSpan) errSpan.textContent = mensaje;
+        return false;
+      }
+
+      if (!mensaje && (input.value || "").trim()) {
+        input.classList.add("is-valid");
+        input.setAttribute("aria-invalid", "false");
+      } else {
+        input.removeAttribute("aria-invalid");
+      }
+      if (errSpan) errSpan.textContent = "";
+      return !mensaje;
+    }
+
+    let usuarioEstudianteManual = false;
+
+    async function cargarPlacesParaBarrios() {
+      const input = els.regEstBarrio;
+      if (!input || input.dataset.placesReady === "true") return;
+      try {
+        const config = await fetch("/api/mapa/config", { cache: "no-store" }).then((r) => r.json());
+        const apiKey = config.googleMapsApiKey;
+        if (!apiKey) return;
+
+        if (!window.google?.maps?.places) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&libraries=places&language=es&region=CO`;
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        if (!window.google?.maps?.places?.Autocomplete) return;
+
+        const florencia = new window.google.maps.LatLngBounds(
+          { lat: 1.52, lng: -75.68 },
+          { lat: 1.66, lng: -75.54 }
+        );
+        const autocomplete = new window.google.maps.places.Autocomplete(input, {
+          bounds: florencia,
+          strictBounds: true,
+          componentRestrictions: { country: "co" },
+          types: ["geocode"],
+          fields: ["name", "address_components"]
+        });
+
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          const componentes = place.address_components || [];
+          const barrio =
+            componentes.find((c) =>
+              c.types.some((t) => t === "sublocality_level_1" || t === "sublocality" || t === "neighborhood")
+            )?.long_name ||
+            componentes.find((c) => c.types.includes("locality"))?.long_name ||
+            place.name ||
+            "";
+          if (barrio) {
+            input.value = barrio;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+          }
+        });
+        input.dataset.placesReady = "true";
+      } catch {
+        // Si Places no está disponible, el datalist local sigue funcionando.
+      }
+    }
+
+    // F11: Registro de estudiante con validación inmediata por campo
     if (els.formRegEstudiante) {
+      const camposEstudiante = Array.from(
+        els.formRegEstudiante.querySelectorAll("input.ios-input-field, select.ios-input-field")
+      );
+
+      camposEstudiante.forEach((input) => {
+        input.addEventListener("input", () => {
+          if (input.id === "reg-est-id") input.value = soloDigitos(input.value, 10);
+          if (input.id === "reg-est-cod") input.value = soloDigitos(input.value, 12);
+          if (input.id === "reg-est-tel") input.value = soloDigitos(input.value, 10);
+
+          if (input.id === "reg-est-usuario") {
+            usuarioEstudianteManual = input.value.trim().length > 0;
+          }
+
+          if (input.id === "reg-est-correo" && !usuarioEstudianteManual && els.regEstUsuario) {
+            els.regEstUsuario.value = derivarUsuarioDesdeCorreo(input.value);
+            aplicarEstadoEstudiante(els.regEstUsuario, false);
+          }
+
+          if (input.id === "reg-est-password") {
+            actualizarMedidorFuerza(
+              input.value,
+              "est-pass-strength-bar",
+              "est-pass-strength-label"
+            );
+            if (els.regEstPasswordConfirm?.dataset.dirty === "true") {
+              aplicarEstadoEstudiante(els.regEstPasswordConfirm, true);
+            }
+          }
+
+          // Feedback inmediato: el usuario ve el error mientras escribe.
+          aplicarEstadoEstudiante(input, true);
+        });
+
+        input.addEventListener("blur", () => {
+          input.dataset.dirty = "true";
+          aplicarEstadoEstudiante(input, true);
+        });
+
+        input.addEventListener("change", () => {
+          input.dataset.dirty = "true";
+          aplicarEstadoEstudiante(input, true);
+        });
+      });
+
+      els.regEstBarrio?.addEventListener("focus", cargarPlacesParaBarrios, { once: true });
+
       els.formRegEstudiante.addEventListener("submit", async (e) => {
         e.preventDefault();
         ocultarAlertaInline();
-        limpiarErroresCampos(els.formRegEstudiante);
 
-        const pass = els.regEstPassword?.value || "";
-        const passConfirm = els.regEstPasswordConfirm?.value || "";
-
-        if (pass.length < 10) {
-          mostrarAlertaInline("La contraseña debe tener al menos 10 caracteres.", "error");
-          els.regEstPassword?.setAttribute("aria-invalid", "true");
-          els.regEstPassword?.focus();
-          return;
+        let primerInvalido = null;
+        for (const input of camposEstudiante) {
+          input.dataset.dirty = "true";
+          if (!aplicarEstadoEstudiante(input, true) && !primerInvalido) {
+            primerInvalido = input;
+          }
         }
 
-        if (pass !== passConfirm) {
-          mostrarAlertaInline("Las contraseñas no coinciden. Por favor verifícalas.", "error");
-          els.regEstPasswordConfirm?.setAttribute("aria-invalid", "true");
-          els.regEstPasswordConfirm?.focus();
-          return;
-        }
-
-        const correo = els.regEstCorreo?.value.trim().toLowerCase() || "";
-        if (!correo.endsWith("@uniamazonia.edu.co") && !correo.endsWith("@udla.edu.co")) {
-          mostrarAlertaInline("Debes ingresar un correo institucional (@uniamazonia.edu.co).", "error");
-          els.regEstCorreo?.setAttribute("aria-invalid", "true");
-          els.regEstCorreo?.focus();
+        if (primerInvalido) {
+          mostrarAlertaInline("Corrige los campos marcados en rojo antes de continuar.", "error");
+          primerInvalido.focus();
           return;
         }
 
         const payload = {
-          identificacion: els.regEstId?.value.trim() || "",
-          codigoEstudiantil: els.regEstCod?.value.trim() || "",
-          nombre: els.regEstNombre?.value.trim() || "",
-          telefono: els.regEstTel?.value.trim() || "",
-          correoInstitucional: correo,
-          carrera: els.regEstCarrera?.value.trim() || "",
-          barrioResidencia: els.regEstBarrio?.value.trim() || "Sin especificar",
-          password: pass
+          identificacion: els.regEstId.value.trim(),
+          codigoEstudiantil: els.regEstCod.value.trim(),
+          nombre: els.regEstNombre.value.trim().replace(/\s+/g, " "),
+          telefono: els.regEstTel.value.trim(),
+          correoInstitucional: els.regEstCorreo.value.trim().toLowerCase(),
+          usuario: els.regEstUsuario.value.trim().toLowerCase(),
+          carrera: els.regEstCarrera.value,
+          barrioResidencia: els.regEstBarrio.value.trim(),
+          password: els.regEstPassword.value
         };
 
         setBotonBusy(els.btnRegEstSubmit, true, "Crear cuenta de estudiante");
@@ -376,12 +570,24 @@
 
           setBotonBusy(els.btnRegEstSubmit, false, "Crear cuenta de estudiante");
           els.formRegEstudiante.reset();
+          usuarioEstudianteManual = false;
+          camposEstudiante.forEach((input) => {
+            input.classList.remove("is-valid", "is-invalid");
+            input.removeAttribute("aria-invalid");
+            const errSpan = document.getElementById(`${input.id}-error`);
+            if (errSpan) errSpan.textContent = "";
+            delete input.dataset.dirty;
+          });
+          actualizarMedidorFuerza("", "est-pass-strength-bar", "est-pass-strength-label");
 
-          // F12: Redirigir a pestaña de login con aviso de éxito y credencial precargada
+          // F12: Redirigir a la pestaña de login con el usuario precargado
           cambiarModoAuth("login");
-          mostrarAlertaInline("¡Cuenta creada exitosamente! Ingresa con tus credenciales.", "success");
+          mostrarAlertaInline(
+            `¡Cuenta creada! Ingresa con tu usuario ${payload.usuario}.`,
+            "success"
+          );
           if (els.inputLoginId) {
-            els.inputLoginId.value = payload.identificacion;
+            els.inputLoginId.value = payload.usuario;
           }
           if (els.inputLoginPassword) {
             els.inputLoginPassword.focus();
@@ -482,9 +688,9 @@
       }
     }
 
-    function actualizarMedidorFuerza(pass) {
-      const bar = document.getElementById("tucan-pass-strength-bar");
-      const label = document.getElementById("tucan-pass-strength-label");
+    function actualizarMedidorFuerza(pass, barId = "tucan-pass-strength-bar", labelId = "tucan-pass-strength-label") {
+      const bar = document.getElementById(barId);
+      const label = document.getElementById(labelId);
       if (!bar || !label) return;
 
       let score = 0;

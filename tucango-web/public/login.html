@@ -14,7 +14,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=4.4" />
+  <link rel="stylesheet" href="/login.css?v=4.5" />
 </head>
 <body>
   <!-- F14: Banner de estado de conexión / API offline -->
@@ -250,22 +250,73 @@
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="reg-est-id" class="ios-input-label">Cédula de ciudadanía</label>
-                <input id="reg-est-id" type="text" inputmode="numeric" pattern="[0-9]*" class="ios-input-field" required placeholder="Ej. 1006888999" />
+                <input
+                  id="reg-est-id"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  minlength="6"
+                  maxlength="10"
+                  pattern="[0-9]{6,10}"
+                  class="ios-input-field"
+                  aria-describedby="reg-est-id-error"
+                  required
+                  placeholder="Ej. 1006888999"
+                />
+                <span id="reg-est-id-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-cod" class="ios-input-label">Código estudiantil</label>
-                <input id="reg-est-cod" type="text" inputmode="numeric" class="ios-input-field" required placeholder="Ej. 202610045" />
+                <input
+                  id="reg-est-cod"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  minlength="6"
+                  maxlength="12"
+                  pattern="[0-9]{6,12}"
+                  class="ios-input-field"
+                  aria-describedby="reg-est-cod-error"
+                  required
+                  placeholder="Ej. 202610045"
+                />
+                <span id="reg-est-cod-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-nombre" class="ios-input-label">Nombre completo</label>
-                <input id="reg-est-nombre" type="text" autocapitalize="words" autocomplete="name" class="ios-input-field" required placeholder="Ej. Sofía Muñoz" />
+                <input
+                  id="reg-est-nombre"
+                  type="text"
+                  autocapitalize="words"
+                  autocomplete="name"
+                  minlength="3"
+                  maxlength="80"
+                  class="ios-input-field"
+                  aria-describedby="reg-est-nombre-error"
+                  required
+                  placeholder="Ej. Sofía Muñoz"
+                />
+                <span id="reg-est-nombre-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-tel" class="ios-input-label">Teléfono celular</label>
-                <input id="reg-est-tel" type="tel" inputmode="tel" autocomplete="tel" class="ios-input-field" required placeholder="Ej. 3110000000" />
+                <input
+                  id="reg-est-tel"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  minlength="10"
+                  maxlength="10"
+                  pattern="3[0-9]{9}"
+                  class="ios-input-field"
+                  aria-describedby="reg-est-tel-error"
+                  required
+                  placeholder="Ej. 3110000000"
+                />
+                <span id="reg-est-tel-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
-                <label for="reg-est-correo" class="ios-input-label">Correo institucional (@uniamazonia.edu.co)</label>
+                <label for="reg-est-correo" class="ios-input-label">Correo institucional</label>
                 <input
                   id="reg-est-correo"
                   type="email"
@@ -274,20 +325,83 @@
                   spellcheck="false"
                   autocomplete="email"
                   class="ios-input-field"
+                  aria-describedby="reg-est-correo-error"
                   required
                   placeholder="Ej. s.munoz@uniamazonia.edu.co"
                 />
+                <span class="field-hint">Debe ser @uniamazonia.edu.co o @udla.edu.co</span>
+                <span id="reg-est-correo-error" class="field-error-msg" aria-live="polite"></span>
+              </div>
+              <div class="ios-input-row">
+                <label for="reg-est-usuario" class="ios-input-label">Usuario de acceso</label>
+                <input
+                  id="reg-est-usuario"
+                  type="text"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  autocomplete="username"
+                  minlength="3"
+                  maxlength="30"
+                  pattern="[a-z0-9][a-z0-9._-]{2,29}"
+                  class="ios-input-field"
+                  aria-describedby="reg-est-usuario-hint reg-est-usuario-error"
+                  required
+                  placeholder="Ej. j.ferrer"
+                />
+                <span id="reg-est-usuario-hint" class="field-hint">Se genera desde tu correo. Puedes personalizarlo.</span>
+                <span id="reg-est-usuario-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-carrera" class="ios-input-label">Programa académico</label>
-                <input
+                <select
                   id="reg-est-carrera"
-                  type="text"
-                  autocapitalize="words"
                   class="ios-input-field"
+                  aria-describedby="reg-est-carrera-error"
                   required
-                  placeholder="Ej. Ingeniería de Sistemas"
-                />
+                >
+                  <option value="">Selecciona tu programa</option>
+                  <optgroup label="Ciencias Agropecuarias">
+                    <option value="Medicina Veterinaria y Zootecnia">Medicina Veterinaria y Zootecnia</option>
+                  </optgroup>
+                  <optgroup label="Ciencias Básicas">
+                    <option value="Biología">Biología</option>
+                    <option value="Química">Química</option>
+                  </optgroup>
+                  <optgroup label="Ciencias Contables, Económicas y Administrativas">
+                    <option value="Administración de Empresas">Administración de Empresas</option>
+                    <option value="Contaduría Pública">Contaduría Pública</option>
+                  </optgroup>
+                  <optgroup label="Ciencias de la Educación">
+                    <option value="Licenciatura en Ciencias Sociales">Licenciatura en Ciencias Sociales</option>
+                    <option value="Licenciatura en Educación Artística">Licenciatura en Educación Artística</option>
+                    <option value="Licenciatura en Educación Física, Deportes y Recreación">Licenciatura en Educación Física, Deportes y Recreación</option>
+                    <option value="Licenciatura en Lenguas Extranjeras con Énfasis en Inglés">Licenciatura en Lenguas Extranjeras con Énfasis en Inglés</option>
+                    <option value="Licenciatura en Literatura y Lengua Castellana">Licenciatura en Literatura y Lengua Castellana</option>
+                    <option value="Licenciatura en Matemáticas">Licenciatura en Matemáticas</option>
+                  </optgroup>
+                  <optgroup label="Derecho">
+                    <option value="Derecho (Caquetá)">Derecho (Caquetá)</option>
+                    <option value="Derecho (Guaviare)">Derecho (Guaviare)</option>
+                  </optgroup>
+                  <optgroup label="Ingeniería">
+                    <option value="Ingeniería Agroecológica (Caquetá)">Ingeniería Agroecológica (Caquetá)</option>
+                    <option value="Ingeniería Agroecológica (Guaviare)">Ingeniería Agroecológica (Guaviare)</option>
+                    <option value="Ingeniería Agroecológica (Putumayo)">Ingeniería Agroecológica (Putumayo)</option>
+                    <option value="Ingeniería de Sistemas">Ingeniería de Sistemas</option>
+                    <option value="Ingeniería de Alimentos">Ingeniería de Alimentos</option>
+                  </optgroup>
+                  <optgroup label="Ciencias de la Salud">
+                    <option value="Enfermería">Enfermería</option>
+                    <option value="Psicología">Psicología</option>
+                  </optgroup>
+                  <optgroup label="Educación a Distancia">
+                    <option value="Tecnología en Criminalística">Tecnología en Criminalística</option>
+                    <option value="Administración Financiera">Administración Financiera</option>
+                    <option value="Licenciatura en Educación Infantil">Licenciatura en Educación Infantil</option>
+                    <option value="Mercadeo">Mercadeo</option>
+                  </optgroup>
+                </select>
+                <span id="reg-est-carrera-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-barrio" class="ios-input-label">Barrio o sector de residencia (Florencia)</label>
@@ -296,10 +410,16 @@
                   type="text"
                   list="florencia-barrios-list"
                   autocapitalize="words"
+                  autocomplete="off"
+                  minlength="3"
+                  maxlength="60"
                   class="ios-input-field"
+                  aria-describedby="reg-est-barrio-hint reg-est-barrio-error"
                   required
                   placeholder="Ej. La Vega, El Porvenir, Bello Horizonte"
                 />
+                <span id="reg-est-barrio-hint" class="field-hint">Escribe y elige una sugerencia de Florencia.</span>
+                <span id="reg-est-barrio-error" class="field-error-msg" aria-live="polite"></span>
                 <datalist id="florencia-barrios-list">
                   <option value="El Porvenir"></option>
                   <option value="La Vega"></option>
@@ -323,9 +443,13 @@
                   minlength="10"
                   class="ios-input-field"
                   autocomplete="new-password"
+                  aria-describedby="reg-est-password-error"
                   required
                   placeholder="Mínimo 10 caracteres"
                 />
+                <div class="pass-strength-track"><div id="est-pass-strength-bar" class="pass-strength-bar"></div></div>
+                <span id="est-pass-strength-label" class="pass-strength-label">Seguridad: --</span>
+                <span id="reg-est-password-error" class="field-error-msg" aria-live="polite"></span>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-password-confirm" class="ios-input-label">Confirmar contraseña</label>
@@ -335,9 +459,11 @@
                   minlength="10"
                   class="ios-input-field"
                   autocomplete="new-password"
+                  aria-describedby="reg-est-password-confirm-error"
                   required
                   placeholder="Repite tu contraseña"
                 />
+                <span id="reg-est-password-confirm-error" class="field-error-msg" aria-live="polite"></span>
               </div>
             </div>
 
@@ -833,6 +959,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=4.6"></script>
+  <script src="/login.js?v=4.7"></script>
 </body>
 </html>

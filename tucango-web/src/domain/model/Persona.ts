@@ -6,6 +6,7 @@ export abstract class Persona {
   private _nombre: string;
   private _telefono: string;
   private _correoInstitucional: string;
+  private _usuario: string;
   private _passwordHash: string;
   private _debeCambiarPassword: boolean;
   private _contactoEmergencia: string;
@@ -38,6 +39,7 @@ export abstract class Persona {
     this._nombre = nombre.trim();
     this._telefono = telefono.trim();
     this._correoInstitucional = correoInstitucional.trim().toLowerCase();
+    this._usuario = Persona.derivarUsuario(this._correoInstitucional);
     this._passwordHash = passwordHash;
     this._debeCambiarPassword = debeCambiarPassword;
     this._contactoEmergencia = (contactoEmergencia || "").trim();
@@ -58,6 +60,42 @@ export abstract class Persona {
 
   public get correoInstitucional(): string {
     return this._correoInstitucional;
+  }
+
+  public get usuario(): string {
+    return this._usuario;
+  }
+
+  public set usuario(valor: string) {
+    this._usuario = Persona.normalizarUsuario(valor);
+  }
+
+  /**
+   * El usuario institucional se deriva de la parte local del correo:
+   * j.ferrer@udla.edu.co -> j.ferrer. Si esa parte no cumple el formato,
+   * devuelve vacío y el alta debe pedir uno personalizado.
+   */
+  public static derivarUsuario(correo: string): string {
+    const local = (correo || "")
+      .split("@")[0]
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]/g, "");
+    return Persona.esUsuarioValido(local) ? local : "";
+  }
+
+  public static esUsuarioValido(valor: string): boolean {
+    return /^[a-z0-9][a-z0-9._-]{2,29}$/.test((valor || "").trim().toLowerCase());
+  }
+
+  public static normalizarUsuario(valor: string): string {
+    const usuario = (valor || "").trim().toLowerCase();
+    if (!Persona.esUsuarioValido(usuario)) {
+      throw new ValidacionError(
+        "El usuario debe tener entre 3 y 30 caracteres y solo puede usar letras, números, punto, guion o guion bajo."
+      );
+    }
+    return usuario;
   }
 
   public set telefono(nuevoTelefono: string) {
@@ -101,7 +139,12 @@ export abstract class Persona {
     }
     this._nombre = nombre.trim();
     this._telefono = telefono.trim();
+    const usuarioDerivadoAnterior = Persona.derivarUsuario(this._correoInstitucional);
+    const conservaUsuarioPersonalizado = this._usuario !== usuarioDerivadoAnterior;
     this._correoInstitucional = correoInstitucional.trim().toLowerCase();
+    if (!conservaUsuarioPersonalizado) {
+      this._usuario = Persona.derivarUsuario(this._correoInstitucional);
+    }
     if (contactoEmergencia !== undefined) {
       this._contactoEmergencia = contactoEmergencia.trim();
     }
@@ -141,6 +184,7 @@ export abstract class Persona {
     nombre: string;
     correo: string;
     telefono: string;
+    usuario: string;
     detalle: string;
     debeCambiarPassword: boolean;
   } {
@@ -150,6 +194,7 @@ export abstract class Persona {
       nombre: this._nombre,
       correo: this._correoInstitucional,
       telefono: this._telefono,
+      usuario: this._usuario,
       detalle: this.construirDetalle(),
       debeCambiarPassword: this._debeCambiarPassword
     };

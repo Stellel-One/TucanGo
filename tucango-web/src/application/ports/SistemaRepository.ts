@@ -20,6 +20,7 @@ export interface EstudianteSnapshot {
   correoInstitucional: string;
   codigoEstudiantil: string;
   carrera: string;
+  usuario?: string;
   passwordHash?: string;
   debeCambiarPassword?: boolean;
   contactoEmergencia?: string;
@@ -43,6 +44,7 @@ export interface MotoristaSnapshot {
   nombre: string;
   telefono: string;
   correoInstitucional: string;
+  usuario?: string;
   disponible: boolean;
   latitud?: number;
   longitud?: number;
