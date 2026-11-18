@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 import { hashPassword, verifyPassword } from "../security/PasswordHasher.ts";
 
 export abstract class Persona {
@@ -21,16 +22,16 @@ export abstract class Persona {
     sedeFavorita: string = "PORVENIR"
   ) {
     if (!identificacion || identificacion.trim().length === 0) {
-      throw new Error("La identificación no puede estar vacía.");
+      throw new ValidacionError("La identificación no puede estar vacía.");
     }
     if (!nombre || nombre.trim().length === 0) {
-      throw new Error("El nombre no puede estar vacío.");
+      throw new ValidacionError("El nombre no puede estar vacío.");
     }
     if (!telefono || telefono.trim().length === 0) {
-      throw new Error("El teléfono no puede estar vacío.");
+      throw new ValidacionError("El teléfono no puede estar vacío.");
     }
     if (!correoInstitucional || !correoInstitucional.includes("@")) {
-      throw new Error("El correo institucional debe ser válido.");
+      throw new ValidacionError("El correo institucional debe ser válido.");
     }
 
     this._identificacion = identificacion.trim();
@@ -61,7 +62,7 @@ export abstract class Persona {
 
   public set telefono(nuevoTelefono: string) {
     if (!nuevoTelefono || nuevoTelefono.trim().length === 0) {
-      throw new Error("El teléfono no puede estar vacío.");
+      throw new ValidacionError("El teléfono no puede estar vacío.");
     }
     this._telefono = nuevoTelefono.trim();
   }
@@ -90,13 +91,13 @@ export abstract class Persona {
     sedeFavorita?: string
   ): void {
     if (!nombre || nombre.trim().length === 0) {
-      throw new Error("El nombre no puede estar vacío.");
+      throw new ValidacionError("El nombre no puede estar vacío.");
     }
     if (!telefono || telefono.trim().length === 0) {
-      throw new Error("El teléfono no puede estar vacío.");
+      throw new ValidacionError("El teléfono no puede estar vacío.");
     }
     if (!correoInstitucional || !correoInstitucional.includes("@")) {
-      throw new Error("El correo institucional debe ser válido.");
+      throw new ValidacionError("El correo institucional debe ser válido.");
     }
     this._nombre = nombre.trim();
     this._telefono = telefono.trim();

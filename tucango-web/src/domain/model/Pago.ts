@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 export const MetodoPago = {
   EFECTIVO: "EFECTIVO",
   NEQUI: "NEQUI",
@@ -22,7 +23,7 @@ export class Pago {
 
   constructor(monto: number, metodo: MetodoPago = MetodoPago.EFECTIVO) {
     if (monto < 0) {
-      throw new Error("El monto del pago no puede ser negativo.");
+      throw new ValidacionError("El monto del pago no puede ser negativo.");
     }
     this._monto = monto;
     this._metodo = metodo;
@@ -47,7 +48,7 @@ export class Pago {
 
   public procesarPago(): void {
     if (this._estado === EstadoPago.PAGADO) {
-      throw new Error("El pago ya fue procesado anteriormente.");
+      throw new ValidacionError("El pago ya fue procesado anteriormente.");
     }
     this._estado = EstadoPago.PAGADO;
     this._fechaPago = new Date();

@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 import { Persona } from "./Persona.ts";
 import { Moto } from "./Moto.ts";
 import { Coordenada } from "./Coordenada.ts";
@@ -69,7 +70,7 @@ export class Motorista extends Persona {
 
   public set disponible(valor: boolean) {
     if (this._estadoAprobacion !== "ACTIVO" && valor) {
-      throw new Error("Un Tucán no puede activarse si su estado no es ACTIVO y verificado por la administración.");
+      throw new ValidacionError("Un Tucán no puede activarse si su estado no es ACTIVO y verificado por la administración.");
     }
     this._disponible = valor;
   }
@@ -176,11 +177,11 @@ export class Motorista extends Persona {
 
   public actualizarUbicacion(nuevaUbicacion: Coordenada, direccionGrados?: number): void {
     if (!nuevaUbicacion) {
-      throw new Error("La nueva ubicación del motorista es obligatoria.");
+      throw new ValidacionError("La nueva ubicación del motorista es obligatoria.");
     }
     if (direccionGrados !== undefined) {
       if (!Number.isFinite(direccionGrados) || direccionGrados < 0 || direccionGrados > 360) {
-        throw new Error("La dirección en grados debe estar entre 0 y 360.");
+        throw new ValidacionError("La dirección en grados debe estar entre 0 y 360.");
       }
       this._direccionGrados = ((Math.round(direccionGrados) % 360) + 360) % 360;
     } else if (
@@ -194,11 +195,11 @@ export class Motorista extends Persona {
 
   public registrarMoto(moto: Moto): void {
     if (!moto) {
-      throw new Error("La moto a registrar no puede ser nula.");
+      throw new ValidacionError("La moto a registrar no puede ser nula.");
     }
     const existe = this._motos.some((m) => m.placa === moto.placa);
     if (existe) {
-      throw new Error(`La moto con placa ${moto.placa} ya está registrada.`);
+      throw new ValidacionError(`La moto con placa ${moto.placa} ya está registrada.`);
     }
 
     if (this._motos.length === 0) {

@@ -135,12 +135,23 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
 
   test("TucanGoFacade: Orquestación completa de casos de uso y métricas", () => {
     const facade = new TucanGoFacade();
+    // La semilla solo crea la cuenta administrativa.
     assert.equal(facade.obtenerAdministradores().length, 1);
-    assert.equal(facade.obtenerEstudiantes().length, 1);
+    assert.equal(facade.obtenerEstudiantes().length, 0);
     assert.equal(facade.obtenerMotoristas().length, 0);
 
+    const est = facade.registrarEstudiante({
+      identificacion: "1001",
+      nombre: "Carlos Rivera",
+      telefono: "3115551234",
+      correoInstitucional: "c.rivera@uniamazonia.edu.co",
+      codigoEstudiantil: "202610001",
+      carrera: "Ingeniería de Sistemas",
+      barrioResidencia: "La Vega"
+    });
+
     facade.registrarMotoristaConMoto({
-      identificacion: "2001",
+      identificacion: "2001001",
       nombre: "Jhonatan Silva",
       telefono: "3201234567",
       correoInstitucional: "j.silva@uniamazonia.edu.co",
@@ -149,7 +160,8 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
       modelo: "GN 125",
       cilindraje: 125,
       soatVigente: true,
-      numeroSoat: "SOAT-2026-FLR"
+      numeroSoat: "SOAT-2026-FLR",
+      numeroLicencia: "LIC-2001-A2"
     });
 
     const ests = facade.obtenerEstudiantes();
@@ -159,7 +171,7 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     assert.equal(mots.length >= 1, true);
 
     const viaje = facade.solicitarViaje(
-      ests[0].identificacion,
+      est.identificacion,
       "Barrio La Vega",
       "Campus Porvenir",
       3.2,

@@ -83,7 +83,8 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       modelo: "CB 125F",
       cilindraje: 125,
       soatVigente: true,
-      numeroSoat: "SOAT-2026-FLR"
+      numeroSoat: "SOAT-2026-FLR",
+      numeroLicencia: "LIC-1118000999-A2"
     });
 
     assert.equal(mot.obtenerMotoActiva()?.placa, "XYZ-99A");
@@ -106,7 +107,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       barrioResidencia: "El Cunduy"
     });
     const motRegistrado = facade.registrarMotoristaConMoto({
-      identificacion: "2001",
+      identificacion: "2001001",
       nombre: "Jhonatan Silva",
       telefono: "3201234567",
       correoInstitucional: "j.silva@uniamazonia.edu.co",
@@ -115,7 +116,8 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       modelo: "GN 125",
       cilindraje: 125,
       soatVigente: true,
-      numeroSoat: "SOAT-2026-FLR"
+      numeroSoat: "SOAT-2026-FLR",
+      numeroLicencia: "LIC-2001-A2"
     });
     const mots = [motRegistrado];
 
@@ -196,16 +198,17 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       );
 
       const mot1 = facade1.registrarMotoristaConMoto({
-        identificacion: "2001",
+        identificacion: "2001001",
         nombre: "Tucán Prueba",
         telefono: "3201234567",
-        correoInstitucional: "tucan.prueba@uniamazonia.edu.co",
+        correoInstitucional: "tucan.prueba@gmail.com",
         placa: "GNX-45F",
         marca: "Suzuki",
         modelo: "GN 125",
         cilindraje: 125,
         soatVigente: true,
-        numeroSoat: "SOAT-2026-FLR"
+        numeroSoat: "SOAT-2026-FLR",
+        numeroLicencia: "LIC-2001-A2"
       });
       facade1.aceptarViaje(viaje.codigoViaje, mot1.identificacion);
       facade1.iniciarViaje(viaje.codigoViaje);
@@ -251,9 +254,11 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       const repo1 = new SqliteSistemaRepository(dbPath);
       const facade1 = new TucanGoFacade(repo1);
 
-      // Datos con la forma antigua: el número viajaba en el campo de imagen
+      // Datos con la forma antigua: el número viajaba en el campo de imagen.
+      // Se crea como RECHAZADO para poder omitir numeroLicencia, igual que un
+      // registro previo a la existencia del campo.
       facade1.registrarMotoristaConMoto({
-        identificacion: "2002",
+        identificacion: "2002002",
         nombre: "Tucán Legado",
         telefono: "3205556677",
         correoInstitucional: "tucan.legado@gmail.com",
@@ -263,7 +268,8 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
         cilindraje: 100,
         soatVigente: true,
         numeroSoat: "SOAT-2025-LEG",
-        fotoLicenciaUrl: "LIC-LEGACY-777"
+        fotoLicenciaUrl: "LIC-LEGACY-777",
+        estadoAprobacion: "RECHAZADO"
       });
       repo1.cerrar();
 
@@ -271,7 +277,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       const facade2 = new TucanGoFacade(repo2);
       const recuperado = facade2
         .obtenerMotoristas()
-        .find((m) => m.identificacion === "2002");
+        .find((m) => m.identificacion === "2002002");
 
       assert.ok(recuperado, "El Tucán legado debe persistir tras reiniciar");
       assert.equal(recuperado.numeroLicencia, "LIC-LEGACY-777");
@@ -289,22 +295,33 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
 
     const facade = new TucanGoFacade(undefined, bus);
 
-    // Seed limpio: 1 admin + 1 estudiante, 0 motoristas pre-creados
+    // La semilla solo crea la cuenta administrativa; el resto lo crea la comunidad.
     assert.equal(facade.obtenerAdministradores().length, 1);
-    assert.equal(facade.obtenerEstudiantes().length, 1);
+    assert.equal(facade.obtenerEstudiantes().length, 0);
     assert.equal(facade.obtenerMotoristas().length, 0);
 
+    const estudiante = facade.registrarEstudiante({
+      identificacion: "1001",
+      nombre: "Carlos Rivera",
+      telefono: "3115551234",
+      correoInstitucional: "c.rivera@uniamazonia.edu.co",
+      codigoEstudiantil: "202610001",
+      carrera: "Ingeniería de Sistemas",
+      barrioResidencia: "La Vega"
+    });
+
     facade.registrarMotoristaConMoto({
-      identificacion: "2001",
+      identificacion: "2001001",
       nombre: "Jhonatan Silva",
       telefono: "3201234567",
-      correoInstitucional: "j.silva@uniamazonia.edu.co",
+      correoInstitucional: "j.silva@gmail.com",
       placa: "GNX-45F",
       marca: "Suzuki",
       modelo: "GN 125",
       cilindraje: 125,
       soatVigente: true,
-      numeroSoat: "SOAT-2026-FLR"
+      numeroSoat: "SOAT-2026-FLR",
+      numeroLicencia: "LIC-2001-A2"
     });
 
     // 1. Login rápido pasajero y motorista (por placa)
@@ -314,7 +331,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
 
     const sesMot = facade.autenticarUsuario("GNX-45F", "motorista");
     assert.equal(sesMot.rol, "motorista");
-    assert.equal(sesMot.identificacion, "2001");
+    assert.equal(sesMot.identificacion, "2001001");
 
     assert.throws(() => facade.autenticarUsuario("no-existe-999"), /No se encontró/);
 
@@ -324,17 +341,17 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     assert.equal(ruta.direccionInicialGrados >= 0 && ruta.direccionInicialGrados < 360, true);
 
     // 3. Ubicación y disponibilidad del motorista
-    const motLibre = facade.cambiarDisponibilidadMotorista("2001", false);
+    const motLibre = facade.cambiarDisponibilidadMotorista("2001001", false);
     assert.equal(motLibre.disponible, false);
-    facade.cambiarDisponibilidadMotorista("2001", true);
+    facade.cambiarDisponibilidadMotorista("2001001", true);
 
     const coord = new (facade.obtenerMotoristas()[0].ubicacionActual.constructor as any)(1.6199, -75.6050);
-    const motMovido = facade.actualizarUbicacionMotorista("2001", coord.latitud, coord.longitud);
+    const motMovido = facade.actualizarUbicacionMotorista("2001001", coord.latitud, coord.longitud);
     assert.equal(motMovido.ubicacionActual.latitud, 1.6199);
 
     // 4. Ciclo completo de tracking GPS en CAMINO_ORIGEN y EN_VIAJE
     const viaje = facade.solicitarViaje(
-      "1001",
+      estudiante.identificacion,
       "Campus Porvenir - Portería Principal",
       "Sede Centro - Edificio Administrativo",
       1.15,
@@ -343,12 +360,12 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     );
     assert.match(viaje.pinSeguridad, /^\d{4}$/);
 
-    facade.aceptarViaje(viaje.codigoViaje, "2001");
+    facade.aceptarViaje(viaje.codigoViaje, "2001001");
     assert.equal(viaje.etapaTracking, "CAMINO_ORIGEN");
 
     // No puede desconectarse con viaje activo
     assert.throws(
-      () => facade.cambiarDisponibilidadMotorista("2001", false),
+      () => facade.cambiarDisponibilidadMotorista("2001001", false),
       /mientras atiendes/i
     );
 

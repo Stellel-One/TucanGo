@@ -1582,8 +1582,28 @@ function badgeEstadoClase(estado) {
 }
 
 function renderMetricasPorRol(data) {
-  const m = data.metricas || {};
-  const rol = state.authUser?.rol === "motorista" || state.role === "motorista" ? "motorista" : "pasajero";
+  const m = data.metricas || { rol: "anonimo" };
+  // El rol lo declara el servidor; el DOM no lo adivina.
+  const rol = m.rol || "anonimo";
+
+  if (rol === "admin") {
+    if (els.activityBannerTitle) els.activityBannerTitle.textContent = "Panel de Operación Institucional";
+    if (els.activityBannerSub) els.activityBannerSub.textContent = "Flota, solicitudes y volumen de movilidad del campus";
+    if (els.metricLabel1) els.metricLabel1.textContent = "VIAJES FLOTA";
+    if (els.metricTag1) els.metricTag1.textContent = "HISTÓRICO";
+    if (els.metricLabel2) els.metricLabel2.textContent = "FINALIZADOS";
+    if (els.metricTag2) els.metricTag2.textContent = "CERRADOS";
+    if (els.metricLabel3) els.metricLabel3.textContent = "EN CURSO";
+    if (els.metricTag3) els.metricTag3.textContent = "ACTIVOS";
+    if (els.metricLabel4) els.metricLabel4.textContent = "VOLUMEN MOVILIDAD";
+    if (els.metricTag4) els.metricTag4.textContent = "FACTURADO COP";
+
+    els.metricTotal.textContent = String(m.totalViajes ?? 0);
+    els.metricFinalizados.textContent = String(m.finalizados ?? 0);
+    els.metricSolicitados.textContent = String(m.enCurso ?? 0);
+    els.metricIngresos.textContent = `$${Number(m.volumenMovilidadCop ?? 0).toLocaleString("es-CO")}`;
+    return;
+  }
 
   if (rol === "motorista") {
     if (els.activityBannerTitle) els.activityBannerTitle.textContent = "Mi Desempeño como Tucán";
@@ -1594,14 +1614,17 @@ function renderMetricasPorRol(data) {
     if (els.metricTag2) els.metricTag2.textContent = "FINALIZADAS";
     if (els.metricLabel3) els.metricLabel3.textContent = "EN RADAR";
     if (els.metricTag3) els.metricTag3.textContent = "PENDIENTES";
-    if (els.metricLabel4) els.metricLabel4.textContent = "GANANCIAS COP";
+    if (els.metricLabel4) els.metricLabel4.textContent = "MIS GANANCIAS";
     if (els.metricTag4) els.metricTag4.textContent = "TUCÁN";
 
     els.metricTotal.textContent = String(m.totalViajes ?? 0);
     els.metricFinalizados.textContent = String(m.finalizados ?? 0);
     els.metricSolicitados.textContent = String(m.solicitados ?? 0);
     els.metricIngresos.textContent = `$${Number(m.gananciasCop ?? 0).toLocaleString("es-CO")}`;
-  } else {
+    return;
+  }
+
+  if (rol === "pasajero") {
     if (els.activityBannerTitle) els.activityBannerTitle.textContent = "Mi Historial Universitario";
     if (els.activityBannerSub) els.activityBannerSub.textContent = "Tus trayectos entre sedes y lugares guardados";
     if (els.metricLabel1) els.metricLabel1.textContent = "MIS VIAJES";
@@ -1610,14 +1633,20 @@ function renderMetricasPorRol(data) {
     if (els.metricTag2) els.metricTag2.textContent = "SEGUROS";
     if (els.metricLabel3) els.metricLabel3.textContent = "ACTIVOS";
     if (els.metricTag3) els.metricTag3.textContent = "EN CURSO";
-    if (els.metricLabel4) els.metricLabel4.textContent = "GASTO TOTAL COP";
-    if (els.metricTag4) els.metricTag4.textContent = "MIS APORTES";
+    if (els.metricLabel4) els.metricLabel4.textContent = "MI GASTO";
+    if (els.metricTag4) els.metricTag4.textContent = "APORTES";
 
     els.metricTotal.textContent = String(m.totalViajes ?? 0);
     els.metricFinalizados.textContent = String(m.finalizados ?? 0);
     els.metricSolicitados.textContent = String(m.solicitados ?? 0);
     els.metricIngresos.textContent = `$${Number(m.gastoTotalCop ?? 0).toLocaleString("es-CO")}`;
+    return;
   }
+
+  els.metricTotal.textContent = "0";
+  els.metricFinalizados.textContent = "0";
+  els.metricSolicitados.textContent = "0";
+  els.metricIngresos.textContent = "$0";
 }
 
 function renderSeguimientoEnVivo(data) {

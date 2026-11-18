@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 import { Persona } from "./Persona.ts";
 import { Coordenada } from "./Coordenada.ts";
 
@@ -32,10 +33,10 @@ export class Estudiante extends Persona {
     super(identificacion, nombre, telefono, correoInstitucional, passwordHash, debeCambiarPassword);
 
     if (!codigoEstudiantil || codigoEstudiantil.trim().length === 0) {
-      throw new Error("El código estudiantil es obligatorio.");
+      throw new ValidacionError("El código estudiantil es obligatorio.");
     }
     if (!carrera || carrera.trim().length === 0) {
-      throw new Error("La carrera es obligatoria.");
+      throw new ValidacionError("La carrera es obligatoria.");
     }
 
     this._codigoEstudiantil = codigoEstudiantil.trim();
@@ -75,8 +76,8 @@ export class Estudiante extends Persona {
   }): UbicacionFrecuente {
     const etiqueta = (entrada.etiqueta || "").trim();
     const nombre = (entrada.nombre || "").trim();
-    if (!etiqueta) throw new Error("La etiqueta del lugar es obligatoria (ej. Casa, Trabajo).");
-    if (!nombre) throw new Error("El nombre del lugar es obligatorio.");
+    if (!etiqueta) throw new ValidacionError("La etiqueta del lugar es obligatoria (ej. Casa, Trabajo).");
+    if (!nombre) throw new ValidacionError("El nombre del lugar es obligatorio.");
 
     const coord = new Coordenada(Number(entrada.latitud), Number(entrada.longitud));
     const barrio = (entrada.barrio || "").trim() || this._barrioResidencia || "Florencia";
@@ -135,13 +136,13 @@ export class Estudiante extends Persona {
     );
     if (datos.codigoEstudiantil !== undefined) {
       if (datos.codigoEstudiantil.trim().length === 0) {
-        throw new Error("El código estudiantil es obligatorio.");
+        throw new ValidacionError("El código estudiantil es obligatorio.");
       }
       this._codigoEstudiantil = datos.codigoEstudiantil.trim();
     }
     if (datos.carrera !== undefined) {
       if (datos.carrera.trim().length === 0) {
-        throw new Error("La carrera es obligatoria.");
+        throw new ValidacionError("La carrera es obligatoria.");
       }
       this._carrera = datos.carrera.trim();
     }

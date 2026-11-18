@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Administrador } from "../domain/model/Administrador.ts";
 import { Estudiante, type UbicacionFrecuente } from "../domain/model/Estudiante.ts";
 import { Motorista, type EstadoAprobacionTucan } from "../domain/model/Motorista.ts";
@@ -40,7 +41,19 @@ import {
 
 export const DEFAULT_ADMIN_USER = "tucangoadmin";
 export const DEFAULT_ADMIN_EMAIL = "admin@uniamazonia.edu.co";
-export const CURRENT_SEED_VERSION = 2;
+export const CURRENT_SEED_VERSION = 3;
+
+// Invariantes de entrada. Viven en la capa de aplicación porque describen
+// reglas de alta de la comunidad, no la estructura de una persona ya existente.
+const PATRON_CEDULA = /^\d{6,10}$/;
+const PATRON_TELEFONO = /^3\d{9}$/;
+const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PATRON_PLACA = /^[A-Z]{3}-?\d{2}[A-Z0-9]$/;
+const ESTADOS_APROBACION: readonly EstadoAprobacionTucan[] = [
+  "PENDIENTE_APROBACION",
+  "ACTIVO",
+  "RECHAZADO"
+];
 
 export interface RegistrarEstudianteDTO {
   identificacion: string;
@@ -92,6 +105,24 @@ export interface ActualizarPerfilDTO {
   sedeFavorita?: string;
 }
 
+/**
+ * Cada rol observa un recorte distinto de la operación. El tipo discriminado
+ * impide que el borde (HTTP o DOM) invente campos que el rol no posee: un
+ * administrador no tiene "gasto personal" y un pasajero no tiene "ganancias".
+ */
+export interface MetricasBaseDTO {
+  totalViajes: number;
+  finalizados: number;
+  solicitados: number;
+  enCurso: number;
+}
+
+export type MetricasDTO =
+  | (MetricasBaseDTO & { rol: "admin"; volumenMovilidadCop: number })
+  | (MetricasBaseDTO & { rol: "motorista"; gananciasCop: number; kmRecorridos: number })
+  | (MetricasBaseDTO & { rol: "pasajero"; gastoTotalCop: number; kmRecorridos: number })
+  | (MetricasBaseDTO & { rol: "anonimo" });
+
 export class TucanGoFacade {
   private _administradores: Map<string, Administrador> = new Map();
   private _estudiantes: Map<string, Estudiante> = new Map();
@@ -99,6 +130,7 @@ export class TucanGoFacade {
   private _viajes: Map<string, Viaje> = new Map();
   private _notificacionesCorreo: NotificacionCorreoSnapshot[] = [];
   private _contadorViajes: number = 100;
+  private _ultimaPersistenciaUbicacion: Map<string, number> = new Map();
   private readonly _repository?: SistemaRepository;
   private readonly _eventBus: EventBus;
 
@@ -106,11 +138,44 @@ export class TucanGoFacade {
     this._repository = repository;
     this._eventBus = eventBus ?? new EventBus();
 
+    // RESET_DATOS=true es el único mecanismo que descarta el estado persistido.
+    // Subir CURRENT_SEED_VERSION ya no borra datos: solo agrega lo que falte.
+    if (process.env.RESET_DATOS === "true" && this._repository) {
+      this.cargarDatosSemilla();
+      this.persistir();
+      return;
+    }
+
     const snapshot = this._repository?.cargar();
-    if (snapshot && (snapshot.seedVersion ?? 0) >= CURRENT_SEED_VERSION) {
+    if (snapshot) {
       this.rehidratarDesdeSnapshot(snapshot);
+      this.completarSemillaFaltante(snapshot);
     } else {
       this.cargarDatosSemilla();
+      this.persistir();
+    }
+  }
+
+  /**
+   * Una migración nunca destruye datos reales: rehidrata lo que existe y solo
+   * agrega las piezas institucionales que falten. El borrado es explícito
+   * mediante RESET_DATOS.
+   */
+  private completarSemillaFaltante(snapshot: EstadoSistemaSnapshot): void {
+    const versionAnterior = snapshot.seedVersion ?? 0;
+    let huboCambios = false;
+
+    if (this._administradores.size === 0) {
+      this._administradores.set(
+        DEFAULT_ADMIN_USER,
+        this.construirAdministradorSemilla()
+      );
+      huboCambios = true;
+    }
+    if (versionAnterior !== CURRENT_SEED_VERSION) {
+      huboCambios = true;
+    }
+    if (huboCambios) {
       this.persistir();
     }
   }
@@ -425,16 +490,7 @@ export class TucanGoFacade {
         this._administradores.set(admin.identificacion, admin);
       }
     } else {
-      const seedAdminPass = process.env.SEED_ADMIN_PASSWORD || "AdminSeguro*2026";
-      const admin = new Administrador(
-        DEFAULT_ADMIN_USER,
-        "Administrador TucanGo",
-        "3001234567",
-        DEFAULT_ADMIN_EMAIL,
-        "Supervisión General TucanGo",
-        hashPasswordSync(seedAdminPass),
-        !process.env.SEED_ADMIN_PASSWORD
-      );
+      const admin = this.construirAdministradorSemilla();
       this._administradores.set(admin.identificacion, admin);
     }
 
@@ -446,7 +502,7 @@ export class TucanGoFacade {
         estSnap.correoInstitucional,
         estSnap.codigoEstudiantil,
         estSnap.carrera,
-        estSnap.passwordHash || hashPasswordSync(process.env.SEED_STUDENT_PASSWORD || "EstudianteSeguro*2026"),
+        estSnap.passwordHash || this.hashSinPassword(),
         Boolean(estSnap.debeCambiarPassword),
         estSnap.barrioResidencia || "Sin especificar",
         estSnap.ubicacionesFrecuentes || []
@@ -476,7 +532,7 @@ export class TucanGoFacade {
         motSnap.disponible,
         ubicacion,
         motSnap.direccionGrados ?? 0,
-        motSnap.passwordHash || hashPasswordSync(process.env.SEED_DRIVER_PASSWORD || "MotoristaSeguro*2026"),
+        motSnap.passwordHash || this.hashSinPassword(),
         Boolean(motSnap.debeCambiarPassword),
         motSnap.estadoAprobacion ?? "ACTIVO",
         motSnap.fotoRostroUrl ?? "",
@@ -550,11 +606,8 @@ export class TucanGoFacade {
     }
   }
 
-  // --- Inicialización Limpia (Solo Admin + Estudiante; el Tucán lo crea y aprueba el usuario) ---
+  // --- Inicialización Limpia (solo Administrador; el resto lo crea el usuario) ---
   private cargarDatosSemilla(): void {
-    const seedAdminPass = process.env.SEED_ADMIN_PASSWORD || "admin123";
-    const seedEstPass = process.env.SEED_STUDENT_PASSWORD || "estudiante123";
-
     this._administradores.clear();
     this._estudiantes.clear();
     this._motoristas.clear();
@@ -562,32 +615,43 @@ export class TucanGoFacade {
     this._notificacionesCorreo = [];
     this._contadorViajes = 100;
 
-    // 1 Administrador Institucional (Bienestar / Movilidad Uniamazonia)
-    const admin = new Administrador(
+    const admin = this.construirAdministradorSemilla();
+    this._administradores.set(admin.identificacion, admin);
+  }
+
+  /**
+   * Una cuenta sin contraseña persistida no puede quedar con una clave
+   * conocida. Se le asigna el hash de un valor aleatorio: queda inaccesible
+   * hasta que un administrador la reemplace.
+   */
+  private hashSinPassword(): string {
+    return hashPasswordSync(randomUUID());
+  }
+
+  /**
+   * La cuenta administrativa es la única que la plataforma siembra. En
+   * producción su clave debe cumplir la misma política que se exige a
+   * cualquier usuario, y el arranque falla si no la cumple.
+   */
+  private construirAdministradorSemilla(): Administrador {
+    const passwordDefinida = process.env.SEED_ADMIN_PASSWORD;
+    if (process.env.NODE_ENV === "production") {
+      if (!passwordDefinida || passwordDefinida.length < 12) {
+        throw new Error(
+          "FATAL: SEED_ADMIN_PASSWORD es obligatoria en producción y debe tener al menos 12 caracteres."
+        );
+      }
+    }
+    const password = passwordDefinida || "admin123";
+    return new Administrador(
       DEFAULT_ADMIN_USER,
       "Bienestar Universitario",
       "3001234567",
       DEFAULT_ADMIN_EMAIL,
       "Coordinación de Movilidad Segura",
-      hashPasswordSync(seedAdminPass),
-      !process.env.SEED_ADMIN_PASSWORD
+      hashPasswordSync(password),
+      !passwordDefinida
     );
-    this._administradores.set(admin.identificacion, admin);
-
-    // 1 Estudiante Inicial
-    const est1 = new Estudiante(
-      "1001",
-      "Carlos Rivera",
-      "3115551234",
-      "c.rivera@uniamazonia.edu.co",
-      "202610001",
-      "Ingeniería de Sistemas",
-      hashPasswordSync(seedEstPass),
-      false,
-      "La Vega",
-      []
-    );
-    this._estudiantes.set(est1.identificacion, est1);
   }
 
   // --- Casos de Uso: Estudiantes y Motoristas ---
@@ -597,6 +661,21 @@ export class TucanGoFacade {
 
   public obtenerMotoristas(): Motorista[] {
     return Array.from(this._motoristas.values());
+  }
+
+  /**
+   * Una identificación representa a una sola persona en la plataforma.
+   * Estudiantes, Tucanes y Administradores comparten el espacio de cédulas,
+   * así que ningún alta puede reutilizar una identificación existente.
+   */
+  private validarIdentificacionDisponible(identificacion: string): void {
+    const yaExiste =
+      this._estudiantes.has(identificacion) ||
+      this._motoristas.has(identificacion) ||
+      this._administradores.has(identificacion);
+    if (yaExiste) {
+      throw new ValidacionError(`La identificación ${identificacion} ya está registrada en TucanGo.`);
+    }
   }
 
   public registrarEstudiante(entrada: Estudiante | RegistrarEstudianteDTO): Estudiante {
@@ -616,11 +695,8 @@ export class TucanGoFacade {
             []
           );
 
-    if (!(entrada instanceof Estudiante) && this._estudiantes.has(estudiante.identificacion)) {
-      throw new ValidacionError(`Ya existe un estudiante registrado con identificación ${estudiante.identificacion}.`);
-    }
-
     if (!(entrada instanceof Estudiante)) {
+      this.validarIdentificacionDisponible(estudiante.identificacion);
       const email = (entrada.correoInstitucional || "").toLowerCase();
       if (!email.endsWith("@uniamazonia.edu.co") && !email.endsWith("@udla.edu.co")) {
         throw new ValidacionError("El correo debe ser institucional (@uniamazonia.edu.co).");
@@ -646,14 +722,35 @@ export class TucanGoFacade {
   }
 
   public registrarMotoristaConMoto(dto: RegistrarMotoristaDTO): Motorista {
+    const identificacion = (dto.identificacion || "").trim();
+    if (!PATRON_CEDULA.test(identificacion)) {
+      throw new ValidacionError("La cédula del Tucán debe tener entre 6 y 10 dígitos numéricos.");
+    }
+    this.validarIdentificacionDisponible(identificacion);
+
+    if ((dto.nombre || "").trim().length < 3) {
+      throw new ValidacionError("El nombre del Tucán debe tener al menos 3 caracteres.");
+    }
+    if (!PATRON_TELEFONO.test((dto.telefono || "").trim())) {
+      throw new ValidacionError("El teléfono debe ser un celular colombiano de 10 dígitos (ej. 3201234567).");
+    }
+    if (!PATRON_CORREO.test((dto.correoInstitucional || "").trim().toLowerCase())) {
+      throw new ValidacionError("El correo del Tucán debe ser una dirección válida.");
+    }
+    if (!PATRON_PLACA.test((dto.placa || "").trim().toUpperCase())) {
+      throw new ValidacionError("La placa debe tener el formato colombiano (ej. AMZ-77G o AMZ77G).");
+    }
+    if (!Number.isFinite(dto.cilindraje) || dto.cilindraje < 50 || dto.cilindraje > 1500) {
+      throw new ValidacionError("El cilindraje debe ser un número entre 50 y 1500 cc.");
+    }
+    if (dto.estadoAprobacion && !ESTADOS_APROBACION.includes(dto.estadoAprobacion)) {
+      throw new ValidacionError(`Estado de aprobación inválido: ${dto.estadoAprobacion}.`);
+    }
     if (!dto.soatVigente) {
       throw new ValidacionError("El SOAT vigente es obligatorio para habilitar una motocicleta en TucanGo.");
     }
     if (!dto.numeroSoat || dto.numeroSoat.trim().length < 6) {
       throw new ValidacionError("El número de póliza SOAT debe contener al menos 6 caracteres válidos.");
-    }
-    if (this._motoristas.has((dto.identificacion || "").trim())) {
-      throw new ValidacionError(`Ya existe un motorista registrado con identificación ${dto.identificacion}.`);
     }
     if (dto.password) {
       validarPoliticaPassword(dto.password);
@@ -663,6 +760,9 @@ export class TucanGoFacade {
     }
 
     const estadoInicial: EstadoAprobacionTucan = dto.estadoAprobacion ?? "ACTIVO";
+    if (estadoInicial !== "RECHAZADO" && !(dto.numeroLicencia || "").trim()) {
+      throw new ValidacionError("El número de licencia de conducción es obligatorio para habilitar un Tucán.");
+    }
     const disponibleInicial = estadoInicial === "ACTIVO";
 
     const moto = new Moto(
@@ -958,12 +1058,7 @@ export class TucanGoFacade {
       );
 
     if (admin) {
-      let match = await admin.verificarPassword(password);
-      if (!match && (password === "admin123" || password === "AdminSeguro*2026")) {
-        admin.asignarPasswordHash(hashPasswordSync(password));
-        this.persistir();
-        match = true;
-      }
+      const match = await admin.verificarPassword(password);
       if (!match) throw new CredencialesInvalidasError();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "admin",
@@ -984,12 +1079,7 @@ export class TucanGoFacade {
         e.codigoEstudiantil.toLowerCase() === clave
     );
     if (est) {
-      let match = await est.verificarPassword(password);
-      if (!match && (password === "estudiante123" || password === "EstudianteSeguro*2026" || password === "estudiante")) {
-        est.asignarPasswordHash(hashPasswordSync(password));
-        this.persistir();
-        match = true;
-      }
+      const match = await est.verificarPassword(password);
       if (!match) throw new CredencialesInvalidasError();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "pasajero",
@@ -1010,12 +1100,7 @@ export class TucanGoFacade {
         (m.obtenerMotoActiva()?.placa || "").toLowerCase() === clave
     );
     if (mot) {
-      let match = await mot.verificarPassword(password);
-      if (!match && (password === "motorista123" || password === "MotoristaSeguro*2026" || password === "motorista")) {
-        mot.asignarPasswordHash(hashPasswordSync(password));
-        this.persistir();
-        match = true;
-      }
+      const match = await mot.verificarPassword(password);
       if (!match) throw new CredencialesInvalidasError();
 
       if (mot.estadoAprobacion === "PENDIENTE_APROBACION") {
@@ -1684,7 +1769,15 @@ export class TucanGoFacade {
       );
     }
 
-    this.persistir();
+    // La posición GPS es efímera. Persistirla en cada ping reescribe el
+    // snapshot completo, documentos en base64 incluidos, así que se guarda
+    // como máximo cada 15 segundos por Tucán.
+    const ahora = Date.now();
+    const ultimaPersistencia = this._ultimaPersistenciaUbicacion.get(motorista.identificacion) ?? 0;
+    if (ahora - ultimaPersistencia >= 15000) {
+      this._ultimaPersistenciaUbicacion.set(motorista.identificacion, ahora);
+      this.persistir();
+    }
     this.emitirEvento("UBICACION_MOTORISTA_ACTUALIZADA", {
       motoristaId: motorista.identificacion,
       latitud: coord.latitud,
@@ -1784,5 +1877,76 @@ export class TucanGoFacade {
       enCurso: enCurso.length,
       ingresosGenerados
     };
+  }
+
+  /**
+   * Vista de métricas propia de cada rol. Centralizarla evita que el borde
+   * repita la segmentación y que un rol herede campos de otro.
+   */
+  public obtenerMetricasPorRol(
+    rol: "admin" | "motorista" | "pasajero" | null,
+    identificacion?: string
+  ): MetricasDTO {
+    const viajes = Array.from(this._viajes.values());
+    const finalizados = viajes.filter((v) => v.estado.nombre === "FINALIZADO");
+    const solicitados = viajes.filter((v) => v.estado.nombre === "SOLICITADO");
+    const enCurso = viajes.filter(
+      (v) => v.estado.nombre === "EN_CURSO" || v.estado.nombre === "ACEPTADO"
+    );
+
+    if (rol === "admin") {
+      return {
+        rol: "admin",
+        totalViajes: viajes.length,
+        finalizados: finalizados.length,
+        solicitados: solicitados.length,
+        enCurso: enCurso.length,
+        volumenMovilidadCop: finalizados.reduce((acc, v) => acc + v.tarifa, 0)
+      };
+    }
+
+    if (!identificacion) {
+      return { rol: "anonimo", totalViajes: 0, finalizados: 0, solicitados: 0, enCurso: 0 };
+    }
+
+    if (rol === "pasajero") {
+      const propios = viajes.filter((v) => v.estudiante.identificacion === identificacion);
+      const propiosFinalizados = propios.filter((v) => v.estado.nombre === "FINALIZADO");
+      return {
+        rol: "pasajero",
+        totalViajes: propios.length,
+        finalizados: propiosFinalizados.length,
+        solicitados: propios.filter(
+          (v) => v.estado.nombre === "SOLICITADO" || v.estado.nombre === "ACEPTADO" || v.estado.nombre === "EN_CURSO"
+        ).length,
+        enCurso: propios.filter(
+          (v) => v.estado.nombre === "EN_CURSO" || v.estado.nombre === "ACEPTADO"
+        ).length,
+        gastoTotalCop: propiosFinalizados.reduce((acc, v) => acc + v.tarifa, 0),
+        kmRecorridos: Number(
+          propiosFinalizados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2)
+        )
+      };
+    }
+
+    if (rol === "motorista") {
+      const propios = viajes.filter((v) => v.motorista?.identificacion === identificacion);
+      const propiosFinalizados = propios.filter((v) => v.estado.nombre === "FINALIZADO");
+      return {
+        rol: "motorista",
+        totalViajes: propios.length,
+        finalizados: propiosFinalizados.length,
+        solicitados: solicitados.length,
+        enCurso: propios.filter(
+          (v) => v.estado.nombre === "EN_CURSO" || v.estado.nombre === "ACEPTADO"
+        ).length,
+        gananciasCop: propiosFinalizados.reduce((acc, v) => acc + v.tarifa, 0),
+        kmRecorridos: Number(
+          propiosFinalizados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2)
+        )
+      };
+    }
+
+    return { rol: "anonimo", totalViajes: 0, finalizados: 0, solicitados: 0, enCurso: 0 };
   }
 }

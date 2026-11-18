@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 export class Calificacion {
   private _puntuacion: number;
   private _comentario: string;
@@ -5,10 +6,10 @@ export class Calificacion {
 
   constructor(puntuacion: number, comentario: string, autorIdentificacion: string) {
     if (puntuacion < 1 || puntuacion > 5) {
-      throw new Error("La puntuación debe estar entre 1.0 y 5.0 estrellas.");
+      throw new ValidacionError("La puntuación debe estar entre 1.0 y 5.0 estrellas.");
     }
     if (!autorIdentificacion || autorIdentificacion.trim().length === 0) {
-      throw new Error("La identificación del autor de la calificación es obligatoria.");
+      throw new ValidacionError("La identificación del autor de la calificación es obligatoria.");
     }
 
     this._puntuacion = puntuacion;

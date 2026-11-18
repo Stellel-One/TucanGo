@@ -97,9 +97,24 @@ interface RateLimitEntry {
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
 function obtenerClienteIp(req: http.IncomingMessage): string {
+  // Cloudflare sobrescribe este header con la IP real del cliente.
+  const cfConnectingIp = req.headers["cf-connecting-ip"];
+  if (typeof cfConnectingIp === "string" && cfConnectingIp.trim().length > 0) {
+    return cfConnectingIp.trim();
+  }
+
+  // Detrás de un proxy de confianza, el ÚLTIMO salto de X-Forwarded-For es el
+  // que agregó el proxy. El primero lo controla el cliente, así que confiar en
+  // él permitía evadir cualquier rate limit rotando el header.
   const xForwardedFor = req.headers["x-forwarded-for"];
   if (typeof xForwardedFor === "string") {
-    return xForwardedFor.split(",")[0].trim();
+    const saltos = xForwardedFor
+      .split(",")
+      .map((salto) => salto.trim())
+      .filter((salto) => salto.length > 0);
+    if (saltos.length > 0) {
+      return saltos[saltos.length - 1];
+    }
   }
   return req.socket.remoteAddress || "127.0.0.1";
 }
@@ -604,39 +619,8 @@ function construirEstadoDTO(
     fecha: v.fechaCreacion.toISOString()
   }));
 
-  // Métricas estrictamente segmentadas por rol (sin fugar ingresos globales al pasajero)
-  let metricas: Record<string, number>;
-  if (rol === "pasajero" && userId) {
-    const misFinalizados = viajesFiltrados.filter((v) => v.estado.nombre === "FINALIZADO");
-    const misActivos = viajesFiltrados.filter(
-      (v) =>
-        v.estado.nombre === "SOLICITADO" ||
-        v.estado.nombre === "ACEPTADO" ||
-        v.estado.nombre === "EN_CURSO"
-    );
-    metricas = {
-      totalViajes: viajesFiltrados.length,
-      finalizados: misFinalizados.length,
-      solicitados: misActivos.length,
-      gastoTotalCop: misFinalizados.reduce((acc, v) => acc + v.tarifa, 0),
-      kmRecorridos: Number(misFinalizados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2))
-    };
-  } else if (rol === "motorista" && userId) {
-    const misViajesMot = viajesFiltrados.filter((v) => v.motorista?.identificacion === userId);
-    const misCompletados = misViajesMot.filter((v) => v.estado.nombre === "FINALIZADO");
-    const solicitudesCola = viajesFiltrados.filter((v) => v.estado.nombre === "SOLICITADO");
-    metricas = {
-      totalViajes: misViajesMot.length,
-      finalizados: misCompletados.length,
-      solicitados: solicitudesCola.length,
-      gananciasCop: misCompletados.reduce((acc, v) => acc + v.tarifa, 0),
-      kmRecorridos: Number(misCompletados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2))
-    };
-  } else if (rol === "admin") {
-    metricas = facade.obtenerMetricas();
-  } else {
-    metricas = { totalViajes: 0, finalizados: 0, solicitados: 0, enCurso: 0 };
-  }
+  // Métricas segmentadas por rol: la fachada decide qué ve cada uno.
+  const metricas = facade.obtenerMetricasPorRol(rol, userId);
 
   return {
     rolActivo: rol ?? null,
@@ -1221,6 +1205,13 @@ export function crearServidor(
 
       // Registro de Motorista / Onboarding Aspirante a Tucán (con Políticas y Compromiso Institucional)
       if ((pathname === "/api/tucanes/registro" || pathname === "/api/motoristas") && req.method === "POST") {
+        // El registro público de Tucanes es la única vía anónima. El alta
+        // administrativa directa exige sesión de administrador.
+        if (pathname === "/api/motoristas") {
+          const auth = requerirRol(req, res, facade, "admin");
+          if (!auth) return;
+        }
+        const esRutaTucanes = pathname === "/api/tucanes/registro";
         const ip = obtenerClienteIp(req);
         const rateCheck = verificarRateLimit(`reg:${ip}`, 10, 600000);
         if (!rateCheck.permitido) {
@@ -1233,7 +1224,21 @@ export function crearServidor(
           return;
         }
 
-        const esRutaTucanes = pathname === "/api/tucanes/registro";
+        // Tope global: no depende de headers ni de la IP, así que no se puede
+        // rotar para inundar la base con registros de hasta 2 MB.
+        const rateCheckGlobal = verificarRateLimit("global:registro", 30, 60000);
+        if (!rateCheckGlobal.permitido) {
+          sendJson(
+            res,
+            429,
+            { error: "El servicio de registro está saturado. Intenta nuevamente en unos segundos." },
+            { "Retry-After": String(rateCheckGlobal.retryAfterSegundos) }
+          );
+          return;
+        }
+        registrarFalloRateLimit(`reg:${ip}`, 10, 600000);
+        registrarFalloRateLimit("global:registro", 30, 60000);
+
         const body = await parseJsonBody<{
           identificacion: string;
           nombre: string;
@@ -1277,8 +1282,13 @@ export function crearServidor(
           return;
         }
 
-        // Sin estos documentos el Administrador no puede auditar la hoja de vida.
-        if (esRutaTucanes) {
+        const estadoAprobacion = esRutaTucanes
+          ? "PENDIENTE_APROBACION"
+          : (body.estadoAprobacion ?? "PENDIENTE_APROBACION");
+
+        // Un Tucán habilitado necesita expediente completo, venga del registro
+        // público o de un alta administrativa.
+        if (esRutaTucanes || estadoAprobacion === "ACTIVO") {
           const documentosRequeridos: Array<[string, string]> = [
             [body.fotoRostroUrl || "", "la selfie de reconocimiento facial"],
             [body.fotoCedulaUrl || "", "la fotografía de la cédula"],
@@ -1292,15 +1302,11 @@ export function crearServidor(
             .map(([, etiqueta]) => etiqueta);
           if (faltantes.length > 0) {
             sendJson(res, 422, {
-              error: `Faltan documentos obligatorios para tu hoja de vida: ${faltantes.join(", ")}.`
+              error: `Faltan documentos obligatorios para la hoja de vida: ${faltantes.join(", ")}.`
             });
             return;
           }
         }
-
-        const estadoAprobacion = esRutaTucanes
-          ? "PENDIENTE_APROBACION"
-          : (body.estadoAprobacion ?? "ACTIVO");
 
         const mot = facade.registrarMotoristaConMoto({
           ...body,
@@ -1578,7 +1584,10 @@ export function crearServidor(
         sendJson(res, err.statusHttp, { error: err.message });
         return;
       }
-      sendJson(res, 400, { error: err.message || "Error procesando solicitud" });
+      // Un fallo no controlado es un 500, no un 400: no se filtra al cliente
+      // el mensaje interno (rutas, SQL, detalles de implementación).
+      console.error("[tucango] Error no controlado:", err);
+      sendJson(res, 500, { error: "Error interno del servidor." });
       return;
     }
 

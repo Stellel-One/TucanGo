@@ -1,3 +1,5 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
+
 export class Moto {
   private _placa: string;
   private _marca: string;
@@ -17,16 +19,17 @@ export class Moto {
     numeroSoat: string = "SOAT-VIGENTE"
   ) {
     if (!placa || placa.trim().length === 0) {
-      throw new Error("La placa de la moto es obligatoria.");
+      throw new ValidacionError("La placa de la moto es obligatoria.");
     }
     if (!marca || marca.trim().length === 0) {
-      throw new Error("La marca de la moto es obligatoria.");
+      throw new ValidacionError("La marca de la moto es obligatoria.");
     }
-    if (cilindraje <= 0) {
-      throw new Error("El cilindraje debe ser mayor a cero.");
+    // Number.isFinite atrapa NaN e Infinity: "abc" no es un cilindraje válido.
+    if (!Number.isFinite(cilindraje) || cilindraje <= 0) {
+      throw new ValidacionError("El cilindraje debe ser un número mayor a cero.");
     }
     if (activa && !soatVigente) {
-      throw new Error("No se puede activar una motocicleta sin SOAT vigente.");
+      throw new ValidacionError("No se puede activar una motocicleta sin SOAT vigente.");
     }
 
     this._placa = placa.trim().toUpperCase();
@@ -60,7 +63,7 @@ export class Moto {
 
   public set activa(estado: boolean) {
     if (estado && !this._soatVigente) {
-      throw new Error("No se puede activar una motocicleta sin SOAT vigente.");
+      throw new ValidacionError("No se puede activar una motocicleta sin SOAT vigente.");
     }
     this._activa = estado;
   }
@@ -86,31 +89,31 @@ export class Moto {
   }): void {
     if (datos.placa !== undefined) {
       if (datos.placa.trim().length === 0) {
-        throw new Error("La placa de la moto es obligatoria.");
+        throw new ValidacionError("La placa de la moto es obligatoria.");
       }
       this._placa = datos.placa.trim().toUpperCase();
     }
     if (datos.marca !== undefined) {
       if (datos.marca.trim().length === 0) {
-        throw new Error("La marca de la moto es obligatoria.");
+        throw new ValidacionError("La marca de la moto es obligatoria.");
       }
       this._marca = datos.marca.trim();
     }
     if (datos.modelo !== undefined) {
       if (datos.modelo.trim().length === 0) {
-        throw new Error("El modelo de la moto es obligatorio.");
+        throw new ValidacionError("El modelo de la moto es obligatorio.");
       }
       this._modelo = datos.modelo.trim();
     }
     if (datos.cilindraje !== undefined) {
       if (!Number.isFinite(datos.cilindraje) || datos.cilindraje <= 0) {
-        throw new Error("El cilindraje debe ser mayor a cero.");
+        throw new ValidacionError("El cilindraje debe ser mayor a cero.");
       }
       this._cilindraje = Math.round(datos.cilindraje);
     }
     if (datos.numeroSoat !== undefined) {
       if (datos.numeroSoat.trim().length < 6) {
-        throw new Error("El número de póliza SOAT debe contener al menos 6 caracteres válidos.");
+        throw new ValidacionError("El número de póliza SOAT debe contener al menos 6 caracteres válidos.");
       }
       this._numeroSoat = datos.numeroSoat.trim().toUpperCase();
     }

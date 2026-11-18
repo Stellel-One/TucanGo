@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 import { Estudiante } from "../model/Estudiante.ts";
 import { Motorista } from "../model/Motorista.ts";
 import { Pago, MetodoPago, type EstadoPago } from "../model/Pago.ts";
@@ -62,19 +63,19 @@ export class Viaje {
     metodoPago: MetodoPago = MetodoPago.EFECTIVO
   ) {
     if (!codigoViaje || codigoViaje.trim().length === 0) {
-      throw new Error("El código de viaje es obligatorio.");
+      throw new ValidacionError("El código de viaje es obligatorio.");
     }
     if (!origen || origen.trim().length === 0) {
-      throw new Error("El origen del viaje es obligatorio.");
+      throw new ValidacionError("El origen del viaje es obligatorio.");
     }
     if (!destino || destino.trim().length === 0) {
-      throw new Error("El destino del viaje es obligatorio.");
+      throw new ValidacionError("El destino del viaje es obligatorio.");
     }
     if (distanciaKm <= 0) {
-      throw new Error("La distancia estimada debe ser mayor a cero.");
+      throw new ValidacionError("La distancia estimada debe ser mayor a cero.");
     }
     if (!estudiante) {
-      throw new Error("El estudiante que solicita el viaje es obligatorio.");
+      throw new ValidacionError("El estudiante que solicita el viaje es obligatorio.");
     }
 
     this._codigoViaje = codigoViaje.trim();
@@ -189,7 +190,7 @@ export class Viaje {
 
   public iniciar(pinIngresado?: string): void {
     if (pinIngresado !== undefined && pinIngresado.trim() !== this._pinSeguridad) {
-      throw new Error("El PIN de seguridad ingresado no coincide con el código del estudiante.");
+      throw new ValidacionError("El PIN de seguridad ingresado no coincide con el código del estudiante.");
     }
     this._estado.iniciar(this);
     this._etapaTracking = "EN_VIAJE";
@@ -214,13 +215,13 @@ export class Viaje {
     direccionGrados: number
   ): void {
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-      throw new Error("La latitud de seguimiento debe estar entre -90 y 90 grados.");
+      throw new ValidacionError("La latitud de seguimiento debe estar entre -90 y 90 grados.");
     }
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-      throw new Error("La longitud de seguimiento debe estar entre -180 y 180 grados.");
+      throw new ValidacionError("La longitud de seguimiento debe estar entre -180 y 180 grados.");
     }
     if (!Number.isFinite(progreso)) {
-      throw new Error("El progreso de ruta debe ser un número válido.");
+      throw new ValidacionError("El progreso de ruta debe ser un número válido.");
     }
     this._progresoRuta = Math.max(0, Math.min(100, Math.round(progreso)));
     this._ubicacionMotoristaLat = lat;
@@ -232,10 +233,10 @@ export class Viaje {
 
   public confirmarLlegadaSegura(): void {
     if (this._estado.nombre !== "FINALIZADO") {
-      throw new Error("Solo se puede confirmar llegada segura cuando el viaje está finalizado.");
+      throw new ValidacionError("Solo se puede confirmar llegada segura cuando el viaje está finalizado.");
     }
     if (this._llegadaSeguraConfirmada) {
-      throw new Error("La llegada segura ya fue confirmada para este viaje.");
+      throw new ValidacionError("La llegada segura ya fue confirmada para este viaje.");
     }
     this._llegadaSeguraConfirmada = true;
     this._fechaLlegadaSegura = new Date();
@@ -256,13 +257,13 @@ export class Viaje {
 
   public agregarCalificacion(calificacion: Calificacion): void {
     if (!calificacion) {
-      throw new Error("La calificación no puede ser nula.");
+      throw new ValidacionError("La calificación no puede ser nula.");
     }
     if (this._estado.nombre !== "FINALIZADO") {
-      throw new Error("Solo se puede calificar un viaje que haya finalizado.");
+      throw new ValidacionError("Solo se puede calificar un viaje que haya finalizado.");
     }
     if (this._calificaciones.length >= 2) {
-      throw new Error("El viaje ya cuenta con las calificaciones del estudiante y del motorista.");
+      throw new ValidacionError("El viaje ya cuenta con las calificaciones del estudiante y del motorista.");
     }
     this._calificaciones.push(calificacion);
   }

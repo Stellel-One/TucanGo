@@ -1,3 +1,4 @@
+import { ValidacionError } from "../security/ErroresAuth.ts";
 import { Coordenada } from "./Coordenada.ts";
 
 export class SectorCampus {
@@ -15,10 +16,10 @@ export class SectorCampus {
     esCampusUniamazonia: boolean
   ) {
     if (!id || id.trim().length === 0) {
-      throw new Error("El identificador del sector es obligatorio.");
+      throw new ValidacionError("El identificador del sector es obligatorio.");
     }
     if (!nombre || nombre.trim().length === 0) {
-      throw new Error("El nombre del sector es obligatorio.");
+      throw new ValidacionError("El nombre del sector es obligatorio.");
     }
 
     this._id = id.trim().toUpperCase();
