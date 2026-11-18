@@ -1557,8 +1557,9 @@ async function simularPedirMoto() {
 
 // Paso 3: Aceptar en Radar
 async function simularAceptarEnRadar() {
-  const solicitudes = state.data?.solicitudesPendientes || [];
-  const viaje = solicitudes.find((v) => v.codigoViaje === state.simViajeActivo) || solicitudes[0];
+  const viajes = state.data?.viajes || [];
+  const solicitados = viajes.filter((v) => v.estado === "SOLICITADO");
+  const viaje = (state.simViajeActivo ? solicitados.find((v) => v.codigo === state.simViajeActivo) : null) || solicitados[0];
   if (!viaje) {
     showToast("No hay solicitudes pendientes en el radar", "info");
     return;
@@ -1566,7 +1567,7 @@ async function simularAceptarEnRadar() {
   const motoristaId = els.selectMotorista?.value || state.data?.motoristas?.[0]?.identificacion;
   try {
     const res = await postJson("/api/viajes/aceptar", {
-      codigoViaje: viaje.codigoViaje,
+      codigoViaje: viaje.codigo,
       motoristaId
     });
     state.simViajeActivo = res.codigo;
@@ -1583,9 +1584,12 @@ async function simularAceptarEnRadar() {
 
 // Paso 4: Handshake de Seguridad con PIN
 async function simularValidarPinEIniciar() {
-  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  const viajes = state.data?.viajes || [];
+  const aceptados = viajes.filter((v) => v.estado === "ACEPTADO");
+  const viaje = (state.simViajeActivo ? aceptados.find((v) => v.codigo === state.simViajeActivo) : null) || aceptados[0];
+  const codigo = viaje?.codigo || state.simViajeActivo;
   if (!codigo) {
-    showToast("No hay viaje activo para iniciar", "info");
+    showToast("No hay viaje aceptado para iniciar", "info");
     return;
   }
   try {
@@ -1602,7 +1606,10 @@ async function simularValidarPinEIniciar() {
 
 // Paso 5: Avanzar Telemetría GPS
 async function simularAvanzarGps() {
-  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  const viajes = state.data?.viajes || [];
+  const enCurso = viajes.filter((v) => v.estado === "EN_CURSO");
+  const viaje = (state.simViajeActivo ? enCurso.find((v) => v.codigo === state.simViajeActivo) : null) || enCurso[0];
+  const codigo = viaje?.codigo || state.simViajeActivo;
   if (!codigo) {
     showToast("No hay viaje en curso para avanzar GPS", "info");
     return;
@@ -1620,7 +1627,10 @@ async function simularAvanzarGps() {
 
 // Paso 6: Llegada Segura y Calificación
 async function simularFinalizarYCalificar() {
-  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  const viajes = state.data?.viajes || [];
+  const enCurso = viajes.filter((v) => v.estado === "EN_CURSO");
+  const viaje = (state.simViajeActivo ? enCurso.find((v) => v.codigo === state.simViajeActivo) : null) || enCurso[0];
+  const codigo = viaje?.codigo || state.simViajeActivo;
   if (!codigo) {
     showToast("No hay viaje en curso para finalizar", "info");
     return;
@@ -1629,8 +1639,8 @@ async function simularFinalizarYCalificar() {
     await postJson("/api/viajes/finalizar", { codigoViaje: codigo });
     resaltarPasoSimulador(6);
     state.calificandoCodigo = codigo;
-    els.calificarCodigo.textContent = codigo;
-    els.modalCalificar.classList.remove("hidden");
+    if (els.calificarCodigo) els.calificarCodigo.textContent = codigo;
+    if (els.modalCalificar) els.modalCalificar.classList.remove("hidden");
     cerrarSimuladorModal();
     showToast(`Paso 6: Llegada segura al campus verificada · Califica el viaje`, "success");
     await cargarEstado(false);
