@@ -715,7 +715,8 @@ function initMap(sectores) {
 }
 
 async function reverseGeocodeSiAplica(lat, lng) {
-  if (!state.geocoder) return null;
+  // Solo invocar Geocoder si está explícitamente habilitado para evitar errores en consola si la API no está activa en GCP
+  if (!state.mapConfig?.geocodingEnabled || !state.geocoder) return null;
   if (state.lastGeocodePos) {
     const movM = calcularDistanciaMetrosOficial(
       state.lastGeocodePos.lat,
@@ -1371,7 +1372,7 @@ async function completarPuntoSeleccionadoEnMapa(lat, lng) {
   if (els.lugarLat) els.lugarLat.value = String(lat);
   if (els.lugarLng) els.lugarLng.value = String(lng);
 
-  if (state.geocoder) {
+  if (state.mapConfig?.geocodingEnabled && state.geocoder) {
     try {
       const resp = await state.geocoder.geocode({ location: { lat, lng } });
       const first = resp?.results?.[0];
@@ -2601,9 +2602,17 @@ async function iniciarAppAutenticada() {
     state.authUser = data.usuario;
     setRole(data.usuario.rol === "motorista" ? "motorista" : "pasajero");
     conectarSse();
-    await cargarConfigMapa();
-    await cargarUbicacionesEstudiante();
-    await cargarEstado(true);
+    if (data.usuario.rol === "admin") {
+      // Para Admin, cargar el dashboard y las gráficas de inmediato sin esperar al script del mapa
+      await cargarEstado(false);
+      cargarConfigMapa().then(() => {
+        if (state.adminShowMap) initMap(state.data?.sectores || []);
+      });
+    } else {
+      await cargarConfigMapa();
+      await cargarUbicacionesEstudiante();
+      await cargarEstado(true);
+    }
   } catch {
     window.location.replace("/login");
   }
