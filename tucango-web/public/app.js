@@ -122,8 +122,29 @@ const els = {
   sheetToggleHint: document.getElementById("sheet-toggle-hint"),
   sectionActividad: document.getElementById("section-actividad"),
   mobileTabBtns: document.querySelectorAll("[data-mobile-tab]"),
-  mobileTrackingDot: document.getElementById("mobile-tracking-dot")
+  mobileTrackingDot: document.getElementById("mobile-tracking-dot"),
+  btnAbrirSimulador: document.getElementById("btn-abrir-simulador"),
+  modalSimulador: document.getElementById("modal-simulador"),
+  btnCerrarSimulador: document.getElementById("btn-cerrar-simulador"),
+  btnSimAutoAll: document.getElementById("btn-sim-auto-all"),
+  btnSimRegEst: document.getElementById("btn-sim-reg-est"),
+  btnSimRegMot: document.getElementById("btn-sim-reg-mot"),
+  btnSimSolicitar: document.getElementById("btn-sim-solicitar"),
+  btnSimAceptar: document.getElementById("btn-sim-aceptar"),
+  btnSimValidarPin: document.getElementById("btn-sim-validar-pin"),
+  btnSimAvanzarGps: document.getElementById("btn-sim-avanzar-gps"),
+  btnSimFinalizar: document.getElementById("btn-sim-finalizar")
 };
+
+function actualizarIconosLucide() {
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    try {
+      window.lucide.createIcons();
+    } catch (e) {
+      console.warn("Lucide icons error:", e);
+    }
+  }
+}
 
 function esc(value) {
   return String(value ?? "")
@@ -920,6 +941,7 @@ function renderAll(data) {
   renderSeguimientoEnVivo(data);
   renderMotorista(data);
   renderFeed(data);
+  actualizarIconosLucide();
 }
 
 async function cargarEstado(actualizarRutaInicial = false) {
@@ -1402,6 +1424,7 @@ async function iniciarAppAutenticada() {
     conectarSse();
     await cargarConfigMapa();
     await cargarEstado(true);
+    actualizarIconosLucide();
   } catch {
     window.location.replace("/login");
   }
@@ -1412,8 +1435,267 @@ if (els.roleLockedBadge) {
     if (state.authUser?.rol !== "admin") return;
     setRole(state.role === "pasajero" ? "motorista" : "pasajero");
     showToast(`Vista Admin cambiada a ${state.role.toUpperCase()}`, "info");
+    actualizarIconosLucide();
   });
 }
+
+// --- SIMULADOR END-TO-END DIDI / UBER MOTO ---
+function abrirSimuladorModal() {
+  els.modalSimulador?.classList.remove("hidden");
+  actualizarIconosLucide();
+}
+
+function cerrarSimuladorModal() {
+  els.modalSimulador?.classList.add("hidden");
+}
+
+els.btnAbrirSimulador?.addEventListener("click", abrirSimuladorModal);
+els.btnCerrarSimulador?.addEventListener("click", cerrarSimuladorModal);
+
+// Resaltar visualmente el paso actual del stepper
+function resaltarPasoSimulador(pasoNum) {
+  document.querySelectorAll(".sim-step-card").forEach((card) => {
+    const p = Number(card.dataset.step);
+    if (p === pasoNum) {
+      card.classList.add("active-step");
+      card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      card.classList.remove("active-step");
+    }
+  });
+}
+
+// Paso 1: Onboarding y Registro Estudiante / Motorista
+async function simularRegistroEstudiante() {
+  const rnd = Math.floor(1000 + Math.random() * 9000);
+  const id = `1006${rnd}`;
+  const cod = `2026${rnd}`;
+  const nombre = `Estudiante Demo ${rnd}`;
+  const payload = {
+    identificacion: id,
+    nombre,
+    telefono: `311${rnd}000`,
+    correoInstitucional: `demo${rnd}@uniamazonia.edu.co`,
+    codigoEstudiantil: cod,
+    carrera: "Ingeniería de Sistemas",
+    password: `Uniamazonia${rnd}*`
+  };
+  try {
+    const res = await postJson("/api/estudiantes", payload);
+    showToast(`Paso 1: Estudiante ${res.nombre} registrado`, "success");
+    await cargarEstado(false);
+    if (els.selectEstudiante) els.selectEstudiante.value = res.identificacion;
+    resaltarPasoSimulador(1);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+async function simularRegistroMotorista() {
+  const rnd = Math.floor(1000 + Math.random() * 9000);
+  const id = `1117${rnd}`;
+  const nombre = `Motorista Demo ${rnd}`;
+  const payload = {
+    identificacion: id,
+    nombre,
+    telefono: `320${rnd}000`,
+    correoInstitucional: `moto${rnd}@uniamazonia.edu.co`,
+    placa: `AMZ-${rnd.toString().slice(0, 2)}D`,
+    marca: "Suzuki",
+    modelo: "Gixxer 150 FI",
+    cilindraje: 150,
+    soatVigente: true,
+    numeroSoat: `SOAT-2026-${rnd}`,
+    password: `Uniamazonia${rnd}*`
+  };
+  try {
+    const res = await postJson("/api/motoristas", payload);
+    showToast(`Paso 1: Motorista ${res.nombre} y Moto ${res.placa} verificados con SOAT`, "success");
+    await cargarEstado(false);
+    if (els.selectMotorista) els.selectMotorista.value = res.identificacion;
+    resaltarPasoSimulador(1);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Paso 2: Cotización y Pedido de Moto
+async function simularPedirMoto() {
+  const sectores = state.data?.sectores || [];
+  if (sectores.length < 2) {
+    showToast("No hay suficientes sectores para trazar ruta", "error");
+    return;
+  }
+  const origen = sectores[0].nombre;
+  const destino = sectores[1].nombre;
+  const estudianteId = els.selectEstudiante?.value || state.data?.estudiantes?.[0]?.identificacion;
+
+  try {
+    const res = await postJson("/api/viajes/solicitar", {
+      estudianteId,
+      origen,
+      destino,
+      distanciaKm: 2.4,
+      tipoTarifa: "estudiantil",
+      metodoPago: "EFECTIVO"
+    });
+    state.simViajeActivo = res.codigo;
+    state.simPin = res.pinSeguridad;
+    showToast(`Paso 2: Viaje ${res.codigo} solicitado · PIN: ${res.pinSeguridad}`, "success");
+    resaltarPasoSimulador(2);
+    await cargarEstado(false);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Paso 3: Aceptar en Radar
+async function simularAceptarEnRadar() {
+  const solicitudes = state.data?.solicitudesPendientes || [];
+  const viaje = solicitudes.find((v) => v.codigoViaje === state.simViajeActivo) || solicitudes[0];
+  if (!viaje) {
+    showToast("No hay solicitudes pendientes en el radar", "info");
+    return;
+  }
+  const motoristaId = els.selectMotorista?.value || state.data?.motoristas?.[0]?.identificacion;
+  try {
+    const res = await postJson("/api/viajes/aceptar", {
+      codigoViaje: viaje.codigoViaje,
+      motoristaId
+    });
+    state.simViajeActivo = res.codigo;
+    state.simPin = res.pinSeguridad;
+    showToast(`Paso 3: Motorista asignado a ${res.codigo} · PIN de viaje: ${res.pinSeguridad}`, "success");
+    resaltarPasoSimulador(3);
+    await cargarEstado(false);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Paso 4: Handshake de Seguridad con PIN
+async function simularValidarPinEIniciar() {
+  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  if (!codigo) {
+    showToast("No hay viaje activo para iniciar", "info");
+    return;
+  }
+  try {
+    const res = await postJson("/api/viajes/iniciar", { codigoViaje: codigo });
+    showToast(`Paso 4: PIN verificado correctamente · Carrera ${codigo} en marcha`, "success");
+    resaltarPasoSimulador(4);
+    await cargarEstado(false);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Paso 5: Avanzar Telemetría GPS
+async function simularAvanzarGps() {
+  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  if (!codigo) {
+    showToast("No hay viaje en curso para avanzar GPS", "info");
+    return;
+  }
+  try {
+    const res = await avanzarTrackingPaso(codigo, 35);
+    showToast(`Paso 5: Telemetría GPS: ${res.progresoRuta}% del trayecto · Rumbo ${res.direccionGrados || 0}°`, "success");
+    resaltarPasoSimulador(5);
+    return res;
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Paso 6: Llegada Segura y Calificación
+async function simularFinalizarYCalificar() {
+  const codigo = state.simViajeActivo || state.data?.viajesEnCurso?.[0]?.codigoViaje;
+  if (!codigo) {
+    showToast("No hay viaje en curso para finalizar", "info");
+    return;
+  }
+  try {
+    await postJson("/api/viajes/finalizar", { codigoViaje: codigo });
+    resaltarPasoSimulador(6);
+    state.calificandoCodigo = codigo;
+    els.calificarCodigo.textContent = codigo;
+    els.modalCalificar.classList.remove("hidden");
+    cerrarSimuladorModal();
+    showToast(`Paso 6: Llegada segura al campus verificada · Califica el viaje`, "success");
+    await cargarEstado(false);
+  } catch (err) {
+    showToast(err.message, "error");
+    throw err;
+  }
+}
+
+// Auto Demo Express (12 segundos)
+async function ejecutarAutoDemoCompleta() {
+  const btn = els.btnSimAutoAll;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader"></i> Ejecutando simulación...`;
+    actualizarIconosLucide();
+  }
+
+  try {
+    showToast("🚀 Iniciando Simulación End-to-End DiDi Moto...", "info");
+    
+    // Paso 1
+    await simularRegistroEstudiante();
+    await new Promise((r) => setTimeout(r, 1400));
+
+    // Paso 2
+    await simularPedirMoto();
+    await new Promise((r) => setTimeout(r, 1600));
+
+    // Paso 3
+    await simularAceptarEnRadar();
+    await new Promise((r) => setTimeout(r, 1600));
+
+    // Paso 4
+    await simularValidarPinEIniciar();
+    await new Promise((r) => setTimeout(r, 1600));
+
+    // Paso 5: Avance GPS
+    await simularAvanzarGps();
+    await new Promise((r) => setTimeout(r, 1500));
+    await simularAvanzarGps();
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // Paso 6
+    await simularFinalizarYCalificar();
+  } catch (err) {
+    console.error("Error en auto demo:", err);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="play"></i> Iniciar Demo Completa`;
+      actualizarIconosLucide();
+    }
+  }
+}
+
+// Event Listeners del Simulador
+els.btnSimRegEst?.addEventListener("click", simularRegistroEstudiante);
+els.btnSimRegMot?.addEventListener("click", simularRegistroMotorista);
+els.btnSimSolicitar?.addEventListener("click", simularPedirMoto);
+els.btnSimAceptar?.addEventListener("click", simularAceptarEnRadar);
+els.btnSimValidarPin?.addEventListener("click", simularValidarPinEIniciar);
+els.btnSimAvanzarGps?.addEventListener("click", simularAvanzarGps);
+els.btnSimFinalizar?.addEventListener("click", simularFinalizarYCalificar);
+els.btnSimAutoAll?.addEventListener("click", ejecutarAutoDemoCompleta);
 
 // --- INIT ---
 iniciarAppAutenticada();

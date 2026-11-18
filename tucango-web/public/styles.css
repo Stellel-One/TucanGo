@@ -2045,3 +2045,225 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* LUCIDE ICONS INTEGRATION */
+.lucide, [data-lucide] {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* SIMULATOR PILL IN MAP */
+.map-simulator-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  border: 1.5px solid #FF6600;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1E2421;
+  box-shadow: 0 4px 14px rgba(255, 102, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-simulator-pill:hover {
+  background: #FF6600;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.sim-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF6600;
+  box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7);
+  animation: simPulse 1.8s infinite;
+}
+
+@keyframes simPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 102, 0, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 102, 0, 0); }
+}
+
+/* MODAL SIMULATOR WIDE */
+.modal-card-wide {
+  max-width: 680px !important;
+  width: 95% !important;
+}
+
+.sim-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 102, 0, 0.1);
+  color: #D7331B;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  margin-bottom: 4px;
+}
+
+.sim-quick-run-box {
+  background: linear-gradient(135deg, #FFF9F2 0%, #FFF1E0 100%);
+  border: 1.5px solid #FFD8B3;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sim-quick-info strong {
+  display: block;
+  font-size: 13.5px;
+  color: #1E2421;
+}
+
+.sim-quick-info small {
+  font-size: 11.5px;
+  color: #6C7A72;
+}
+
+.btn-sim-play {
+  flex-shrink: 0;
+  background: #FF6600 !important;
+  color: #FFFFFF !important;
+  border: none;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px !important;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.btn-sim-play:hover {
+  transform: scale(1.03);
+}
+
+.sim-stepper-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.sim-step-card {
+  background: #FFFFFF;
+  border: 1px solid #E5DFD3;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.sim-step-card:hover {
+  border-color: #0F6B36;
+  box-shadow: 0 4px 12px rgba(15, 107, 54, 0.08);
+}
+
+.sim-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #F4EFE6;
+  color: #0F6B36;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sim-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.sim-step-body strong {
+  display: block;
+  font-size: 13px;
+  color: #1E2421;
+}
+
+.sim-step-body p {
+  font-size: 11px;
+  color: #6C7A72;
+  margin: 2px 0 8px;
+  line-height: 1.35;
+}
+
+.sim-step-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-step-action {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #E5DFD3;
+  background: #F8F6F1;
+  color: #1E2421;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.btn-step-action:hover {
+  background: #0F6B36;
+  color: #FFFFFF;
+  border-color: #0F6B36;
+}
+
+.btn-step-accent {
+  background: #FFF2EB;
+  border-color: #FF6600;
+  color: #D7331B;
+}
+
+.btn-step-accent:hover {
+  background: #FF6600;
+  color: #FFFFFF;
+}
+
+.btn-step-success {
+  background: #E8F5EE;
+  border-color: #0F6B36;
+  color: #0F6B36;
+}
+
+.btn-step-success:hover {
+  background: #0F6B36;
+  color: #FFFFFF;
+}
+
+@media (max-width: 600px) {
+  .sim-stepper-grid {
+    grid-template-columns: 1fr;
+  }
+}

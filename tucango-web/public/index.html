@@ -104,6 +104,17 @@
 
             <button
               type="button"
+              id="btn-abrir-simulador"
+              class="map-simulator-pill"
+              title="Simulador interactivo DiDi/Uber desde cero"
+              aria-label="Abrir simulador de viaje"
+            >
+              <span class="sim-dot-pulse"></span>
+              <span>🕹️ Simulador DiDi</span>
+            </button>
+
+            <button
+              type="button"
               id="btn-abrir-login-badge"
               class="map-promo-circle hidden"
               title="Beneficios y seguridad Uniamazonia"
@@ -675,9 +686,125 @@
     </div>
   </div>
 
+  <!-- MODAL DE SIMULADOR DIDI / UBER END-TO-END -->
+  <div id="modal-simulador" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-sim-title">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <div class="sim-header-title">
+          <div class="sim-badge"><i data-lucide="sparkles"></i> <span>Ciclo Completo</span></div>
+          <h3 id="modal-sim-title">Simulador DiDi Moto · Flujo desde Cero</h3>
+          <p class="muted-sub">Ejecuta o simula cada etapa del protocolo de movilidad y seguridad de Uniamazonia</p>
+        </div>
+        <button type="button" class="btn-close" id="btn-cerrar-simulador" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <!-- BOTÓN DE REPRODUCCIÓN AUTOMÁTICA -->
+      <div class="sim-quick-run-box">
+        <div class="sim-quick-info">
+          <strong>⚡ Recorrido Automático Express (12 segundos)</strong>
+          <small>Demuestra registro, cotización, aceptación en radar, validación de PIN, telemetría y calificación.</small>
+        </div>
+        <button type="button" id="btn-sim-auto-all" class="btn-primary btn-sim-play">
+          <i data-lucide="play"></i> Iniciar Demo Completa
+        </button>
+      </div>
+
+      <!-- PASOS DETALLADOS DEL CICLO -->
+      <div class="sim-stepper-grid">
+        <!-- PASO 1: ONBOARDING -->
+        <div class="sim-step-card" data-step="1">
+          <div class="sim-step-num">1</div>
+          <div class="sim-step-body">
+            <strong>Onboarding y Registro</strong>
+            <p>Crea usuarios reales en SQLite con hash scrypt y SOAT verificado.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action" id="btn-sim-reg-est">
+                <i data-lucide="user-plus"></i> Estudiante
+              </button>
+              <button type="button" class="btn-step-action" id="btn-sim-reg-mot">
+                <i data-lucide="bike"></i> Motorista + Moto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2: COTIZAR Y SOLICITAR -->
+        <div class="sim-step-card" data-step="2">
+          <div class="sim-step-num">2</div>
+          <div class="sim-step-body">
+            <strong>Cotización y Pedido</strong>
+            <p>Traza ruta en Florencia (Porvenir ↔ Centro) con tarifa estudiantil.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action btn-step-accent" id="btn-sim-solicitar">
+                <i data-lucide="navigation"></i> Pedir Moto ($2.500)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 3: RADAR Y ACEPTACIÓN -->
+        <div class="sim-step-card" data-step="3">
+          <div class="sim-step-num">3</div>
+          <div class="sim-step-body">
+            <strong>Radar de Despacho</strong>
+            <p>El motorista detecta la solicitud y la acepta en su HUD en tiempo real.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action" id="btn-sim-aceptar">
+                <i data-lucide="radio"></i> Aceptar en Radar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 4: HANDSHAKE CON PIN -->
+        <div class="sim-step-card" data-step="4">
+          <div class="sim-step-num">4</div>
+          <div class="sim-step-body">
+            <strong>Handshake de Seguridad (PIN)</strong>
+            <p>Verificación física: el pasajero entrega su PIN de 4 dígitos para iniciar.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action" id="btn-sim-validar-pin">
+                <i data-lucide="shield-check"></i> Validar PIN y Subir
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 5: TELEMETRÍA GPS -->
+        <div class="sim-step-card" data-step="5">
+          <div class="sim-step-num">5</div>
+          <div class="sim-step-body">
+            <strong>Telemetría GPS en Vivo</strong>
+            <p>Avanza la motocicleta con su rumbo cenital y actualiza el ETA.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action" id="btn-sim-avanzar-gps">
+                <i data-lucide="fast-forward"></i> Avanzar GPS (+35%)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 6: LLEGADA SEGURA Y RATING -->
+        <div class="sim-step-card" data-step="6">
+          <div class="sim-step-num">6</div>
+          <div class="sim-step-body">
+            <strong>Llegada Segura y Calificación</strong>
+            <p>Confirmación en portería de campus y calificación 5 estrellas.</p>
+            <div class="sim-step-actions">
+              <button type="button" class="btn-step-action btn-step-success" id="btn-sim-finalizar">
+                <i data-lucide="award"></i> Finalizar y Calificar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
-  <script src="app.js?v=3.2"></script>
+  <script src="/vendor/lucide/lucide.min.js"></script>
+  <script src="app.js?v=3.3"></script>
 </body>
 </html>
