@@ -418,7 +418,7 @@ function requerirRol(
   const sesion = requerirSesion(req, res, facade);
   if (!sesion) return null;
 
-  if (sesion.rol !== "admin" && sesion.rol !== rolRequerido) {
+  if (sesion.rol !== rolRequerido) {
     sendJson(res, 403, { error: `Operación restringida al rol ${rolRequerido}.` });
     return null;
   }
@@ -437,7 +437,6 @@ function verificarPropiedadViaje(
     sendJson(res, 404, { error: `Viaje con código ${codigoViaje} no existe.` });
     return false;
   }
-  if (auth.rol === "admin") return true;
 
   const esPasajero = viaje.estudiante.identificacion === auth.identificacion;
   const esMotorista = viaje.motorista?.identificacion === auth.identificacion;
@@ -711,27 +710,71 @@ function resolverArchivoPublico(publicDir: string, pathname: string): string | n
   return candidato;
 }
 
+interface ClienteSse {
+  res: http.ServerResponse;
+  rol: "admin" | "pasajero" | "motorista";
+  identificacion: string;
+}
+
+/**
+ * Un cliente solo recibe eventos que le conciernen. El administrador ve la
+ * operación completa; nadie más recibe PII de terceros ni ubicaciones ajenas.
+ */
+function eventoVisiblePara(cliente: ClienteSse, evento: EventoDominio): boolean {
+  if (cliente.rol === "admin") return true;
+  const payload = evento.payload || {};
+  const esPropio = payload.identificacion === cliente.identificacion;
+  const esEstudiante = payload.estudianteId === cliente.identificacion;
+  const esMotorista = payload.motoristaId === cliente.identificacion;
+
+  switch (evento.tipo) {
+    case "USUARIO_AUTENTICADO":
+    case "TUCAN_APROBADO":
+    case "TUCAN_RECHAZADO":
+    case "PERFIL_ACTUALIZADO":
+    case "PASSWORD_CAMBIADO":
+    case "UBICACION_FRECUENTE_ACTUALIZADA":
+      return esPropio;
+    case "MOTORISTA_DISPONIBILIDAD_CAMBIADA":
+      return esMotorista;
+    case "VIAJE_SOLICITADO":
+      // La cola de solicitudes no contiene datos del estudiante.
+      return esEstudiante || cliente.rol === "motorista";
+    case "VIAJE_ACEPTADO":
+    case "VIAJE_INICIADO":
+    case "VIAJE_FINALIZADO":
+    case "VIAJE_CANCELADO":
+    case "VIAJE_CALIFICADO":
+    case "LLEGADA_SEGURA_CONFIRMADA":
+    case "TRACKING_VIAJE_ACTUALIZADO":
+    case "UBICACION_MOTORISTA_ACTUALIZADA":
+      return esEstudiante || esMotorista;
+    default:
+      return false;
+  }
+}
+
 export function crearServidor(
   facade: TucanGoFacade,
   options: { persistencia?: string; publicDir?: string } = {}
 ): http.Server {
   const publicDir = options.publicDir || DEFAULT_PUBLIC_DIR;
   const persistencia = options.persistencia || "memoria";
-  const clientesSse = new Set<http.ServerResponse>();
+  const clientesSse = new Set<ClienteSse>();
 
   const desuscribirBus = facade.obtenerEventBus().suscribir((evento: EventoDominio) => {
     const trama = `event: dominio\ndata: ${JSON.stringify(evento)}\n\n`;
     for (const cliente of clientesSse) {
-      if (!cliente.writableEnded) {
-        cliente.write(trama);
+      if (!cliente.res.writableEnded && eventoVisiblePara(cliente, evento)) {
+        cliente.res.write(trama);
       }
     }
   });
 
   const keepaliveTimer = setInterval(() => {
     for (const cliente of clientesSse) {
-      if (!cliente.writableEnded) {
-        cliente.write(": keepalive\n\n");
+      if (!cliente.res.writableEnded) {
+        cliente.res.write(": keepalive\n\n");
       }
     }
   }, 25000);
@@ -780,6 +823,11 @@ export function crearServidor(
       }
 
       if (pathname === "/api/eventos" && req.method === "GET") {
+        const sesion = obtenerSesionRequest(req, facade);
+        if (!sesion) {
+          sendJson(res, 401, { error: "Sesión no autenticada o expirada." });
+          return;
+        }
         res.writeHead(200, {
           "Content-Type": "text/event-stream; charset=utf-8",
           "Cache-Control": "no-cache, no-transform",
@@ -787,10 +835,20 @@ export function crearServidor(
           "X-Accel-Buffering": "no",
           ...SECURITY_HEADERS
         });
-        res.write(`event: conectado\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
-        clientesSse.add(res);
+        const cliente: ClienteSse = {
+          res,
+          rol: sesion.rol as ClienteSse["rol"],
+          identificacion: sesion.identificacion
+        };
+        res.write(
+          `event: conectado\ndata: ${JSON.stringify({
+            timestamp: new Date().toISOString(),
+            rol: cliente.rol
+          })}\n\n`
+        );
+        clientesSse.add(cliente);
         req.on("close", () => {
-          clientesSse.delete(res);
+          clientesSse.delete(cliente);
         });
         return;
       }
@@ -1438,23 +1496,39 @@ export function crearServidor(
 
         const body = await parseJsonBody<{
           estudianteId?: string;
-          origen: string;
-          destino: string;
-          distanciaKm: number;
-          tipoTarifa: string;
-          metodoPago: string;
+          origenId?: string;
+          destinoId?: string;
+          tipoTarifa?: string;
+          metodoPago?: string;
         }>(req);
 
         const estudianteId =
           auth.rol === "admin" && body.estudianteId ? body.estudianteId : auth.identificacion;
 
+        if (!body.origenId || !body.destinoId) {
+          sendJson(res, 422, {
+            error: "El origen y el destino son obligatorios para calcular la tarifa del viaje."
+          });
+          return;
+        }
+
+        let ruta: ReturnType<typeof facade.calcularRutaEntreSectores>;
+        try {
+          ruta = facade.calcularRutaEntreSectores(body.origenId, body.destinoId);
+        } catch {
+          sendJson(res, 422, {
+            error: "El origen o el destino no pertenecen al catálogo de sectores del campus."
+          });
+          return;
+        }
+
         const viaje = facade.solicitarViaje(
           estudianteId,
-          body.origen,
-          body.destino,
-          body.distanciaKm,
-          body.tipoTarifa,
-          body.metodoPago as any
+          ruta.origen.nombre,
+          ruta.destino.nombre,
+          ruta.distanciaKm,
+          body.tipoTarifa || "estudiantil",
+          (body.metodoPago || "EFECTIVO") as any
         );
 
         sendJson(res, 201, {
@@ -1511,6 +1585,12 @@ export function crearServidor(
         if (!auth) return;
 
         const body = await parseJsonBody<{ codigoViaje: string; pinSeguridad?: string }>(req);
+        if (!body.pinSeguridad || !body.pinSeguridad.trim()) {
+          sendJson(res, 422, {
+            error: "El PIN de seguridad del estudiante es obligatorio para iniciar el viaje."
+          });
+          return;
+        }
         if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "motorista")) return;
 
         const viaje = facade.iniciarViaje(body.codigoViaje, body.pinSeguridad);
@@ -1627,8 +1707,8 @@ export function crearServidor(
     clearInterval(keepaliveTimer);
     desuscribirBus();
     for (const cliente of clientesSse) {
-      if (!cliente.writableEnded) {
-        cliente.end();
+      if (!cliente.res.writableEnded) {
+        cliente.res.end();
       }
     }
     clientesSse.clear();

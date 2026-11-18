@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { ValidacionError } from "../security/ErroresAuth.ts";
 import { Estudiante } from "../model/Estudiante.ts";
 import { Motorista } from "../model/Motorista.ts";
@@ -20,14 +21,12 @@ export type EtapaTracking =
   | "COMPLETADO"
   | "CANCELADO";
 
-function generarPinDesdeCodigo(codigoViaje: string): string {
-  let hash = 2166136261;
-  for (let i = 0; i < codigoViaje.length; i++) {
-    hash ^= codigoViaje.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  const numero = 1000 + (Math.abs(hash) % 9000);
-  return String(numero);
+/**
+ * El PIN es un secreto entre el pasajero y el conductor. Derivarlo del código
+ * secuencial del viaje lo hacía predecible, así que se genera al azar.
+ */
+function generarPinSeguridad(): string {
+  return String(randomInt(1000, 10000));
 }
 
 export class Viaje {
@@ -71,8 +70,8 @@ export class Viaje {
     if (!destino || destino.trim().length === 0) {
       throw new ValidacionError("El destino del viaje es obligatorio.");
     }
-    if (distanciaKm <= 0) {
-      throw new ValidacionError("La distancia estimada debe ser mayor a cero.");
+    if (!Number.isFinite(distanciaKm) || distanciaKm <= 0) {
+      throw new ValidacionError("La distancia estimada debe ser un número mayor a cero.");
     }
     if (!estudiante) {
       throw new ValidacionError("El estudiante que solicita el viaje es obligatorio.");
@@ -85,11 +84,14 @@ export class Viaje {
     this._estudiante = estudiante;
     this._estrategiaTarifa = estrategiaTarifa;
     this._tarifa = this._estrategiaTarifa.calcular(distanciaKm, 3000);
+    if (!Number.isFinite(this._tarifa) || this._tarifa <= 0) {
+      throw new ValidacionError("No se pudo calcular una tarifa válida para el viaje.");
+    }
     this._pago = new Pago(this._tarifa, metodoPago);
     this._calificaciones = [];
     this._fechaCreacion = new Date();
     this._estado = new EstadoSolicitado();
-    this._pinSeguridad = generarPinDesdeCodigo(this._codigoViaje);
+    this._pinSeguridad = generarPinSeguridad();
     this._etapaTracking = "BUSCANDO";
   }
 
@@ -188,9 +190,9 @@ export class Viaje {
     this._direccionMotoristaGrados = motorista.direccionGrados;
   }
 
-  public iniciar(pinIngresado?: string): void {
-    if (pinIngresado !== undefined && pinIngresado.trim() !== this._pinSeguridad) {
-      throw new ValidacionError("El PIN de seguridad ingresado no coincide con el código del estudiante.");
+  public iniciar(pinIngresado: string): void {
+    if (!pinIngresado || pinIngresado.trim() !== this._pinSeguridad) {
+      throw new ValidacionError("El PIN de seguridad es obligatorio y debe coincidir con el código del estudiante.");
     }
     this._estado.iniciar(this);
     this._etapaTracking = "EN_VIAJE";

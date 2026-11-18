@@ -22,8 +22,8 @@ export class Pago {
   private _fechaPago?: Date;
 
   constructor(monto: number, metodo: MetodoPago = MetodoPago.EFECTIVO) {
-    if (monto < 0) {
-      throw new ValidacionError("El monto del pago no puede ser negativo.");
+    if (!Number.isFinite(monto) || monto < 0) {
+      throw new ValidacionError("El monto del pago debe ser un número no negativo.");
     }
     this._monto = monto;
     this._metodo = metodo;

@@ -50,8 +50,20 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(ruta.distanciaKm > 5, true);
       assert.equal(ruta.tiempoEstimadoMin >= 3, true);
 
+      // El stream SSE exige sesión: un anónimo no recibe eventos.
+      const sseAnonimo = await fetch(`${baseUrl}/api/eventos`);
+      assert.equal(sseAnonimo.status, 401);
+
+      const sseAdminLogin = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "tucangoadmin", password: "TestAdmin*Segura2026" })
+      });
+      const sseAdminCookie = (sseAdminLogin.headers.get("set-cookie") || "").split(";")[0];
+
       // Conectar stream SSE antes de disparar eventos de viaje
       const sseRes = await fetch(`${baseUrl}/api/eventos`, {
+        headers: { Cookie: sseAdminCookie },
         signal: sseController.signal
       });
       assert.equal(sseRes.status, 200);
@@ -160,9 +172,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({
-          origen: "Campus Porvenir - Portería Principal",
-          destino: "Sede Centro - Edificio Administrativo",
-          distanciaKm: 1.5,
+          origenId: "PORVENIR",
+          destinoId: "CENTRO",
           tipoTarifa: "estudiantil",
           metodoPago: "NEQUI"
         })
@@ -187,7 +198,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       await fetch(`${baseUrl}/api/viajes/iniciar`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: motCookie },
-        body: JSON.stringify({ codigoViaje: solJson.codigo })
+        body: JSON.stringify({ codigoViaje: solJson.codigo, pinSeguridad: solJson.pinSeguridad })
       });
       await fetch(`${baseUrl}/api/viajes/finalizar`, {
         method: "POST",
@@ -383,7 +394,10 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       });
       assert.equal(resUbic.status, 200);
 
-      const sseRes = await fetch(`${baseUrl}/api/eventos`, { signal: sseController.signal });
+      const sseRes = await fetch(`${baseUrl}/api/eventos`, {
+        headers: { Cookie: estCookie },
+        signal: sseController.signal
+      });
       const reader = sseRes.body!.getReader();
       const decoder = new TextDecoder();
       await reader.read();
@@ -392,9 +406,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({
-          origen: "Campus Porvenir - Portería Principal",
-          destino: "Sede Centro - Edificio Administrativo",
-          distanciaKm: 1.15,
+          origenId: "PORVENIR",
+          destinoId: "CENTRO",
           tipoTarifa: "estudiantil",
           metodoPago: "NEQUI"
         })
@@ -770,9 +783,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: motCookie },
         body: JSON.stringify({
-          origen: "Campus Porvenir",
-          destino: "Sede Centro",
-          distanciaKm: 1.15,
+          origenId: "PORVENIR",
+          destinoId: "CENTRO",
           tipoTarifa: "estudiantil",
           metodoPago: "EFECTIVO"
         })
@@ -960,9 +972,8 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         method: "POST",
         headers: { "Content-Type": "application/json", Cookie: estCookie },
         body: JSON.stringify({
-          origen: "Sede Porvenir",
-          destino: "Sede Centro / IDEMA",
-          distanciaKm: 1.4,
+          origenId: "PORVENIR",
+          destinoId: "CENTRO",
           tipoTarifa: "estudiantil",
           metodoPago: "EFECTIVO"
         })

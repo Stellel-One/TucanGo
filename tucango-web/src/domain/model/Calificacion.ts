@@ -5,7 +5,7 @@ export class Calificacion {
   private _autorIdentificacion: string;
 
   constructor(puntuacion: number, comentario: string, autorIdentificacion: string) {
-    if (puntuacion < 1 || puntuacion > 5) {
+    if (!Number.isFinite(puntuacion) || puntuacion < 1 || puntuacion > 5) {
       throw new ValidacionError("La puntuación debe estar entre 1.0 y 5.0 estrellas.");
     }
     if (!autorIdentificacion || autorIdentificacion.trim().length === 0) {

@@ -521,7 +521,7 @@
                   <div class="driver-active-head">
                     <span class="chip-mono chip-neutral" id="driver-trip-code">TUC-000</span>
                     <span class="chip-mono chip-ochre-soft" id="driver-trip-state">ACEPTADO</span>
-                    <span class="chip-mono chip-verified" id="driver-trip-pin">PIN: 0000</span>
+                    <span class="chip-mono chip-verified" id="driver-trip-pin">PIN: lo da el estudiante</span>
                   </div>
                   <p class="driver-stage-copy" id="driver-tracking-stage-text">Dirígete al punto de recogida del estudiante</p>
                   <p id="driver-trip-pax"></p>
@@ -533,6 +533,16 @@
                     </div>
                   </div>
                   <div class="driver-action-row">
+                    <input
+                      id="input-pin-viaje"
+                      type="text"
+                      inputmode="numeric"
+                      maxlength="4"
+                      pattern="[0-9]{4}"
+                      class="ios-input-field"
+                      placeholder="PIN de 4 dígitos"
+                      aria-label="PIN de seguridad del estudiante"
+                    />
                     <button type="button" id="btn-iniciar-viaje" class="btn-primary">Validar PIN e Iniciar</button>
                     <button type="button" id="btn-finalizar-viaje" class="btn-leaf">Finalizar Trayecto</button>
                   </div>
@@ -945,6 +955,6 @@
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
   <script src="/vendor/chartjs/chart.umd.min.js?v=4.4.8"></script>
-  <script src="/app.js?v=5.5"></script>
+  <script src="/app.js?v=5.6"></script>
 </body>
 </html>

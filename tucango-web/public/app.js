@@ -148,6 +148,7 @@ const els = {
   driverTripCode: document.getElementById("driver-trip-code"),
   driverTripState: document.getElementById("driver-trip-state"),
   driverTripPin: document.getElementById("driver-trip-pin"),
+  inputPinViaje: document.getElementById("input-pin-viaje"),
   driverTrackingStageText: document.getElementById("driver-tracking-stage-text"),
   driverProgressBar: document.getElementById("driver-progress-bar"),
   driverTripPax: document.getElementById("driver-trip-pax"),
@@ -340,11 +341,11 @@ function setRole(role) {
 
   const tabMotoristaDesktop = document.getElementById("tab-motorista-desktop");
   if (tabMotoristaDesktop) {
-    tabMotoristaDesktop.classList.toggle("hidden", !esAdmin && esPasajero);
+    tabMotoristaDesktop.classList.toggle("hidden", esAdmin || esPasajero);
   }
   const tabMotoristaMobile = document.querySelector('[data-mobile-tab="motorista"]');
   if (tabMotoristaMobile) {
-    tabMotoristaMobile.classList.toggle("hidden", !esAdmin && esPasajero);
+    tabMotoristaMobile.classList.toggle("hidden", esAdmin || esPasajero);
   }
 
   if (els.selectEstudiante) {
@@ -1870,21 +1871,25 @@ function renderFeed(data) {
           : "";
 
       const botones = [];
-      if (esMotorista) {
-        if (v.estado === "ACEPTADO" && v.motorista?.id === uid) {
-          botones.push(`<button type="button" class="btn-primary btn-sm" data-iniciar-viaje="${esc(v.codigo)}">Iniciar</button>`);
-        } else if (v.estado === "EN_CURSO" && v.motorista?.id === uid) {
-          botones.push(`<button type="button" class="btn-leaf btn-sm" data-finalizar-viaje="${esc(v.codigo)}">Finalizar</button>`);
-        }
-      } else {
-        if (v.estado === "SOLICITADO" || v.estado === "ACEPTADO") {
-          botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
-        } else if (v.estado === "FINALIZADO") {
-          if (!v.llegadaSeguraConfirmada) {
-            botones.push(`<button type="button" class="btn-primary btn-sm" data-llegada-segura="${esc(v.codigo)}">Confirmar Llegada Segura</button>`);
+      // El administrador observa la operación; no ejecuta viajes como pasajero
+      // ni como Tucán. El servidor también lo rechaza.
+      if (!esAdmin) {
+        if (esMotorista) {
+          if (v.estado === "ACEPTADO" && v.motorista?.id === uid) {
+            botones.push(`<button type="button" class="btn-primary btn-sm" data-iniciar-viaje="${esc(v.codigo)}">Iniciar</button>`);
+          } else if (v.estado === "EN_CURSO" && v.motorista?.id === uid) {
+            botones.push(`<button type="button" class="btn-leaf btn-sm" data-finalizar-viaje="${esc(v.codigo)}">Finalizar</button>`);
           }
-          if (v.calificaciones.length === 0) {
-            botones.push(`<button type="button" class="btn-chip" data-calificar-viaje="${esc(v.codigo)}">Calificar</button>`);
+        } else {
+          if (v.estado === "SOLICITADO" || v.estado === "ACEPTADO") {
+            botones.push(`<button type="button" class="btn-danger-outline" data-cancelar-viaje="${esc(v.codigo)}">Cancelar</button>`);
+          } else if (v.estado === "FINALIZADO") {
+            if (!v.llegadaSeguraConfirmada) {
+              botones.push(`<button type="button" class="btn-primary btn-sm" data-llegada-segura="${esc(v.codigo)}">Confirmar Llegada Segura</button>`);
+            }
+            if (v.calificaciones.length === 0) {
+              botones.push(`<button type="button" class="btn-chip" data-calificar-viaje="${esc(v.codigo)}">Calificar</button>`);
+            }
           }
         }
       }
@@ -2548,16 +2553,23 @@ function pintarPerfilEnVista(perfil) {
   if (els.perfilCardId) els.perfilCardId.textContent = `ID: ${perfil.identificacion}`;
 
   const stats = perfil.estadisticas || {};
-  if (els.perfilStatViajes) els.perfilStatViajes.textContent = String(stats.totalViajesUsuario ?? 0);
-  if (els.perfilStatRating) {
-    els.perfilStatRating.textContent = `${Number(stats.calificacionPromedio ?? 5).toFixed(1)} ★`;
-  }
-  if (els.perfilStatMoneyLabel) {
-    els.perfilStatMoneyLabel.textContent =
-      perfil.rol === "motorista" ? "Ganancias" : perfil.rol === "admin" ? "Volumen" : "Gasto Total";
-  }
-  if (els.perfilStatAhorro) {
-    els.perfilStatAhorro.textContent = formatoCop(stats.gastoTotalCop ?? stats.gastoOAhorroCop ?? 0);
+  if (perfil.rol === "admin") {
+    // El administrador no tiene viajes ni calificaciones personales.
+    if (els.perfilStatViajes) els.perfilStatViajes.textContent = "—";
+    if (els.perfilStatRating) els.perfilStatRating.textContent = "—";
+    if (els.perfilStatMoneyLabel) els.perfilStatMoneyLabel.textContent = "Operación";
+    if (els.perfilStatAhorro) els.perfilStatAhorro.textContent = "Panel admin";
+  } else {
+    if (els.perfilStatViajes) els.perfilStatViajes.textContent = String(stats.totalViajesUsuario ?? 0);
+    if (els.perfilStatRating) {
+      els.perfilStatRating.textContent = `${Number(stats.calificacionPromedio ?? 0).toFixed(1)} ★`;
+    }
+    if (els.perfilStatMoneyLabel) {
+      els.perfilStatMoneyLabel.textContent = perfil.rol === "motorista" ? "Ganancias" : "Gasto Total";
+    }
+    if (els.perfilStatAhorro) {
+      els.perfilStatAhorro.textContent = formatoCop(stats.gastoTotalCop ?? stats.gastoOAhorroCop ?? 0);
+    }
   }
 
   if (els.perfilInputId) els.perfilInputId.value = perfil.identificacion || "";
@@ -2717,14 +2729,19 @@ document.addEventListener("click", async (e) => {
 
   try {
     if (target.dataset.aceptarViaje) {
-      const r = await postJson("/api/viajes/aceptar", {
+      await postJson("/api/viajes/aceptar", {
         codigoViaje: target.dataset.aceptarViaje,
         motoristaId: els.selectMotorista.value
       });
-      showToast(`Solicitud ${target.dataset.aceptarViaje} aceptada · PIN ${r.pinSeguridad}`, "success");
+      showToast(`Solicitud ${target.dataset.aceptarViaje} aceptada. Pide el PIN al estudiante.`, "success");
       await cargarEstado(false);
     } else if (target.dataset.iniciarViaje) {
-      await postJson("/api/viajes/iniciar", { codigoViaje: target.dataset.iniciarViaje });
+      const pin = pedirPinViaje();
+      if (!pin) return;
+      await postJson("/api/viajes/iniciar", {
+        codigoViaje: target.dataset.iniciarViaje,
+        pinSeguridad: pin
+      });
       showToast(`Trayecto ${target.dataset.iniciarViaje} iniciado`, "success");
       await cargarEstado(false);
     } else if (target.dataset.finalizarViaje) {
@@ -2738,7 +2755,7 @@ document.addEventListener("click", async (e) => {
     } else if (target.dataset.cancelarViaje) {
       await postJson("/api/viajes/cancelar", {
         codigoViaje: target.dataset.cancelarViaje,
-        motivo: "Cancelado por el estudiante"
+        motivo: "Cancelado por el usuario"
       });
       showToast(`Solicitud ${target.dataset.cancelarViaje} cancelada`);
       await cargarEstado(false);
@@ -2752,11 +2769,28 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+function pedirPinViaje() {
+  const input = els.inputPinViaje;
+  const valorInput = (input?.value || "").trim();
+  if (/^\d{4}$/.test(valorInput)) return valorInput;
+
+  const respuesta = window.prompt("Ingresa el PIN de 4 dígitos que te dio el estudiante:");
+  const pin = (respuesta || "").trim();
+  if (!/^\d{4}$/.test(pin)) {
+    showToast("El PIN debe tener 4 dígitos.", "error");
+    return "";
+  }
+  if (input) input.value = pin;
+  return pin;
+}
+
 els.btnIniciarViaje?.addEventListener("click", async () => {
   const codigo = els.driverActiveBox.dataset.codigo;
   if (!codigo) return;
+  const pin = pedirPinViaje();
+  if (!pin) return;
   try {
-    await postJson("/api/viajes/iniciar", { codigoViaje: codigo });
+    await postJson("/api/viajes/iniciar", { codigoViaje: codigo, pinSeguridad: pin });
     showToast(`Trayecto ${codigo} en curso`, "success");
     await cargarEstado(false);
   } catch (err) {
@@ -2895,8 +2929,8 @@ if (els.roleLockedBadge) {
   els.roleLockedBadge.addEventListener("click", async () => {
     if (state.authUser?.rol !== "admin") return;
     await abrirMapaAdmin();
-    setRole(state.role === "pasajero" ? "motorista" : "pasajero");
-    showToast(`Vista operativa: ${state.role.toUpperCase()}`, "info");
+    document.getElementById("btn-abrir-auditoria")?.click();
+    showToast("Panel de administración", "info");
   });
 }
 

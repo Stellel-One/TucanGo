@@ -137,7 +137,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     );
 
     facade.aceptarViaje(viaje.codigoViaje, mots[0].identificacion);
-    facade.iniciarViaje(viaje.codigoViaje);
+    facade.iniciarViaje(viaje.codigoViaje, viaje.pinSeguridad);
     facade.finalizarViaje(viaje.codigoViaje);
     facade.marcarLlegadaSegura(viaje.codigoViaje);
 
@@ -211,7 +211,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
         numeroLicencia: "LIC-2001-A2"
       });
       facade1.aceptarViaje(viaje.codigoViaje, mot1.identificacion);
-      facade1.iniciarViaje(viaje.codigoViaje);
+      facade1.iniciarViaje(viaje.codigoViaje, viaje.pinSeguridad);
       facade1.finalizarViaje(viaje.codigoViaje);
       facade1.marcarLlegadaSegura(viaje.codigoViaje);
       facade1.calificarViaje(viaje.codigoViaje, 5, "Excelente ruta bajo lluvia", nuevoEst.identificacion);
@@ -373,7 +373,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     assert.equal(viaje.progresoRuta, 50);
     assert.equal(typeof viaje.ubicacionMotoristaLat, "number");
 
-    facade.iniciarViaje(viaje.codigoViaje);
+    facade.iniciarViaje(viaje.codigoViaje, viaje.pinSeguridad);
     assert.equal(viaje.etapaTracking, "EN_VIAJE");
     assert.equal(viaje.progresoRuta, 0);
 

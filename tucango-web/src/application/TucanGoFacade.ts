@@ -966,7 +966,12 @@ export class TucanGoFacade {
 
   // --- Estrategias de Tarifa Disponibles ---
   public resolverEstrategiaTarifa(tipo: string): EstrategiaTarifa {
-    switch ((tipo || "").trim().toLowerCase()) {
+    const normalizado = (tipo || "estudiantil").trim().toLowerCase();
+    const validos = ["estudiantil", "estudiantil_fija", "distancia", "por_kilometro", "lluvia", "dinamica_lluvia", "nocturna"];
+    if (!validos.includes(normalizado)) {
+      throw new ValidacionError(`Tipo de tarifa inválido: ${tipo}.`);
+    }
+    switch (normalizado) {
       case "distancia":
       case "por_kilometro":
         return new TarifaPorKilometro();
@@ -975,8 +980,6 @@ export class TucanGoFacade {
         return new TarifaDinamicaLluvia();
       case "nocturna":
         return new TarifaNocturna();
-      case "estudiantil":
-      case "estudiantil_fija":
       default:
         return new TarifaEstudiantilFija();
     }
@@ -994,6 +997,9 @@ export class TucanGoFacade {
     const estudiante = this._estudiantes.get(estudianteId);
     if (!estudiante) {
       throw new Error(`Estudiante con ID ${estudianteId} no encontrado.`);
+    }
+    if (!Object.values(MetodoPago).includes(metodoPago)) {
+      throw new ValidacionError("Método de pago inválido.");
     }
 
     this._contadorViajes++;
@@ -1014,6 +1020,7 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_SOLICITADO", {
       codigo,
+      estudianteId: viaje.estudiante.identificacion,
       origen: viaje.origen,
       destino: viaje.destino,
       tarifa: viaje.tarifa
@@ -1035,6 +1042,7 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_ACEPTADO", {
       codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
       motoristaId: motorista.identificacion,
       motorista: motorista.nombre
     });
@@ -1048,7 +1056,11 @@ export class TucanGoFacade {
     }
     viaje.iniciar(pinIngresado);
     this.persistir();
-    this.emitirEvento("VIAJE_INICIADO", { codigo: viaje.codigoViaje });
+    this.emitirEvento("VIAJE_INICIADO", {
+      codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
+      motoristaId: viaje.motorista?.identificacion ?? null
+    });
     return viaje;
   }
 
@@ -1061,6 +1073,8 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_FINALIZADO", {
       codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
+      motoristaId: viaje.motorista?.identificacion ?? null,
       tarifa: viaje.tarifa,
       pago: viaje.pago.estado
     });
@@ -1076,6 +1090,8 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("LLEGADA_SEGURA_CONFIRMADA", {
       codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
+      motoristaId: viaje.motorista?.identificacion ?? null,
       fechaLlegadaSegura: viaje.fechaLlegadaSegura?.toISOString()
     });
     return viaje;
@@ -1090,6 +1106,8 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_CANCELADO", {
       codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
+      motoristaId: viaje.motorista?.identificacion ?? null,
       motivo
     });
     return viaje;
@@ -1109,6 +1127,8 @@ export class TucanGoFacade {
     this.persistir();
     this.emitirEvento("VIAJE_CALIFICADO", {
       codigo: viaje.codigoViaje,
+      estudianteId: viaje.estudiante.identificacion,
+      motoristaId: viaje.motorista?.identificacion ?? null,
       puntuacion,
       autorId
     });
@@ -1302,10 +1322,12 @@ export class TucanGoFacade {
         contactoEmergencia: admin.contactoEmergencia,
         sedeFavorita: admin.sedeFavorita,
         estadisticas: {
-          totalViajesUsuario: metricas.totalViajes,
+          // El admin no viaja ni recibe calificaciones: se reporta la operación
+          // de la plataforma, no estadísticas personales ficticias.
+          totalViajesUsuario: 0,
           viajesCompletados: metricas.finalizados,
-          gastoOAhorroCop: metricas.ingresosGenerados,
-          calificacionPromedio: 5.0
+          gastoOAhorroCop: 0,
+          calificacionPromedio: null
         }
       };
     }
@@ -1936,6 +1958,7 @@ export class TucanGoFacade {
       latitud: lat,
       longitud: lng,
       direccionGrados: rumbo,
+      estudianteId: viaje.estudiante.identificacion,
       motoristaId: viaje.motorista.identificacion
     });
     return viaje;

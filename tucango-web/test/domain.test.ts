@@ -109,7 +109,7 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     assert.equal(viaje.pago.estado, EstadoPago.PENDIENTE);
 
     // No se puede iniciar directamente desde SOLICITADO
-    assert.throws(() => viaje.iniciar(), /No se puede iniciar un viaje sin antes ser aceptado/);
+    assert.throws(() => viaje.iniciar(viaje.pinSeguridad), /No se puede iniciar un viaje sin antes ser aceptado/);
 
     // Motorista acepta el viaje
     viaje.aceptar(motorista);
@@ -118,7 +118,7 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     assert.equal(motorista.disponible, false); // Motorista queda ocupado
 
     // Iniciar viaje
-    viaje.iniciar();
+    viaje.iniciar(viaje.pinSeguridad);
     assert.equal(viaje.estado.nombre, "EN_CURSO");
 
     // Finalizar viaje
@@ -184,7 +184,7 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     facade.aceptarViaje(viaje.codigoViaje, mots[0].identificacion);
     assert.equal(viaje.estado.nombre, "ACEPTADO");
 
-    facade.iniciarViaje(viaje.codigoViaje);
+    facade.iniciarViaje(viaje.codigoViaje, viaje.pinSeguridad);
     assert.equal(viaje.estado.nombre, "EN_CURSO");
 
     facade.finalizarViaje(viaje.codigoViaje);
