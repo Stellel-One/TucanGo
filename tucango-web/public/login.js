@@ -42,6 +42,7 @@
     regEstTel: document.getElementById("reg-est-tel"),
     regEstCorreo: document.getElementById("reg-est-correo"),
     regEstCarrera: document.getElementById("reg-est-carrera"),
+    regEstBarrio: document.getElementById("reg-est-barrio"),
     regEstPassword: document.getElementById("reg-est-password"),
     regEstPasswordConfirm: document.getElementById("reg-est-password-confirm"),
 
@@ -264,21 +265,6 @@
       els.linkGoLogin.addEventListener("click", () => cambiarModoAuth("login"));
     }
 
-    // Accesos rápidos de prueba (un clic)
-    const quickPills = document.querySelectorAll(".quick-cred-pill");
-    quickPills.forEach((pill) => {
-      pill.addEventListener("click", () => {
-        const user = pill.getAttribute("data-user");
-        const pass = pill.getAttribute("data-pass");
-        if (user && pass && els.inputLoginId && els.inputLoginPassword) {
-          els.inputLoginId.value = user;
-          els.inputLoginPassword.value = pass;
-          mostrarAlertaInline(`Credencial de ${user} seleccionada. Presiona Ingresar.`, "success");
-          els.btnLoginSubmit?.focus();
-        }
-      });
-    });
-
     // Toggle visibilidad de contraseña
     if (els.btnToggleLoginPass && els.inputLoginPassword) {
       els.btnToggleLoginPass.addEventListener("click", () => {
@@ -367,6 +353,7 @@
           telefono: els.regEstTel?.value.trim() || "",
           correoInstitucional: correo,
           carrera: els.regEstCarrera?.value.trim() || "",
+          barrioResidencia: els.regEstBarrio?.value.trim() || "Sin especificar",
           password: pass
         };
 
@@ -449,7 +436,7 @@
         }
       } else if (pasoActual === 2) {
         if (!wizardPhotos.face) {
-          mostrarAlertaInline("Por favor sube o usa la foto de demostración para tu reconocimiento facial.", "error");
+          mostrarAlertaInline("Por favor sube una fotografía de perfil para tu verificación facial.", "error");
           return false;
         }
       } else if (pasoActual === 3) {
@@ -483,9 +470,8 @@
     });
 
     // Gestión de subida y vista previa de fotografías
-    function setupPhotoUpload(triggerBtnId, demoBtnId, inputId, imgId, placeholderId, keyName, demoDataSvg) {
+    function setupPhotoUpload(triggerBtnId, inputId, imgId, placeholderId, keyName) {
       const trigger = document.getElementById(triggerBtnId);
-      const demoBtn = document.getElementById(demoBtnId);
       const fileInput = document.getElementById(inputId);
       const imgEl = document.getElementById(imgId);
       const placeholderEl = document.getElementById(placeholderId);
@@ -511,27 +497,10 @@
         };
         reader.readAsDataURL(file);
       });
-
-      demoBtn?.addEventListener("click", () => {
-        applyPreview(demoDataSvg);
-        mostrarToast("Foto de demostración cargada correctamente", "success");
-      });
     }
 
-    const demoFaceSvg =
-      "data:image/svg+xml;utf8," +
-      encodeURIComponent(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#EAF1ED"/><circle cx="60" cy="45" r="22" fill="#006837"/><path d="M25 110 C25 80 95 80 95 110 Z" fill="#006837"/><circle cx="52" cy="42" r="3" fill="#FFF"/><circle cx="68" cy="42" r="3" fill="#FFF"/><path d="M52 53 Q60 60 68 53" stroke="#FFF" stroke-width="3" fill="none" stroke-linecap="round"/></svg>'
-      );
-
-    const demoMotoSvg =
-      "data:image/svg+xml;utf8," +
-      encodeURIComponent(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120"><rect width="240" height="120" fill="#EAF1ED"/><circle cx="60" cy="85" r="24" stroke="#112A1E" stroke-width="6" fill="#FFF"/><circle cx="180" cy="85" r="24" stroke="#112A1E" stroke-width="6" fill="#FFF"/><path d="M60 85 L105 45 L155 45 L180 85 M105 45 L90 25 M155 45 L170 30 L185 30" stroke="#006837" stroke-width="7" stroke-linecap="round" fill="none"/><rect x="95" y="38" width="45" height="14" rx="4" fill="#E30613"/></svg>'
-      );
-
-    setupPhotoUpload("btn-trigger-face", "btn-demo-face", "input-file-face", "img-preview-face", "placeholder-face", "face", demoFaceSvg);
-    setupPhotoUpload("btn-trigger-moto", "btn-demo-moto", "input-file-moto", "img-preview-moto", "placeholder-moto", "moto", demoMotoSvg);
+    setupPhotoUpload("btn-trigger-face", "input-file-face", "img-preview-face", "placeholder-face", "face");
+    setupPhotoUpload("btn-trigger-moto", "input-file-moto", "img-preview-moto", "placeholder-moto", "moto");
 
     if (els.formWizardTucan) {
       els.formWizardTucan.addEventListener("submit", async (e) => {

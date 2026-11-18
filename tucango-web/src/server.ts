@@ -407,48 +407,118 @@ function serializarSector(sector: SectorCampus) {
   };
 }
 
-function construirEstadoDTO(facade: TucanGoFacade) {
-  const estudiantes = facade.obtenerEstudiantes().map((e) => ({
-    identificacion: e.identificacion,
-    nombre: e.nombre,
-    telefono: e.telefono,
-    correo: e.correoInstitucional,
-    codigo: e.codigoEstudiantil,
-    carrera: e.carrera
-  }));
+function construirEstadoDTO(
+  facade: TucanGoFacade,
+  sesion?: ReturnType<typeof obtenerSesionRequest>
+) {
+  const rol = sesion?.rol;
+  const userId = sesion?.identificacion;
+  const todosViajes = facade.obtenerTodosLosViajes();
 
-  const motoristas = facade.obtenerMotoristas().map((m) => {
-    const motoActiva = m.obtenerMotoActiva();
-    return {
-      identificacion: m.identificacion,
-      nombre: m.nombre,
-      telefono: m.telefono,
-      correo: m.correoInstitucional,
-      disponible: m.disponible,
-      latitud: m.ubicacionActual.latitud,
-      longitud: m.ubicacionActual.longitud,
-      direccionGrados: m.direccionGrados,
-      motoActiva: motoActiva
-        ? {
-            placa: motoActiva.placa,
-            marca: motoActiva.marca,
-            modelo: motoActiva.modelo,
-            cilindraje: motoActiva.cilindraje,
-            soatVigente: motoActiva.soatVigente,
-            numeroSoat: motoActiva.numeroSoat
-          }
-        : null,
-      motos: m.motos.map((moto) => ({
-        placa: moto.placa,
-        descripcion: moto.descripcionCorta,
-        activa: moto.activa,
-        soatVigente: moto.soatVigente,
-        numeroSoat: moto.numeroSoat
-      }))
-    };
-  });
+  const estudiantes =
+    rol === "admin"
+      ? facade.obtenerEstudiantes().map((e) => ({
+          identificacion: e.identificacion,
+          nombre: e.nombre,
+          telefono: e.telefono,
+          correo: e.correoInstitucional,
+          codigo: e.codigoEstudiantil,
+          carrera: e.carrera,
+          barrioResidencia: e.barrioResidencia,
+          ubicacionesFrecuentes: e.ubicacionesFrecuentes
+        }))
+      : rol === "pasajero" && userId
+        ? facade
+            .obtenerEstudiantes()
+            .filter((e) => e.identificacion === userId)
+            .map((e) => ({
+              identificacion: e.identificacion,
+              nombre: e.nombre,
+              telefono: e.telefono,
+              correo: e.correoInstitucional,
+              codigo: e.codigoEstudiantil,
+              carrera: e.carrera,
+              barrioResidencia: e.barrioResidencia,
+              ubicacionesFrecuentes: e.ubicacionesFrecuentes
+            }))
+        : [];
 
-  const viajes = facade.obtenerTodosLosViajes().map((v) => ({
+  const motoristas =
+    rol === "admin"
+      ? facade.obtenerMotoristas().map((m) => {
+          const motoActiva = m.obtenerMotoActiva();
+          return {
+            identificacion: m.identificacion,
+            nombre: m.nombre,
+            telefono: m.telefono,
+            correo: m.correoInstitucional,
+            estadoAprobacion: m.estadoAprobacion,
+            disponible: m.disponible,
+            latitud: m.ubicacionActual.latitud,
+            longitud: m.ubicacionActual.longitud,
+            direccionGrados: m.direccionGrados,
+            motoActiva: motoActiva
+              ? {
+                  placa: motoActiva.placa,
+                  marca: motoActiva.marca,
+                  modelo: motoActiva.modelo,
+                  cilindraje: motoActiva.cilindraje,
+                  soatVigente: motoActiva.soatVigente,
+                  numeroSoat: motoActiva.numeroSoat
+                }
+              : null,
+            motos: m.motos.map((moto) => ({
+              placa: moto.placa,
+              descripcion: moto.descripcionCorta,
+              activa: moto.activa,
+              soatVigente: moto.soatVigente,
+              numeroSoat: moto.numeroSoat
+            }))
+          };
+        })
+      : rol === "motorista" && userId
+        ? facade
+            .obtenerMotoristas()
+            .filter((m) => m.identificacion === userId)
+            .map((m) => {
+              const motoActiva = m.obtenerMotoActiva();
+              return {
+                identificacion: m.identificacion,
+                nombre: m.nombre,
+                telefono: m.telefono,
+                correo: m.correoInstitucional,
+                estadoAprobacion: m.estadoAprobacion,
+                disponible: m.disponible,
+                latitud: m.ubicacionActual.latitud,
+                longitud: m.ubicacionActual.longitud,
+                direccionGrados: m.direccionGrados,
+                motoActiva: motoActiva
+                  ? {
+                      placa: motoActiva.placa,
+                      marca: motoActiva.marca,
+                      modelo: motoActiva.modelo,
+                      cilindraje: motoActiva.cilindraje,
+                      soatVigente: motoActiva.soatVigente,
+                      numeroSoat: motoActiva.numeroSoat
+                    }
+                  : null,
+                motos: []
+              };
+            })
+        : [];
+
+  const viajesFiltrados =
+    rol === "admin"
+      ? todosViajes
+      : rol === "pasajero" && userId
+        ? todosViajes.filter((v) => v.estudiante.identificacion === userId)
+        : rol === "motorista" && userId
+          ? todosViajes.filter(
+              (v) => v.estado.nombre === "SOLICITADO" || v.motorista?.identificacion === userId
+            )
+          : [];
+
+  const viajes = viajesFiltrados.map((v) => ({
     codigo: v.codigoViaje,
     origen: v.origen,
     destino: v.destino,
@@ -490,35 +560,74 @@ function construirEstadoDTO(facade: TucanGoFacade) {
     fecha: v.fechaCreacion.toISOString()
   }));
 
+  // Métricas estrictamente segmentadas por rol (sin fugar ingresos globales al pasajero)
+  let metricas: Record<string, number>;
+  if (rol === "pasajero" && userId) {
+    const misFinalizados = viajesFiltrados.filter((v) => v.estado.nombre === "FINALIZADO");
+    const misActivos = viajesFiltrados.filter(
+      (v) =>
+        v.estado.nombre === "SOLICITADO" ||
+        v.estado.nombre === "ACEPTADO" ||
+        v.estado.nombre === "EN_CURSO"
+    );
+    metricas = {
+      totalViajes: viajesFiltrados.length,
+      finalizados: misFinalizados.length,
+      solicitados: misActivos.length,
+      gastoTotalCop: misFinalizados.reduce((acc, v) => acc + v.tarifa, 0),
+      kmRecorridos: Number(misFinalizados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2))
+    };
+  } else if (rol === "motorista" && userId) {
+    const misViajesMot = viajesFiltrados.filter((v) => v.motorista?.identificacion === userId);
+    const misCompletados = misViajesMot.filter((v) => v.estado.nombre === "FINALIZADO");
+    const solicitudesCola = viajesFiltrados.filter((v) => v.estado.nombre === "SOLICITADO");
+    metricas = {
+      totalViajes: misViajesMot.length,
+      finalizados: misCompletados.length,
+      solicitados: solicitudesCola.length,
+      gananciasCop: misCompletados.reduce((acc, v) => acc + v.tarifa, 0),
+      kmRecorridos: Number(misCompletados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2))
+    };
+  } else if (rol === "admin") {
+    metricas = facade.obtenerMetricas();
+  } else {
+    metricas = { totalViajes: 0, finalizados: 0, solicitados: 0, enCurso: 0 };
+  }
+
   return {
-    metricas: facade.obtenerMetricas(),
+    rolActivo: rol ?? null,
+    metricas,
     sectores: facade.obtenerSectoresCampus().map(serializarSector),
     estudiantes,
     motoristas,
     viajes,
-    tucanesPendientes: facade.obtenerTucanesPendientes().map((m) => ({
-      identificacion: m.identificacion,
-      nombre: m.nombre,
-      telefono: m.telefono,
-      correo: m.correoInstitucional,
-      estadoAprobacion: m.estadoAprobacion,
-      fotoRostroUrl: m.fotoRostroUrl,
-      fotoMotoUrl: m.fotoMotoUrl,
-      fotoSoatUrl: m.fotoSoatUrl,
-      fotoLicenciaUrl: m.fotoLicenciaUrl,
-      compromisoAceptado: m.compromisoAceptado,
-      moto: m.obtenerMotoActiva()
-        ? {
-            placa: m.obtenerMotoActiva()!.placa,
-            marca: m.obtenerMotoActiva()!.marca,
-            modelo: m.obtenerMotoActiva()!.modelo,
-            cilindraje: m.obtenerMotoActiva()!.cilindraje,
-            soatVigente: m.obtenerMotoActiva()!.soatVigente,
-            numeroSoat: m.obtenerMotoActiva()!.numeroSoat
-          }
-        : null
-    })),
-    notificacionesCorreo: facade.obtenerNotificacionesCorreo()
+    analiticaAdmin: rol === "admin" ? facade.obtenerAnaliticaAdmin() : null,
+    tucanesPendientes:
+      rol === "admin"
+        ? facade.obtenerTucanesPendientes().map((m) => ({
+            identificacion: m.identificacion,
+            nombre: m.nombre,
+            telefono: m.telefono,
+            correo: m.correoInstitucional,
+            estadoAprobacion: m.estadoAprobacion,
+            fotoRostroUrl: m.fotoRostroUrl,
+            fotoMotoUrl: m.fotoMotoUrl,
+            fotoSoatUrl: m.fotoSoatUrl,
+            fotoLicenciaUrl: m.fotoLicenciaUrl,
+            compromisoAceptado: m.compromisoAceptado,
+            moto: m.obtenerMotoActiva()
+              ? {
+                  placa: m.obtenerMotoActiva()!.placa,
+                  marca: m.obtenerMotoActiva()!.marca,
+                  modelo: m.obtenerMotoActiva()!.modelo,
+                  cilindraje: m.obtenerMotoActiva()!.cilindraje,
+                  soatVigente: m.obtenerMotoActiva()!.soatVigente,
+                  numeroSoat: m.obtenerMotoActiva()!.numeroSoat
+                }
+              : null
+          }))
+        : [],
+    notificacionesCorreo: rol === "admin" ? facade.obtenerNotificacionesCorreo() : []
   };
 }
 
@@ -571,7 +680,7 @@ export function crearServidor(
 
     if (req.method === "OPTIONS") {
       res.writeHead(204, {
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
         ...SECURITY_HEADERS
       });
@@ -668,9 +777,52 @@ export function crearServidor(
       }
 
       if (pathname === "/api/ruta" && req.method === "GET") {
-        const origenId = url.searchParams.get("origenId") || "";
-        const destinoId = url.searchParams.get("destinoId") || "";
-        const ruta = facade.calcularRutaEntreSectores(origenId, destinoId);
+        const hasCoords =
+          url.searchParams.has("origenLat") &&
+          url.searchParams.has("origenLng") &&
+          url.searchParams.has("destinoLat") &&
+          url.searchParams.has("destinoLng");
+        const origenLat = hasCoords ? Number(url.searchParams.get("origenLat")) : NaN;
+        const origenLng = hasCoords ? Number(url.searchParams.get("origenLng")) : NaN;
+        const destinoLat = hasCoords ? Number(url.searchParams.get("destinoLat")) : NaN;
+        const destinoLng = hasCoords ? Number(url.searchParams.get("destinoLng")) : NaN;
+
+        let ruta: any;
+        if (
+          hasCoords &&
+          Number.isFinite(origenLat) &&
+          Number.isFinite(origenLng) &&
+          Number.isFinite(destinoLat) &&
+          Number.isFinite(destinoLng)
+        ) {
+          ruta = facade.calcularRutaEntreCoordenadas(
+            {
+              id: url.searchParams.get("origenId") || "ORIGEN_CUSTOM",
+              nombre: url.searchParams.get("origenNombre") || "Origen Seleccionado",
+              latitud: origenLat,
+              longitud: origenLng
+            },
+            {
+              id: url.searchParams.get("destinoId") || "DESTINO_CUSTOM",
+              nombre: url.searchParams.get("destinoNombre") || "Destino Seleccionado",
+              latitud: destinoLat,
+              longitud: destinoLng
+            }
+          );
+        } else {
+          const origenId = url.searchParams.get("origenId") || "";
+          const destinoId = url.searchParams.get("destinoId") || "";
+          const r = facade.calcularRutaEntreSectores(origenId, destinoId);
+          ruta = {
+            origen: serializarSector(r.origen),
+            destino: serializarSector(r.destino),
+            distanciaKm: r.distanciaKm,
+            tiempoEstimadoMin: r.tiempoEstimadoMin,
+            polilinea: r.polilinea,
+            direccionInicialGrados: r.direccionInicialGrados
+          };
+        }
+
         const distanciaParaTarifa = Math.max(0.5, ruta.distanciaKm);
         const tarifas = {
           estudiantil: facade.cotizarTarifa(distanciaParaTarifa, "estudiantil"),
@@ -679,19 +831,78 @@ export function crearServidor(
           nocturna: facade.cotizarTarifa(distanciaParaTarifa, "nocturna")
         };
         sendJson(res, 200, {
-          origen: serializarSector(ruta.origen),
-          destino: serializarSector(ruta.destino),
-          distanciaKm: ruta.distanciaKm,
-          tiempoEstimadoMin: ruta.tiempoEstimadoMin,
-          polilinea: ruta.polilinea,
-          direccionInicialGrados: ruta.direccionInicialGrados,
+          ...ruta,
           tarifas
         });
         return;
       }
 
+      if (pathname === "/api/cotizar" && req.method === "GET") {
+        const rawDist = Number(url.searchParams.get("distanciaKm"));
+        const distanciaParaTarifa = Number.isFinite(rawDist) && rawDist > 0 ? Math.max(0.5, rawDist) : 1.0;
+        sendJson(res, 200, {
+          distanciaKm: Number(distanciaParaTarifa.toFixed(2)),
+          tarifas: {
+            estudiantil: facade.cotizarTarifa(distanciaParaTarifa, "estudiantil"),
+            distancia: facade.cotizarTarifa(distanciaParaTarifa, "distancia"),
+            lluvia: facade.cotizarTarifa(distanciaParaTarifa, "lluvia"),
+            nocturna: facade.cotizarTarifa(distanciaParaTarifa, "nocturna")
+          }
+        });
+        return;
+      }
+
       if (pathname === "/api/estado" && req.method === "GET") {
-        sendJson(res, 200, construirEstadoDTO(facade));
+        const sesion = obtenerSesionRequest(req, facade);
+        sendJson(res, 200, construirEstadoDTO(facade, sesion));
+        return;
+      }
+
+      if (pathname === "/api/estudiante/ubicaciones" && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+        const perfil = facade.obtenerPerfilUsuario("pasajero", auth.identificacion) as any;
+        sendJson(res, 200, {
+          ok: true,
+          barrioResidencia: perfil.barrioResidencia || "Sin especificar",
+          ubicaciones: perfil.ubicacionesFrecuentes || []
+        });
+        return;
+      }
+
+      if (pathname === "/api/estudiante/ubicaciones" && req.method === "POST") {
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+        const body = await parseJsonBody<{
+          id?: string;
+          etiqueta: string;
+          nombre: string;
+          barrio?: string;
+          referencia?: string;
+          latitud: number;
+          longitud: number;
+        }>(req);
+        const guardada = facade.registrarUbicacionEstudiante(auth.identificacion, body);
+        sendJson(res, 201, { ok: true, ubicacion: guardada });
+        return;
+      }
+
+      if (pathname === "/api/estudiante/ubicaciones" && req.method === "DELETE") {
+        const auth = requerirRol(req, res, facade, "pasajero");
+        if (!auth) return;
+        const id = url.searchParams.get("id") || "";
+        const eliminada = facade.eliminarUbicacionEstudiante(auth.identificacion, id);
+        sendJson(res, 200, { ok: true, eliminada });
+        return;
+      }
+
+      if (pathname === "/api/admin/analitica" && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        sendJson(res, 200, {
+          ok: true,
+          analitica: facade.obtenerAnaliticaAdmin()
+        });
         return;
       }
 
@@ -911,6 +1122,7 @@ export function crearServidor(
           correoInstitucional: string;
           codigoEstudiantil: string;
           carrera: string;
+          barrioResidencia?: string;
           password?: string;
         }>(req);
 

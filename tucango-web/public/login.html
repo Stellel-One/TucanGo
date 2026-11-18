@@ -170,25 +170,6 @@
         <div id="view-login" class="auth-view-tab" role="tabpanel" aria-labelledby="tab-btn-login">
           <h2 class="view-heading">Acceso al Campus</h2>
 
-          <!-- ACCESOS RÁPIDOS DE PRUEBA EVALUATIVA -->
-          <div class="quick-credentials-strip" aria-label="Accesos de prueba rápida">
-            <span class="strip-label">Accesos rápidos de evaluación (un clic):</span>
-            <div class="strip-pills">
-              <button type="button" class="quick-cred-pill" data-user="tucangoadmin" data-pass="admin123" title="Admin: tucangoadmin / admin123">
-                <span class="pill-dot dot-admin"></span>
-                <strong>Admin:</strong> <code>admin123</code>
-              </button>
-              <button type="button" class="quick-cred-pill" data-user="estudiante" data-pass="estudiante123" title="Estudiante: estudiante / estudiante123">
-                <span class="pill-dot dot-student"></span>
-                <strong>Estudiante:</strong> <code>estudiante123</code>
-              </button>
-              <button type="button" class="quick-cred-pill" data-user="motorista" data-pass="motorista123" title="Tucán: motorista / motorista123">
-                <span class="pill-dot dot-driver"></span>
-                <strong>Tucán:</strong> <code>motorista123</code>
-              </button>
-            </div>
-          </div>
-
           <form id="form-login-manual" class="ios-form" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
@@ -307,6 +288,32 @@
                   required
                   placeholder="Ej. Ingeniería de Sistemas"
                 />
+              </div>
+              <div class="ios-input-row">
+                <label for="reg-est-barrio" class="ios-input-label">Barrio o sector de residencia (Florencia)</label>
+                <input
+                  id="reg-est-barrio"
+                  type="text"
+                  list="florencia-barrios-list"
+                  autocapitalize="words"
+                  class="ios-input-field"
+                  required
+                  placeholder="Ej. La Vega, El Porvenir, Bello Horizonte"
+                />
+                <datalist id="florencia-barrios-list">
+                  <option value="El Porvenir"></option>
+                  <option value="La Vega"></option>
+                  <option value="Bello Horizonte"></option>
+                  <option value="Juan XXIII"></option>
+                  <option value="Versalles"></option>
+                  <option value="El Cunduy"></option>
+                  <option value="Las Malvinas"></option>
+                  <option value="Centro"></option>
+                  <option value="San Judas"></option>
+                  <option value="Villa Natalia"></option>
+                  <option value="La Consolata"></option>
+                  <option value="Torasso"></option>
+                </datalist>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
@@ -454,11 +461,7 @@
                   <div class="photo-btn-row">
                     <button type="button" class="btn-subtle" id="btn-trigger-face">
                       <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
-                      Subir foto de perfil
-                    </button>
-                    <button type="button" class="btn-subtle" id="btn-demo-face">
-                      <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#tg-bolt"/></svg>
-                      Usar foto de demostración
+                      Subir fotografía de perfil
                     </button>
                   </div>
                 </div>
@@ -518,11 +521,7 @@
                   <div class="photo-btn-row">
                     <button type="button" class="btn-subtle" id="btn-trigger-moto">
                       <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-camera"/></svg>
-                      Subir foto de moto
-                    </button>
-                    <button type="button" class="btn-subtle" id="btn-demo-moto">
-                      <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#tg-bolt"/></svg>
-                      Usar moto demo
+                      Subir fotografía de la moto
                     </button>
                   </div>
                 </div>
@@ -638,6 +637,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=4.2"></script>
+  <script src="/login.js?v=4.3"></script>
 </body>
 </html>

@@ -179,12 +179,15 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const llegadaJson = (await resLlegada.json()) as any;
       assert.equal(llegadaJson.llegadaSeguraConfirmada, true);
 
-      // Consultar estado consolidado
-      const resEstado = await fetch(`${baseUrl}/api/estado`);
+      // Consultar estado consolidado autenticado como estudiante (segmentado por rol)
+      const resEstado = await fetch(`${baseUrl}/api/estado`, {
+        headers: { Cookie: estCookie }
+      });
       assert.equal(resEstado.status, 200);
       const estado = (await resEstado.json()) as any;
       assert.equal(estado.viajes.some((v: any) => v.codigo === solJson.codigo), true);
-      assert.equal(estado.motoristas.some((m: any) => m.identificacion === "3002"), true);
+      assert.equal(estado.metricas.ingresosGenerados, undefined);
+      assert.equal(typeof estado.metricas.gastoTotalCop, "number");
     } finally {
       sseController.abort();
       await new Promise<void>((resolve) => server.close(() => resolve()));
@@ -248,7 +251,26 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       });
       assert.equal(resLoginFail.status, 401);
 
-      // Login motorista seed
+      // Registrar motorista de prueba (el seed arranca limpio sin motoristas pre-creados)
+      await fetch(`${baseUrl}/api/motoristas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "2001",
+          nombre: "Jhonatan Silva",
+          telefono: "3201234567",
+          correoInstitucional: "j.silva@uniamazonia.edu.co",
+          placa: "GNX-45F",
+          marca: "Suzuki",
+          modelo: "GN 125",
+          cilindraje: 125,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-FLR",
+          password: "MotoristaSeguro*2026"
+        })
+      });
+
+      // Login motorista
       const motLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -452,13 +474,35 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(afterUpdateMe.usuario?.nombre, "Carlos Rivera Actualizado");
       assert.equal(afterUpdateMe.usuario?.telefono, "3159998877");
 
-      const estadoRes = await fetch(`${baseUrl}/api/estado`);
+      const estadoRes = await fetch(`${baseUrl}/api/estado`, {
+        headers: { Cookie: cookiePair }
+      });
       const estadoJson = (await estadoRes.json()) as {
         estudiantes: Array<{ identificacion: string; nombre: string; carrera: string }>;
       };
       const estActualizado = estadoJson.estudiantes.find((e) => e.identificacion === "1001");
       assert.equal(estActualizado?.nombre, "Carlos Rivera Actualizado");
       assert.equal(estActualizado?.carrera, "Ingeniería Agroecológica");
+
+      // Estudiante guarda su Casa en lugares frecuentes
+      const saveLocRes = await fetch(`${baseUrl}/api/estudiante/ubicaciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: cookiePair },
+        body: JSON.stringify({
+          etiqueta: "Casa",
+          nombre: "Mi Casa La Vega",
+          barrio: "La Vega",
+          latitud: 1.6238,
+          longitud: -75.6121
+        })
+      });
+      assert.equal(saveLocRes.status, 201);
+      const listLocRes = await fetch(`${baseUrl}/api/estudiante/ubicaciones`, {
+        headers: { Cookie: cookiePair }
+      });
+      assert.equal(listLocRes.status, 200);
+      const listLoc = (await listLocRes.json()) as { ubicaciones: any[] };
+      assert.equal(listLoc.ubicaciones.length, 1);
 
       const logoutRes = await fetch(`${baseUrl}/api/auth/logout`, {
         method: "POST",
@@ -575,7 +619,24 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       });
       assert.equal(pasajeroAceptaRes.status, 403);
 
-      // RBAC (B3): Con cookie Motorista, solicitar viaje recibe 403
+      // RBAC (B3): Con cookie Motorista (creado en este test), solicitar viaje recibe 403
+      await fetch(`${baseUrl}/api/motoristas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "2001",
+          nombre: "Jhonatan Silva",
+          telefono: "3201234567",
+          correoInstitucional: "j.silva@uniamazonia.edu.co",
+          placa: "GNX-45F",
+          marca: "Suzuki",
+          modelo: "GN 125",
+          cilindraje: 125,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-FLR",
+          password: "MotoristaSeguro*2026"
+        })
+      });
       const motLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -643,6 +704,16 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(pendientesRes.status, 200);
       const pendientesJson = (await pendientesRes.json()) as any;
       assert.ok(pendientesJson.pendientes.some((p: any) => p.identificacion === "7001"));
+
+      // Admin consulta analítica institucional (Ley 1581 - agregación por barrios y corredores)
+      const analiticaRes = await fetch(`${baseUrl}/api/admin/analitica`, {
+        headers: { Cookie: adminAuthCookie }
+      });
+      assert.equal(analiticaRes.status, 200);
+      const analiticaJson = (await analiticaRes.json()) as any;
+      assert.equal(analiticaJson.ok, true);
+      assert.equal(Array.isArray(analiticaJson.analitica.barriosEstudiantes), true);
+      assert.equal(Array.isArray(analiticaJson.analitica.corredoresComunes), true);
 
       // Admin aprueba al Tucán
       const aprobarRes = await fetch(`${baseUrl}/api/admin/tucanes/aprobar`, {

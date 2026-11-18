@@ -135,11 +135,28 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
 
   test("TucanGoFacade: Orquestación completa de casos de uso y métricas", () => {
     const facade = new TucanGoFacade();
+    assert.equal(facade.obtenerAdministradores().length, 1);
+    assert.equal(facade.obtenerEstudiantes().length, 1);
+    assert.equal(facade.obtenerMotoristas().length, 0);
+
+    facade.registrarMotoristaConMoto({
+      identificacion: "2001",
+      nombre: "Jhonatan Silva",
+      telefono: "3201234567",
+      correoInstitucional: "j.silva@uniamazonia.edu.co",
+      placa: "GNX-45F",
+      marca: "Suzuki",
+      modelo: "GN 125",
+      cilindraje: 125,
+      soatVigente: true,
+      numeroSoat: "SOAT-2026-FLR"
+    });
+
     const ests = facade.obtenerEstudiantes();
     const mots = facade.obtenerMotoristas();
 
-    assert.equal(ests.length >= 2, true);
-    assert.equal(mots.length >= 2, true);
+    assert.equal(ests.length >= 1, true);
+    assert.equal(mots.length >= 1, true);
 
     const viaje = facade.solicitarViaje(
       ests[0].identificacion,

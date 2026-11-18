@@ -101,9 +101,22 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
       telefono: "3145556677",
       correoInstitucional: "v.ortiz@udla.edu.co",
       codigoEstudiantil: "202520010",
-      carrera: "Biología"
+      carrera: "Biología",
+      barrioResidencia: "El Cunduy"
     });
-    const mots = facade.obtenerMotoristas();
+    const motRegistrado = facade.registrarMotoristaConMoto({
+      identificacion: "2001",
+      nombre: "Jhonatan Silva",
+      telefono: "3201234567",
+      correoInstitucional: "j.silva@uniamazonia.edu.co",
+      placa: "GNX-45F",
+      marca: "Suzuki",
+      modelo: "GN 125",
+      cilindraje: 125,
+      soatVigente: true,
+      numeroSoat: "SOAT-2026-FLR"
+    });
+    const mots = [motRegistrado];
 
     const viaje = facade.solicitarViaje(
       pax.identificacion,
@@ -136,6 +149,7 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     const tipos = eventos.map((e) => e.tipo);
     assert.deepEqual(tipos, [
       "ESTUDIANTE_REGISTRADO",
+      "MOTORISTA_REGISTRADO",
       "VIAJE_SOLICITADO",
       "VIAJE_ACEPTADO",
       "VIAJE_INICIADO",
@@ -160,7 +174,15 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
         telefono: "3104443322",
         correoInstitucional: "m.cuellar@udla.edu.co",
         codigoEstudiantil: "20249988",
-        carrera: "Medicina Veterinaria"
+        carrera: "Medicina Veterinaria",
+        barrioResidencia: "Bello Horizonte"
+      });
+      facade1.registrarUbicacionEstudiante(nuevoEst.identificacion, {
+        etiqueta: "Casa",
+        nombre: "Mi Casa Bello Horizonte",
+        barrio: "Bello Horizonte",
+        latitud: 1.6155,
+        longitud: -75.6118
       });
 
       const viaje = facade1.solicitarViaje(
@@ -172,8 +194,19 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
         MetodoPago.DAVIPLATA
       );
 
-      const mots1 = facade1.obtenerMotoristas();
-      facade1.aceptarViaje(viaje.codigoViaje, mots1[0].identificacion);
+      const mot1 = facade1.registrarMotoristaConMoto({
+        identificacion: "2001",
+        nombre: "Tucán Prueba",
+        telefono: "3201234567",
+        correoInstitucional: "tucan.prueba@uniamazonia.edu.co",
+        placa: "GNX-45F",
+        marca: "Suzuki",
+        modelo: "GN 125",
+        cilindraje: 125,
+        soatVigente: true,
+        numeroSoat: "SOAT-2026-FLR"
+      });
+      facade1.aceptarViaje(viaje.codigoViaje, mot1.identificacion);
       facade1.iniciarViaje(viaje.codigoViaje);
       facade1.finalizarViaje(viaje.codigoViaje);
       facade1.marcarLlegadaSegura(viaje.codigoViaje);
@@ -215,6 +248,24 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     const desuscribir = bus.suscribir((ev) => tipos.push(ev.tipo));
 
     const facade = new TucanGoFacade(undefined, bus);
+
+    // Seed limpio: 1 admin + 1 estudiante, 0 motoristas pre-creados
+    assert.equal(facade.obtenerAdministradores().length, 1);
+    assert.equal(facade.obtenerEstudiantes().length, 1);
+    assert.equal(facade.obtenerMotoristas().length, 0);
+
+    facade.registrarMotoristaConMoto({
+      identificacion: "2001",
+      nombre: "Jhonatan Silva",
+      telefono: "3201234567",
+      correoInstitucional: "j.silva@uniamazonia.edu.co",
+      placa: "GNX-45F",
+      marca: "Suzuki",
+      modelo: "GN 125",
+      cilindraje: 125,
+      soatVigente: true,
+      numeroSoat: "SOAT-2026-FLR"
+    });
 
     // 1. Login rápido pasajero y motorista (por placa)
     const sesEst = facade.autenticarUsuario("c.rivera@uniamazonia.edu.co", "pasajero");

@@ -1,4 +1,5 @@
 import type { MetodoPago, EstadoPago } from "../../domain/model/Pago.ts";
+import type { UbicacionFrecuente } from "../../domain/model/Estudiante.ts";
 
 export interface AdministradorSnapshot {
   identificacion: string;
@@ -23,6 +24,8 @@ export interface EstudianteSnapshot {
   debeCambiarPassword?: boolean;
   contactoEmergencia?: string;
   sedeFavorita?: string;
+  barrioResidencia?: string;
+  ubicacionesFrecuentes?: UbicacionFrecuente[];
 }
 
 export interface MotoSnapshot {
@@ -105,6 +108,7 @@ export interface ViajeSnapshot {
 }
 
 export interface EstadoSistemaSnapshot {
+  seedVersion?: number;
   contadorViajes: number;
   administradores?: AdministradorSnapshot[];
   estudiantes: EstudianteSnapshot[];

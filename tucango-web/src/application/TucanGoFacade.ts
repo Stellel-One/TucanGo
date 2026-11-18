@@ -1,5 +1,5 @@
 import { Administrador } from "../domain/model/Administrador.ts";
-import { Estudiante } from "../domain/model/Estudiante.ts";
+import { Estudiante, type UbicacionFrecuente } from "../domain/model/Estudiante.ts";
 import { Motorista, type EstadoAprobacionTucan } from "../domain/model/Motorista.ts";
 import { Moto } from "../domain/model/Moto.ts";
 import { Coordenada } from "../domain/model/Coordenada.ts";
@@ -39,7 +39,8 @@ import {
 } from "../domain/security/ErroresAuth.ts";
 
 export const DEFAULT_ADMIN_USER = "tucangoadmin";
-export const DEFAULT_ADMIN_EMAIL = "admin@tucango.edu.co";
+export const DEFAULT_ADMIN_EMAIL = "admin@uniamazonia.edu.co";
+export const CURRENT_SEED_VERSION = 2;
 
 export interface RegistrarEstudianteDTO {
   identificacion: string;
@@ -48,6 +49,7 @@ export interface RegistrarEstudianteDTO {
   correoInstitucional: string;
   codigoEstudiantil: string;
   carrera: string;
+  barrioResidencia?: string;
   password?: string;
 }
 
@@ -77,6 +79,7 @@ export interface ActualizarPerfilDTO {
   correoInstitucional?: string;
   codigoEstudiantil?: string;
   carrera?: string;
+  barrioResidencia?: string;
   placa?: string;
   marca?: string;
   modelo?: string;
@@ -102,7 +105,7 @@ export class TucanGoFacade {
     this._eventBus = eventBus ?? new EventBus();
 
     const snapshot = this._repository?.cargar();
-    if (snapshot) {
+    if (snapshot && (snapshot.seedVersion ?? 0) >= CURRENT_SEED_VERSION) {
       this.rehidratarDesdeSnapshot(snapshot);
     } else {
       this.cargarDatosSemilla();
@@ -158,6 +161,49 @@ export class TucanGoFacade {
     return {
       origen,
       destino,
+      distanciaKm,
+      tiempoEstimadoMin,
+      polilinea,
+      direccionInicialGrados
+    };
+  }
+
+  public calcularRutaEntreCoordenadas(
+    origen: { id: string; nombre: string; referencia?: string; latitud: number; longitud: number },
+    destino: { id: string; nombre: string; referencia?: string; latitud: number; longitud: number }
+  ) {
+    const cOrig = new Coordenada(Number(origen.latitud), Number(origen.longitud));
+    const cDest = new Coordenada(Number(destino.latitud), Number(destino.longitud));
+    const distanciaKm = cOrig.distanciaKmHacia(cDest);
+    const tiempoEstimadoMin =
+      distanciaKm === 0 ? 0 : Math.max(3, Math.round((distanciaKm / 24) * 60));
+    const polilinea = TucanGoFacade.construirPolilinea(cOrig, cDest, 10);
+    const p0 = polilinea[0];
+    const p1 = polilinea[1] ?? p0;
+    const direccionInicialGrados = TucanGoFacade.calcularRumbo(
+      p0.latitud,
+      p0.longitud,
+      p1.latitud,
+      p1.longitud
+    );
+
+    return {
+      origen: {
+        id: origen.id,
+        nombre: origen.nombre,
+        referencia: origen.referencia || "",
+        esCampusUniamazonia: origen.id === "PORVENIR" || origen.id === "CENTRO",
+        latitud: cOrig.latitud,
+        longitud: cOrig.longitud
+      },
+      destino: {
+        id: destino.id,
+        nombre: destino.nombre,
+        referencia: destino.referencia || "",
+        esCampusUniamazonia: destino.id === "PORVENIR" || destino.id === "CENTRO",
+        latitud: cDest.latitud,
+        longitud: cDest.longitud
+      },
       distanciaKm,
       tiempoEstimadoMin,
       polilinea,
@@ -263,6 +309,7 @@ export class TucanGoFacade {
 
   private exportarSnapshot(): EstadoSistemaSnapshot {
     return {
+      seedVersion: CURRENT_SEED_VERSION,
       contadorViajes: this._contadorViajes,
       administradores: this.obtenerAdministradores().map((a) => ({
         identificacion: a.identificacion,
@@ -285,7 +332,9 @@ export class TucanGoFacade {
         passwordHash: e.passwordHash,
         debeCambiarPassword: e.debeCambiarPassword,
         contactoEmergencia: e.contactoEmergencia,
-        sedeFavorita: e.sedeFavorita
+        sedeFavorita: e.sedeFavorita,
+        barrioResidencia: e.barrioResidencia,
+        ubicacionesFrecuentes: e.ubicacionesFrecuentes.map((u) => ({ ...u }))
       })),
       motoristas: this.obtenerMotoristas().map((m) => ({
         identificacion: m.identificacion,
@@ -410,7 +459,9 @@ export class TucanGoFacade {
         estSnap.codigoEstudiantil,
         estSnap.carrera,
         estSnap.passwordHash || hashPasswordSync(process.env.SEED_STUDENT_PASSWORD || "EstudianteSeguro*2026"),
-        Boolean(estSnap.debeCambiarPassword)
+        Boolean(estSnap.debeCambiarPassword),
+        estSnap.barrioResidencia || "Sin especificar",
+        estSnap.ubicacionesFrecuentes || []
       );
       if (estSnap.contactoEmergencia) est.contactoEmergencia = estSnap.contactoEmergencia;
       if (estSnap.sedeFavorita) est.sedeFavorita = estSnap.sedeFavorita;
@@ -502,89 +553,44 @@ export class TucanGoFacade {
     }
   }
 
-  // --- Inicialización de Semillas para Demo / Universidad ---
+  // --- Inicialización Limpia (Solo Admin + Estudiante; el Tucán lo crea y aprueba el usuario) ---
   private cargarDatosSemilla(): void {
     const seedAdminPass = process.env.SEED_ADMIN_PASSWORD || "admin123";
     const seedEstPass = process.env.SEED_STUDENT_PASSWORD || "estudiante123";
-    const seedMotPass = process.env.SEED_DRIVER_PASSWORD || "motorista123";
 
-    // 1 Administrador
+    this._administradores.clear();
+    this._estudiantes.clear();
+    this._motoristas.clear();
+    this._viajes.clear();
+    this._notificacionesCorreo = [];
+    this._contadorViajes = 100;
+
+    // 1 Administrador Institucional (Bienestar / Movilidad Uniamazonia)
     const admin = new Administrador(
       DEFAULT_ADMIN_USER,
-      "Administrador TucanGo",
+      "Bienestar Universitario",
       "3001234567",
       DEFAULT_ADMIN_EMAIL,
-      "Supervisión General TucanGo",
+      "Coordinación de Movilidad Segura",
       hashPasswordSync(seedAdminPass),
       !process.env.SEED_ADMIN_PASSWORD
     );
     this._administradores.set(admin.identificacion, admin);
 
-    // 2 Estudiantes
+    // 1 Estudiante Inicial
     const est1 = new Estudiante(
       "1001",
       "Carlos Rivera",
       "3115551234",
       "c.rivera@uniamazonia.edu.co",
-      "EST-2024-001",
+      "202610001",
       "Ingeniería de Sistemas",
-      hashPasswordSync(seedEstPass)
-    );
-    const est2 = new Estudiante(
-      "1002",
-      "Laura Gómez",
-      "3127778899",
-      "l.gomez@uniamazonia.edu.co",
-      "EST-2024-045",
-      "Medicina Veterinaria",
-      hashPasswordSync(seedEstPass)
+      hashPasswordSync(seedEstPass),
+      false,
+      "La Vega",
+      []
     );
     this._estudiantes.set(est1.identificacion, est1);
-    this._estudiantes.set(est2.identificacion, est2);
-
-    // 3 Motoristas con sus motos geolocalizadas en Florencia
-    const mot1 = new Motorista(
-      "2001",
-      "Jhonatan 'El Tucán' Silva",
-      "3201234567",
-      "j.silva@uniamazonia.edu.co",
-      true,
-      new Coordenada(1.6192, -75.6058),
-      215,
-      hashPasswordSync(seedMotPass)
-    );
-    const moto1 = new Moto("GNX-45F", "Suzuki", "GN 125", 125, true);
-    mot1.registrarMoto(moto1);
-
-    const mot2 = new Motorista(
-      "2002",
-      "Diana Marcela Castro",
-      "3109876543",
-      "d.castro@uniamazonia.edu.co",
-      true,
-      new Coordenada(1.6151, -75.6115),
-      45,
-      hashPasswordSync(seedMotPass)
-    );
-    const moto2 = new Moto("TUK-89D", "Yamaha", "Crypton FI", 115, true);
-    mot2.registrarMoto(moto2);
-
-    const mot3 = new Motorista(
-      "2003",
-      "Miguel Ángel Parra",
-      "3154442211",
-      "m.parra@uniamazonia.edu.co",
-      true,
-      new Coordenada(1.6229, -75.6112),
-      135,
-      hashPasswordSync(seedMotPass)
-    );
-    const moto3 = new Moto("FLR-92H", "Bajaj", "Pulsar NS 160", 160, true, true, "SOAT-2026-PUL");
-    mot3.registrarMoto(moto3);
-
-    this._motoristas.set(mot1.identificacion, mot1);
-    this._motoristas.set(mot2.identificacion, mot2);
-    this._motoristas.set(mot3.identificacion, mot3);
   }
 
   // --- Casos de Uso: Estudiantes y Motoristas ---
@@ -606,7 +612,11 @@ export class TucanGoFacade {
             entrada.telefono,
             entrada.correoInstitucional,
             entrada.codigoEstudiantil,
-            entrada.carrera
+            entrada.carrera,
+            "",
+            false,
+            entrada.barrioResidencia || "Sin especificar",
+            []
           );
 
     if (!(entrada instanceof Estudiante) && this._estudiantes.has(estudiante.identificacion)) {
@@ -1231,14 +1241,230 @@ export class TucanGoFacade {
       correo: est.correoInstitucional,
       codigoEstudiantil: est.codigoEstudiantil,
       carrera: est.carrera,
+      barrioResidencia: est.barrioResidencia,
+      ubicacionesFrecuentes: est.ubicacionesFrecuentes,
       detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
       contactoEmergencia: est.contactoEmergencia,
       sedeFavorita: est.sedeFavorita,
       estadisticas: {
         totalViajesUsuario: viajesEst.length,
         viajesCompletados: completados.length,
+        gastoTotalCop: invertido,
         gastoOAhorroCop: invertido,
+        kmRecorridos: Number(
+          completados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2)
+        ),
         calificacionPromedio: ratingProm
+      }
+    };
+  }
+
+  public registrarUbicacionEstudiante(
+    estudianteId: string,
+    dto: {
+      id?: string;
+      etiqueta: string;
+      nombre: string;
+      barrio?: string;
+      referencia?: string;
+      latitud: number;
+      longitud: number;
+    }
+  ): UbicacionFrecuente {
+    const est = this.obtenerEstudiantes().find(
+      (e) => e.identificacion.toLowerCase() === (estudianteId || "").trim().toLowerCase()
+    );
+    if (!est) {
+      throw new NoAutenticadoError("Estudiante no encontrado.");
+    }
+    const guardada = est.guardarUbicacionFrecuente(dto);
+    this.persistir();
+    this.emitirEvento("UBICACION_FRECUENTE_ACTUALIZADA", {
+      estudianteId: est.identificacion,
+      etiqueta: guardada.etiqueta,
+      barrio: guardada.barrio
+    });
+    return guardada;
+  }
+
+  public eliminarUbicacionEstudiante(estudianteId: string, ubicacionId: string): boolean {
+    const est = this.obtenerEstudiantes().find(
+      (e) => e.identificacion.toLowerCase() === (estudianteId || "").trim().toLowerCase()
+    );
+    if (!est) {
+      throw new NoAutenticadoError("Estudiante no encontrado.");
+    }
+    const ok = est.eliminarUbicacionFrecuente(ubicacionId);
+    if (ok) {
+      this.persistir();
+      this.emitirEvento("UBICACION_FRECUENTE_ACTUALIZADA", {
+        estudianteId: est.identificacion,
+        eliminada: ubicacionId
+      });
+    }
+    return ok;
+  }
+
+  public obtenerAnaliticaAdmin() {
+    const estudiantes = this.obtenerEstudiantes();
+    const motoristas = this.obtenerMotoristas();
+    const viajes = this.obtenerTodosLosViajes();
+
+    const finalizados = viajes.filter((v) => v.estado.nombre === "FINALIZADO");
+    const activos = viajes.filter(
+      (v) =>
+        v.estado.nombre === "SOLICITADO" ||
+        v.estado.nombre === "ACEPTADO" ||
+        v.estado.nombre === "EN_CURSO"
+    );
+    const cancelados = viajes.filter((v) => v.estado.nombre === "CANCELADO");
+    const llegadasSeguras = finalizados.filter((v) => v.llegadaSeguraConfirmada).length;
+    const distanciaTotalKm = Number(
+      finalizados.reduce((acc, v) => acc + v.distanciaKm, 0).toFixed(2)
+    );
+    const volumenMovilidadCop = finalizados.reduce((acc, v) => acc + v.tarifa, 0);
+    const promedioDistanciaKm =
+      finalizados.length > 0 ? Number((distanciaTotalKm / finalizados.length).toFixed(2)) : 0;
+
+    // 1. Agregación anónima de barrios de residencia (Ley 1581 de 2012 - sin exponer direcciones exactas)
+    const mapaBarrios = new Map<string, number>();
+    for (const est of estudiantes) {
+      const casa = est.ubicacionesFrecuentes.find((u) => u.etiqueta.toLowerCase() === "casa");
+      const barrio =
+        (casa?.barrio && casa.barrio !== "Sin especificar" ? casa.barrio : est.barrioResidencia) ||
+        "Sin especificar";
+      mapaBarrios.set(barrio, (mapaBarrios.get(barrio) || 0) + 1);
+    }
+    const barriosEstudiantes = Array.from(mapaBarrios.entries())
+      .map(([barrio, cantidad]) => ({
+        barrio,
+        estudiantes: cantidad,
+        porcentaje:
+          estudiantes.length > 0 ? Math.round((cantidad / estudiantes.length) * 100) : 0
+      }))
+      .sort((a, b) => b.estudiantes - a.estudiantes);
+
+    // 2. Corredores / rutas más frecuentes
+    const mapaCorredores = new Map<string, { origen: string; destino: string; viajes: number; sumKm: number }>();
+    for (const v of viajes) {
+      const key = `${v.origen} -> ${v.destino}`;
+      const prev = mapaCorredores.get(key) || {
+        origen: v.origen,
+        destino: v.destino,
+        viajes: 0,
+        sumKm: 0
+      };
+      prev.viajes += 1;
+      prev.sumKm += v.distanciaKm;
+      mapaCorredores.set(key, prev);
+    }
+    const corredoresComunes = Array.from(mapaCorredores.entries())
+      .map(([ruta, info]) => ({
+        ruta,
+        origen: info.origen,
+        destino: info.destino,
+        viajes: info.viajes,
+        kmPromedio: Number((info.sumKm / info.viajes).toFixed(2))
+      }))
+      .sort((a, b) => b.viajes - a.viajes)
+      .slice(0, 8);
+
+    // 3. Demanda por sede oficial
+    let viajesPorvenir = 0;
+    let viajesCentro = 0;
+    let viajesOtros = 0;
+    for (const v of viajes) {
+      const texto = `${v.origen} ${v.destino}`.toLowerCase();
+      if (texto.includes("porvenir")) viajesPorvenir += 1;
+      if (texto.includes("centro") || texto.includes("idema")) viajesCentro += 1;
+      if (!texto.includes("porvenir") && !texto.includes("centro") && !texto.includes("idema")) {
+        viajesOtros += 1;
+      }
+    }
+
+    // 4. Distribución por estrategia de tarifa y método de pago
+    const mapaTarifas = new Map<string, number>();
+    const mapaPagos = new Map<string, number>();
+    const mapaDias = new Map<string, number>();
+    for (const v of viajes) {
+      const estName = v.estrategiaTarifa.nombre;
+      mapaTarifas.set(estName, (mapaTarifas.get(estName) || 0) + 1);
+      const metName = v.pago.metodo;
+      mapaPagos.set(metName, (mapaPagos.get(metName) || 0) + 1);
+      const dia = v.fechaCreacion.toISOString().slice(0, 10);
+      mapaDias.set(dia, (mapaDias.get(dia) || 0) + 1);
+    }
+
+    const tucanesActivos = motoristas.filter((m) => m.estadoAprobacion === "ACTIVO");
+    const tucanesPendientes = motoristas.filter((m) => m.estadoAprobacion === "PENDIENTE_APROBACION");
+
+    return {
+      resumen: {
+        totalEstudiantes: estudiantes.length,
+        totalTucanesActivos: tucanesActivos.length,
+        totalTucanesPendientes: tucanesPendientes.length,
+        totalTucanesRechazados: motoristas.filter((m) => m.estadoAprobacion === "RECHAZADO").length,
+        totalViajes: viajes.length,
+        viajesFinalizados: finalizados.length,
+        viajesActivos: activos.length,
+        viajesCancelados: cancelados.length,
+        llegadasSeguras,
+        tasaCumplimientoPct:
+          viajes.length > 0 ? Math.round((finalizados.length / viajes.length) * 100) : 0,
+        distanciaTotalKm,
+        promedioDistanciaKm,
+        volumenMovilidadCop
+      },
+      barriosEstudiantes,
+      corredoresComunes,
+      demandaPorSede: [
+        { sede: "Sede Porvenir", viajes: viajesPorvenir },
+        { sede: "Sede Centro (IDEMA)", viajes: viajesCentro },
+        { sede: "Otros Sectores", viajes: viajesOtros }
+      ],
+      distribucionTarifas: Array.from(mapaTarifas.entries()).map(([nombre, cantidad]) => ({
+        nombre,
+        cantidad
+      })),
+      distribucionPagos: Array.from(mapaPagos.entries()).map(([metodo, cantidad]) => ({
+        metodo,
+        cantidad
+      })),
+      actividadPorDia: Array.from(mapaDias.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([fecha, cantidad]) => ({ fecha, cantidad })),
+      comunidad: {
+        estudiantes: estudiantes.map((e) => ({
+          identificacion: e.identificacion,
+          nombre: e.nombre,
+          codigoEstudiantil: e.codigoEstudiantil,
+          carrera: e.carrera,
+          barrioResidencia: e.barrioResidencia,
+          sedeFavorita: e.sedeFavorita,
+          lugaresGuardados: e.ubicacionesFrecuentes.length,
+          viajesRealizados: viajes.filter((v) => v.estudiante.identificacion === e.identificacion)
+            .length
+        })),
+        tucanes: motoristas.map((m) => {
+          const moto = m.obtenerMotoActiva();
+          return {
+            identificacion: m.identificacion,
+            nombre: m.nombre,
+            telefono: m.telefono,
+            correo: m.correoInstitucional,
+            estadoAprobacion: m.estadoAprobacion,
+            disponible: m.disponible,
+            placa: moto?.placa || "N/A",
+            marca: moto?.marca || "",
+            modelo: moto?.modelo || "",
+            cilindraje: moto?.cilindraje || 0,
+            soatVigente: moto?.soatVigente ?? false,
+            numeroSoat: moto?.numeroSoat || "",
+            viajesCompletados: finalizados.filter(
+              (v) => v.motorista?.identificacion === m.identificacion
+            ).length
+          };
+        })
       }
     };
   }
@@ -1299,6 +1525,7 @@ export class TucanGoFacade {
         correoInstitucional: dto.correoInstitucional,
         codigoEstudiantil: dto.codigoEstudiantil,
         carrera: dto.carrera,
+        barrioResidencia: dto.barrioResidencia,
         contactoEmergencia: dto.contactoEmergencia,
         sedeFavorita: dto.sedeFavorita
       });
