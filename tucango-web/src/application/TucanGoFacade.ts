@@ -4,6 +4,11 @@ import {
   type ProgramaAcademico,
   esProgramaAcademicoValido
 } from "../domain/catalog/ProgramasAcademicos.ts";
+import {
+  BARRIOS_FLORENCIA,
+  type ComunaFlorencia,
+  esBarrioFlorenciaValido
+} from "../domain/catalog/BarriosFlorencia.ts";
 import { Persona } from "../domain/model/Persona.ts";
 import { Administrador } from "../domain/model/Administrador.ts";
 import { Estudiante, type UbicacionFrecuente } from "../domain/model/Estudiante.ts";
@@ -57,7 +62,6 @@ const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PATRON_PLACA = /^[A-Z]{3}-?\d{2}[A-Z0-9]$/;
 const PATRON_CODIGO_ESTUDIANTIL = /^\d{6,12}$/;
 const PATRON_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{3,80}$/;
-const PATRON_BARRIO = /^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ' .-]{3,60}$/;
 const DOMINIOS_ESTUDIANTE = ["uniamazonia.edu.co", "udla.edu.co"];
 const ESTADOS_APROBACION: readonly EstadoAprobacionTucan[] = [
   "PENDIENTE_APROBACION",
@@ -712,6 +716,10 @@ export class TucanGoFacade {
     return PROGRAMAS_ACADEMICOS;
   }
 
+  public obtenerBarriosFlorencia(): readonly ComunaFlorencia[] {
+    return BARRIOS_FLORENCIA;
+  }
+
   public registrarEstudiante(entrada: Estudiante | RegistrarEstudianteDTO): Estudiante {
     let estudiante: Estudiante;
 
@@ -754,8 +762,8 @@ export class TucanGoFacade {
       }
 
       const barrio = (entrada.barrioResidencia || "").trim();
-      if (barrio && !PATRON_BARRIO.test(barrio)) {
-        throw new ValidacionError("El barrio debe tener entre 3 y 60 caracteres válidos.");
+      if (!esBarrioFlorenciaValido(barrio)) {
+        throw new ValidacionError("Selecciona un barrio de Florencia de la lista oficial.");
       }
 
       const usuario = (entrada.usuario || "").trim()
@@ -777,7 +785,7 @@ export class TucanGoFacade {
         carrera,
         "",
         false,
-        barrio || "Sin especificar",
+        barrio,
         []
       );
       estudiante.usuario = usuario;
@@ -809,8 +817,9 @@ export class TucanGoFacade {
     }
     this.validarIdentificacionDisponible(identificacion);
 
-    if ((dto.nombre || "").trim().length < 3) {
-      throw new ValidacionError("El nombre del Tucán debe tener al menos 3 caracteres.");
+    const nombreTucan = (dto.nombre || "").trim().replace(/\s+/g, " ");
+    if (!PATRON_NOMBRE.test(nombreTucan)) {
+      throw new ValidacionError("El nombre del Tucán debe tener entre 3 y 80 caracteres y solo letras.");
     }
     if (!PATRON_TELEFONO.test((dto.telefono || "").trim())) {
       throw new ValidacionError("El teléfono debe ser un celular colombiano de 10 dígitos (ej. 3201234567).");

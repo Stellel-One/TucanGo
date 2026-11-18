@@ -405,35 +405,15 @@
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-barrio" class="ios-input-label">Barrio o sector de residencia (Florencia)</label>
-                <input
+                <select
                   id="reg-est-barrio"
-                  type="text"
-                  list="florencia-barrios-list"
-                  autocapitalize="words"
-                  autocomplete="off"
-                  minlength="3"
-                  maxlength="60"
                   class="ios-input-field"
-                  aria-describedby="reg-est-barrio-hint reg-est-barrio-error"
+                  aria-describedby="reg-est-barrio-error"
                   required
-                  placeholder="Ej. La Vega, El Porvenir, Bello Horizonte"
-                />
-                <span id="reg-est-barrio-hint" class="field-hint">Escribe y elige una sugerencia de Florencia.</span>
+                >
+                  <option value="">Cargando barrios de Florencia…</option>
+                </select>
                 <span id="reg-est-barrio-error" class="field-error-msg" aria-live="polite"></span>
-                <datalist id="florencia-barrios-list">
-                  <option value="El Porvenir"></option>
-                  <option value="La Vega"></option>
-                  <option value="Bello Horizonte"></option>
-                  <option value="Juan XXIII"></option>
-                  <option value="Versalles"></option>
-                  <option value="El Cunduy"></option>
-                  <option value="Las Malvinas"></option>
-                  <option value="Centro"></option>
-                  <option value="San Judas"></option>
-                  <option value="Villa Natalia"></option>
-                  <option value="La Consolata"></option>
-                  <option value="Torasso"></option>
-                </datalist>
               </div>
               <div class="ios-input-row">
                 <label for="reg-est-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
@@ -959,6 +939,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=4.7"></script>
+  <script src="/login.js?v=4.8"></script>
 </body>
 </html>

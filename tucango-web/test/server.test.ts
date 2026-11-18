@@ -131,6 +131,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           correoInstitucional: "s.munoz@udla.edu.co",
           codigoEstudiantil: "20261001",
           carrera: "Derecho (Caquetá)",
+          barrioResidencia: "La Vega",
           password: "SofiaPassword*2026"
         })
       });
@@ -260,6 +261,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           correoInstitucional: "c.rivera@uniamazonia.edu.co",
           codigoEstudiantil: "202610001",
           carrera: "Ingeniería de Sistemas",
+          barrioResidencia: "La Vega",
           password: "EstudianteSeguro*2026"
         })
       });
@@ -498,6 +500,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           correoInstitucional: "c.rivera@uniamazonia.edu.co",
           codigoEstudiantil: "202610001",
           carrera: "Ingeniería de Sistemas",
+          barrioResidencia: "La Vega",
           password: "EstudianteSeguro*2026"
         })
       });
@@ -546,6 +549,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           nombre: "Carlos Rivera Actualizado",
           telefono: "3159998877",
           carrera: "Ingeniería Agroecológica (Caquetá)",
+          barrioResidencia: "La Vega",
           contactoEmergencia: "Marta Rivera · 3101112233",
           sedeFavorita: "CENTRO"
         })
@@ -644,6 +648,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           telefono: "3110000000",
           correoInstitucional: "s.munoz@uniamazonia.edu.co",
           carrera: "Ingeniería de Sistemas",
+          barrioResidencia: "La Vega",
           password: "SofiaPassword*2026"
         })
       });
@@ -976,6 +981,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           correoInstitucional: "otro@udla.edu.co",
           codigoEstudiantil: "20269999",
           carrera: "Biología",
+          barrioResidencia: "La Vega",
           password: "OtroSeguro*2026"
         })
       });
@@ -1048,12 +1054,27 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
           telefono: "3201234567",
           codigoEstudiantil: "202612345",
           carrera: "Ingeniería de Sistemas",
+          barrioResidencia: "La Vega",
           password: "Jferrer*2026",
           ...campos
         })
       });
 
     try {
+      // El catálogo de barrios proviene del dataset oficial por comunas
+      const catalogo = (await fetch(`${baseUrl}/api/catalogos/barrios`).then((r) => r.json())) as any;
+      assert.equal(catalogo.comunas.length, 4);
+      const totalBarrios = catalogo.comunas.reduce((acc: number, c: any) => acc + c.barrios.length, 0);
+      assert.ok(totalBarrios >= 200, `Se esperaban al menos 200 barrios y llegaron ${totalBarrios}`);
+
+      // Un barrio fuera de la lista oficial no entra
+      const barrioInventado = await registrar({
+        identificacion: "1002003003",
+        correoInstitucional: "barrio@udla.edu.co",
+        barrioResidencia: "Barrio Inventado"
+      });
+      assert.equal(barrioInventado.status, 422);
+
       // Una letra en la cédula no entra a la base
       const cedulaConLetras = await registrar({
         identificacion: "10A6888",

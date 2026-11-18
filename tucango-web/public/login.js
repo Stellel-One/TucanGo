@@ -325,6 +325,22 @@
       return (valor || "").replace(/\D/g, "").slice(0, maximo);
     }
 
+    // El nombre solo admite letras, espacios, apóstrofes y guiones.
+    function filtrarNombre(valor) {
+      return (valor || "")
+        .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]/g, "")
+        .replace(/\s{2,}/g, " ")
+        .replace(/^\s+/, "");
+    }
+
+    // Marca y modelo admiten letras, números, espacios, paréntesis y guiones.
+    function filtrarTextoVehiculo(valor) {
+      return (valor || "")
+        .replace(/[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ() .-]/g, "")
+        .replace(/\s{2,}/g, " ")
+        .replace(/^\s+/, "");
+    }
+
     function derivarUsuarioDesdeCorreo(correo) {
       const local = (correo || "")
         .split("@")[0]
@@ -376,10 +392,7 @@
           if (!valor) return "Selecciona tu programa académico.";
           return "";
         case "reg-est-barrio":
-          if (!valor) return "El barrio o sector es obligatorio.";
-          if (!/^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ' .-]{3,60}$/.test(valor)) {
-            return "El barrio debe tener entre 3 y 60 caracteres válidos.";
-          }
+          if (!valor) return "Selecciona tu barrio o sector.";
           return "";
         case "reg-est-password":
           if (!valor) return "La contraseña es obligatoria.";
@@ -422,56 +435,39 @@
 
     let usuarioEstudianteManual = false;
 
-    async function cargarPlacesParaBarrios() {
-      const input = els.regEstBarrio;
-      if (!input || input.dataset.placesReady === "true") return;
+    async function cargarBarriosFlorencia() {
+      const select = els.regEstBarrio;
+      if (!select || select.dataset.cargado === "true") return;
       try {
-        const config = await fetch("/api/mapa/config", { cache: "no-store" }).then((r) => r.json());
-        const apiKey = config.googleMapsApiKey;
-        if (!apiKey) return;
+        const data = await fetch("/api/catalogos/barrios", { cache: "no-store" }).then((r) => r.json());
+        const comunas = data.comunas || [];
+        if (comunas.length === 0) return;
 
-        if (!window.google?.maps?.places) {
-          await new Promise((resolve, reject) => {
-            const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&libraries=places&language=es&region=CO`;
-            script.async = true;
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
-          });
-        }
-        if (!window.google?.maps?.places?.Autocomplete) return;
+        select.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Selecciona tu barrio";
+        select.appendChild(placeholder);
 
-        const florencia = new window.google.maps.LatLngBounds(
-          { lat: 1.52, lng: -75.68 },
-          { lat: 1.66, lng: -75.54 }
-        );
-        const autocomplete = new window.google.maps.places.Autocomplete(input, {
-          bounds: florencia,
-          strictBounds: true,
-          componentRestrictions: { country: "co" },
-          types: ["geocode"],
-          fields: ["name", "address_components"]
-        });
-
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
-          const componentes = place.address_components || [];
-          const barrio =
-            componentes.find((c) =>
-              c.types.some((t) => t === "sublocality_level_1" || t === "sublocality" || t === "neighborhood")
-            )?.long_name ||
-            componentes.find((c) => c.types.includes("locality"))?.long_name ||
-            place.name ||
-            "";
-          if (barrio) {
-            input.value = barrio;
-            input.dispatchEvent(new Event("input", { bubbles: true }));
+        for (const grupo of comunas) {
+          const optgroup = document.createElement("optgroup");
+          optgroup.label = grupo.comuna;
+          for (const barrio of grupo.barrios) {
+            const opcion = document.createElement("option");
+            opcion.value = barrio;
+            opcion.textContent = barrio;
+            optgroup.appendChild(opcion);
           }
-        });
-        input.dataset.placesReady = "true";
+          select.appendChild(optgroup);
+        }
+        select.dataset.cargado = "true";
+        aplicarEstadoEstudiante(select, false);
       } catch {
-        // Si Places no está disponible, el datalist local sigue funcionando.
+        select.innerHTML = "";
+        const fallo = document.createElement("option");
+        fallo.value = "";
+        fallo.textContent = "No se pudo cargar la lista. Recarga la página.";
+        select.appendChild(fallo);
       }
     }
 
@@ -486,8 +482,10 @@
           if (input.id === "reg-est-id") input.value = soloDigitos(input.value, 10);
           if (input.id === "reg-est-cod") input.value = soloDigitos(input.value, 12);
           if (input.id === "reg-est-tel") input.value = soloDigitos(input.value, 10);
-
+          if (input.id === "reg-est-nombre") input.value = filtrarNombre(input.value);
+          if (input.id === "reg-est-correo") input.value = input.value.replace(/\s+/g, "").toLowerCase();
           if (input.id === "reg-est-usuario") {
+            input.value = input.value.toLowerCase().replace(/[^a-z0-9._-]/g, "");
             usuarioEstudianteManual = input.value.trim().length > 0;
           }
 
@@ -522,7 +520,7 @@
         });
       });
 
-      els.regEstBarrio?.addEventListener("focus", cargarPlacesParaBarrios, { once: true });
+      cargarBarriosFlorencia();
 
       els.formRegEstudiante.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -782,14 +780,32 @@
           validarCampoEnTiempoReal(inputEl);
         });
         inputEl.addEventListener("input", () => {
+          if (inputEl.id === "reg-tucan-id") inputEl.value = soloDigitos(inputEl.value, 10);
+          if (inputEl.id === "reg-tucan-tel") inputEl.value = soloDigitos(inputEl.value, 10);
+          if (inputEl.id === "reg-tucan-cc") inputEl.value = soloDigitos(inputEl.value, 4);
+          if (inputEl.id === "reg-tucan-nombre") inputEl.value = filtrarNombre(inputEl.value);
+          if (inputEl.id === "reg-tucan-marca") inputEl.value = filtrarNombre(inputEl.value);
+          if (inputEl.id === "reg-tucan-modelo") inputEl.value = filtrarTextoVehiculo(inputEl.value);
+          if (inputEl.id === "reg-tucan-correo") {
+            inputEl.value = inputEl.value.replace(/\s+/g, "").toLowerCase();
+          }
+          if (inputEl.id === "reg-tucan-placa") {
+            inputEl.value = inputEl.value
+              .toUpperCase()
+              .replace(/[^A-Z0-9-]/g, "")
+              .slice(0, 7);
+          }
+          if (inputEl.id === "reg-tucan-soat" || inputEl.id === "reg-tucan-licencia") {
+            inputEl.value = inputEl.value
+              .toUpperCase()
+              .replace(/[^A-Z0-9-]/g, "")
+              .slice(0, 30);
+          }
           if (inputEl.id === "reg-tucan-password") {
             actualizarMedidorFuerza(inputEl.value);
             if (els.regTucanPasswordConfirm?.dataset.dirty === "true") {
               validarCampoEnTiempoReal(els.regTucanPasswordConfirm);
             }
-          }
-          if (inputEl.id === "reg-tucan-placa") {
-            inputEl.value = inputEl.value.toUpperCase();
           }
           if (inputEl.dataset.dirty === "true" || inputEl.classList.contains("is-invalid")) {
             validarCampoEnTiempoReal(inputEl);

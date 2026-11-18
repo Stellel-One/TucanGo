@@ -967,6 +967,14 @@ export function crearServidor(
         return;
       }
 
+      if (pathname === "/api/catalogos/barrios" && req.method === "GET") {
+        // División oficial por comunas y barrios de Florencia, Caquetá.
+        sendJson(res, 200, {
+          comunas: facade.obtenerBarriosFlorencia()
+        });
+        return;
+      }
+
       if (pathname === "/api/admin/analitica" && req.method === "GET") {
         const auth = requerirRol(req, res, facade, "admin");
         if (!auth) return;
