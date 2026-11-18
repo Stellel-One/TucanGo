@@ -44,24 +44,33 @@
     regEstPassword: document.getElementById("reg-est-password"),
     regEstPasswordConfirm: document.getElementById("reg-est-password-confirm"),
 
-    // Registro Motorista
-    formRegMotorista: document.getElementById("form-reg-motorista"),
-    btnRegMotSubmit: document.getElementById("btn-reg-mot-submit"),
-    regMotId: document.getElementById("reg-mot-id"),
-    regMotNombre: document.getElementById("reg-mot-nombre"),
-    regMotTel: document.getElementById("reg-mot-tel"),
-    regMotCorreo: document.getElementById("reg-mot-correo"),
-    regMotPassword: document.getElementById("reg-mot-password"),
-    regMotPasswordConfirm: document.getElementById("reg-mot-password-confirm"),
-    regMotPlaca: document.getElementById("reg-mot-placa"),
-    regMotMarca: document.getElementById("reg-mot-marca"),
-    regMotModelo: document.getElementById("reg-mot-modelo"),
-    regMotCc: document.getElementById("reg-mot-cc"),
-    regMotSoat: document.getElementById("reg-mot-soat"),
-    regMotSoatOk: document.getElementById("reg-mot-soat-ok")
+    // Registro Tucán (Wizard 5 pasos)
+    wizardTucanContainer: document.getElementById("wizard-tucan-container"),
+    formWizardTucan: document.getElementById("form-wizard-tucan"),
+    btnSubmitWizardTucan: document.getElementById("btn-submit-wizard-tucan"),
+    regTucanId: document.getElementById("reg-tucan-id"),
+    regTucanNombre: document.getElementById("reg-tucan-nombre"),
+    regTucanTel: document.getElementById("reg-tucan-tel"),
+    regTucanCorreo: document.getElementById("reg-tucan-correo"),
+    regTucanPassword: document.getElementById("reg-tucan-password"),
+    regTucanPasswordConfirm: document.getElementById("reg-tucan-password-confirm"),
+    regTucanPlaca: document.getElementById("reg-tucan-placa"),
+    regTucanMarca: document.getElementById("reg-tucan-marca"),
+    regTucanModelo: document.getElementById("reg-tucan-modelo"),
+    regTucanCc: document.getElementById("reg-tucan-cc"),
+    regTucanSoat: document.getElementById("reg-tucan-soat"),
+    regTucanLicencia: document.getElementById("reg-tucan-licencia"),
+    regTucanCompromisoCheck: document.getElementById("reg-tucan-compromiso-check"),
+    btnPendingGoLogin: document.getElementById("btn-pending-go-login"),
+    pendingTucanNombre: document.getElementById("pending-tucan-nombre"),
+    pendingTucanPlaca: document.getElementById("pending-tucan-placa")
   };
 
   let toastTimer = null;
+  let wizardPhotos = {
+    face: "",
+    moto: ""
+  };
 
   function mostrarToast(mensaje, tipo = "info") {
     if (!els.toast) return;
@@ -153,9 +162,9 @@
 
     if (rol === "motorista") {
       els.formRegEstudiante.classList.add("hidden");
-      els.formRegMotorista.classList.remove("hidden");
+      els.wizardTucanContainer?.classList.remove("hidden");
     } else {
-      els.formRegMotorista.classList.add("hidden");
+      els.wizardTucanContainer?.classList.add("hidden");
       els.formRegEstudiante.classList.remove("hidden");
     }
   }
@@ -384,98 +393,212 @@
       });
     }
 
-    // F11, F13: Registro de motorista con confirmación de clave y verificación de SOAT
-    if (els.formRegMotorista) {
-      els.formRegMotorista.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        ocultarAlertaInline();
-        limpiarErroresCampos(els.formRegMotorista);
+    // ==================== WIZARD ONBOARDING TUCÁN (ESTILO NEQUI / DIDI) ====================
+    function irAPasoWizard(pasoNum) {
+      ocultarAlertaInline();
+      const paneles = document.querySelectorAll("[data-step-panel]");
+      paneles.forEach((p) => {
+        p.classList.toggle("hidden", Number(p.dataset.stepPanel) !== pasoNum);
+      });
 
-        const soatOk = els.regMotSoatOk?.checked;
-        if (!soatOk) {
-          mostrarAlertaInline("Debes certificar tener SOAT vigente y activo para registrarte.", "error");
-          els.regMotSoatOk?.focus();
-          return;
+      const indicadores = document.querySelectorAll("[data-step-indicator]");
+      indicadores.forEach((ind) => {
+        const n = Number(ind.dataset.stepIndicator);
+        ind.classList.toggle("active", n === pasoNum);
+        ind.classList.toggle("completed", n < pasoNum);
+      });
+    }
+
+    function validarPasoWizard(pasoActual) {
+      if (pasoActual === 1) {
+        const id = els.regTucanId?.value.trim() || "";
+        const nombre = els.regTucanNombre?.value.trim() || "";
+        const tel = els.regTucanTel?.value.trim() || "";
+        const correo = els.regTucanCorreo?.value.trim().toLowerCase() || "";
+        const pass = els.regTucanPassword?.value || "";
+        const passConfirm = els.regTucanPasswordConfirm?.value || "";
+
+        if (!id || !nombre || !tel) {
+          mostrarAlertaInline("Completa tu cédula, nombre completo y teléfono celular.", "error");
+          return false;
         }
-
-        const pass = els.regMotPassword?.value || "";
-        const passConfirm = els.regMotPasswordConfirm?.value || "";
-
-        if (pass.length < 10) {
-          mostrarAlertaInline("La contraseña debe tener al menos 10 caracteres.", "error");
-          els.regMotPassword?.setAttribute("aria-invalid", "true");
-          els.regMotPassword?.focus();
-          return;
-        }
-
-        if (pass !== passConfirm) {
-          mostrarAlertaInline("Las contraseñas no coinciden. Por favor verifícalas.", "error");
-          els.regMotPasswordConfirm?.setAttribute("aria-invalid", "true");
-          els.regMotPasswordConfirm?.focus();
-          return;
-        }
-
-        const correo = els.regMotCorreo?.value.trim().toLowerCase() || "";
         if (!correo.endsWith("@uniamazonia.edu.co") && !correo.endsWith("@udla.edu.co")) {
           mostrarAlertaInline("Debes ingresar un correo institucional (@uniamazonia.edu.co).", "error");
-          els.regMotCorreo?.setAttribute("aria-invalid", "true");
-          els.regMotCorreo?.focus();
+          els.regTucanCorreo?.focus();
+          return false;
+        }
+        if (pass.length < 10) {
+          mostrarAlertaInline("La contraseña debe tener al menos 10 caracteres.", "error");
+          els.regTucanPassword?.focus();
+          return false;
+        }
+        if (pass !== passConfirm) {
+          mostrarAlertaInline("Las contraseñas no coinciden.", "error");
+          els.regTucanPasswordConfirm?.focus();
+          return false;
+        }
+      } else if (pasoActual === 2) {
+        if (!wizardPhotos.face) {
+          mostrarAlertaInline("Por favor sube o usa la foto de demostración para tu reconocimiento facial.", "error");
+          return false;
+        }
+      } else if (pasoActual === 3) {
+        const placa = els.regTucanPlaca?.value.trim() || "";
+        const marca = els.regTucanMarca?.value.trim() || "";
+        const modelo = els.regTucanModelo?.value.trim() || "";
+        const cc = parseInt(els.regTucanCc?.value.trim() || "0", 10);
+        if (!placa || !marca || !modelo || cc < 50) {
+          mostrarAlertaInline("Completa los datos técnicos de tu motocicleta (placa, marca, modelo, cilindraje).", "error");
+          return false;
+        }
+      }
+      return true;
+    }
+
+    document.querySelectorAll(".btn-next-step").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const nextStep = Number(btn.dataset.next);
+        const currentStep = nextStep - 1;
+        if (validarPasoWizard(currentStep)) {
+          irAPasoWizard(nextStep);
+        }
+      });
+    });
+
+    document.querySelectorAll(".btn-prev-step").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const prevStep = Number(btn.dataset.prev);
+        irAPasoWizard(prevStep);
+      });
+    });
+
+    // Gestión de subida y vista previa de fotografías
+    function setupPhotoUpload(triggerBtnId, demoBtnId, inputId, imgId, placeholderId, keyName, demoDataSvg) {
+      const trigger = document.getElementById(triggerBtnId);
+      const demoBtn = document.getElementById(demoBtnId);
+      const fileInput = document.getElementById(inputId);
+      const imgEl = document.getElementById(imgId);
+      const placeholderEl = document.getElementById(placeholderId);
+
+      function applyPreview(dataUrl) {
+        wizardPhotos[keyName] = dataUrl;
+        if (imgEl) {
+          imgEl.src = dataUrl;
+          imgEl.classList.remove("hidden");
+        }
+        if (placeholderEl) placeholderEl.classList.add("hidden");
+      }
+
+      trigger?.addEventListener("click", () => fileInput?.click());
+      fileInput?.addEventListener("change", (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (typeof ev.target?.result === "string") {
+            applyPreview(ev.target.result);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      demoBtn?.addEventListener("click", () => {
+        applyPreview(demoDataSvg);
+        mostrarToast("Foto de demostración cargada correctamente", "success");
+      });
+    }
+
+    const demoFaceSvg =
+      "data:image/svg+xml;utf8," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#EAF1ED"/><circle cx="60" cy="45" r="22" fill="#006837"/><path d="M25 110 C25 80 95 80 95 110 Z" fill="#006837"/><circle cx="52" cy="42" r="3" fill="#FFF"/><circle cx="68" cy="42" r="3" fill="#FFF"/><path d="M52 53 Q60 60 68 53" stroke="#FFF" stroke-width="3" fill="none" stroke-linecap="round"/></svg>'
+      );
+
+    const demoMotoSvg =
+      "data:image/svg+xml;utf8," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120"><rect width="240" height="120" fill="#EAF1ED"/><circle cx="60" cy="85" r="24" stroke="#112A1E" stroke-width="6" fill="#FFF"/><circle cx="180" cy="85" r="24" stroke="#112A1E" stroke-width="6" fill="#FFF"/><path d="M60 85 L105 45 L155 45 L180 85 M105 45 L90 25 M155 45 L170 30 L185 30" stroke="#006837" stroke-width="7" stroke-linecap="round" fill="none"/><rect x="95" y="38" width="45" height="14" rx="4" fill="#E30613"/></svg>'
+      );
+
+    setupPhotoUpload("btn-trigger-face", "btn-demo-face", "input-file-face", "img-preview-face", "placeholder-face", "face", demoFaceSvg);
+    setupPhotoUpload("btn-trigger-moto", "btn-demo-moto", "input-file-moto", "img-preview-moto", "placeholder-moto", "moto", demoMotoSvg);
+
+    if (els.formWizardTucan) {
+      els.formWizardTucan.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        ocultarAlertaInline();
+
+        const numeroSoat = els.regTucanSoat?.value.trim() || "";
+        const numeroLicencia = els.regTucanLicencia?.value.trim() || "";
+        const compromisoAceptado = els.regTucanCompromisoCheck?.checked;
+
+        if (!numeroSoat || numeroSoat.length < 6) {
+          mostrarAlertaInline("Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).", "error");
+          els.regTucanSoat?.focus();
+          return;
+        }
+
+        if (!numeroLicencia || numeroLicencia.length < 5) {
+          mostrarAlertaInline("Ingresa tu número de licencia de conducción categoría A2.", "error");
+          els.regTucanLicencia?.focus();
+          return;
+        }
+
+        if (!compromisoAceptado) {
+          mostrarAlertaInline("Debes aceptar el Código de Honor y las políticas de revocación para continuar.", "error");
+          els.regTucanCompromisoCheck?.focus();
           return;
         }
 
         const payload = {
-          identificacion: els.regMotId?.value.trim() || "",
-          nombre: els.regMotNombre?.value.trim() || "",
-          telefono: els.regMotTel?.value.trim() || "",
-          correoInstitucional: correo,
-          password: pass,
-          placa: (els.regMotPlaca?.value.trim() || "").toUpperCase(),
-          marca: els.regMotMarca?.value.trim() || "",
-          modelo: els.regMotModelo?.value.trim() || "",
-          cilindraje: parseInt(els.regMotCc?.value.trim() || "0", 10),
-          numeroSoat: els.regMotSoat?.value.trim() || "",
-          soatVigente: true
+          identificacion: els.regTucanId?.value.trim() || "",
+          nombre: els.regTucanNombre?.value.trim() || "",
+          telefono: els.regTucanTel?.value.trim() || "",
+          correoInstitucional: els.regTucanCorreo?.value.trim().toLowerCase() || "",
+          password: els.regTucanPassword?.value || "",
+          placa: (els.regTucanPlaca?.value.trim() || "").toUpperCase(),
+          marca: els.regTucanMarca?.value.trim() || "",
+          modelo: els.regTucanModelo?.value.trim() || "",
+          cilindraje: parseInt(els.regTucanCc?.value.trim() || "150", 10),
+          numeroSoat,
+          soatVigente: true,
+          fotoRostroUrl: wizardPhotos.face,
+          fotoMotoUrl: wizardPhotos.moto,
+          fotoLicenciaUrl: numeroLicencia,
+          compromisoAceptado: true
         };
 
-        if (!payload.numeroSoat || payload.numeroSoat.length < 6) {
-          mostrarAlertaInline("Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).", "error");
-          els.regMotSoat?.setAttribute("aria-invalid", "true");
-          els.regMotSoat?.focus();
-          return;
-        }
-
-        setBotonBusy(els.btnRegMotSubmit, true, "Registrar motorista y motocicleta");
+        setBotonBusy(els.btnSubmitWizardTucan, true, "Enviar a Auditoría de Administración");
 
         try {
-          const res = await fetch("/api/motoristas", {
+          const res = await fetch("/api/tucanes/registro", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
-
           const data = await res.json();
           if (!res.ok) {
-            throw new Error(data.error || "No se pudo registrar el motorista");
+            throw new Error(data.error || "No se pudo completar el registro como Tucán");
           }
 
-          setBotonBusy(els.btnRegMotSubmit, false, "Registrar motorista y motocicleta");
-          els.formRegMotorista.reset();
+          setBotonBusy(els.btnSubmitWizardTucan, false, "Enviar a Auditoría de Administración");
+          if (els.pendingTucanNombre) els.pendingTucanNombre.textContent = payload.nombre;
+          if (els.pendingTucanPlaca) els.pendingTucanPlaca.textContent = payload.placa;
 
-          // F12: Redirigir a pestaña de login con aviso de éxito y credencial precargada
-          cambiarModoAuth("login");
-          mostrarAlertaInline("¡Motorista verificado con éxito! Ingresa con tu placa o identificación.", "success");
-          if (els.inputLoginId) {
-            els.inputLoginId.value = payload.placa || payload.identificacion;
-          }
-          if (els.inputLoginPassword) {
-            els.inputLoginPassword.focus();
-          }
+          irAPasoWizard(5);
+          mostrarToast("¡Solicitud de Licencia Tucán enviada a auditoría!", "success");
         } catch (err) {
-          setBotonBusy(els.btnRegMotSubmit, false, "Registrar motorista y motocicleta");
+          setBotonBusy(els.btnSubmitWizardTucan, false, "Enviar a Auditoría de Administración");
           mostrarAlertaInline(err.message, "error");
         }
       });
     }
+
+    els.btnPendingGoLogin?.addEventListener("click", () => {
+      els.formWizardTucan?.reset();
+      irAPasoWizard(1);
+      cambiarModoAuth("login");
+    });
 
     // Logout
     if (els.btnLogout) {

@@ -1,6 +1,6 @@
 import { Administrador } from "../domain/model/Administrador.ts";
 import { Estudiante } from "../domain/model/Estudiante.ts";
-import { Motorista } from "../domain/model/Motorista.ts";
+import { Motorista, type EstadoAprobacionTucan } from "../domain/model/Motorista.ts";
 import { Moto } from "../domain/model/Moto.ts";
 import { Coordenada } from "../domain/model/Coordenada.ts";
 import { Calificacion } from "../domain/model/Calificacion.ts";
@@ -21,7 +21,8 @@ import {
 } from "../domain/patterns/EstrategiaTarifa.ts";
 import type {
   EstadoSistemaSnapshot,
-  SistemaRepository
+  SistemaRepository,
+  NotificacionCorreoSnapshot
 } from "./ports/SistemaRepository.ts";
 import {
   hashPasswordSync,
@@ -30,9 +31,11 @@ import {
   validarPoliticaPassword
 } from "../domain/security/PasswordHasher.ts";
 import {
+  AuthError,
   CredencialesInvalidasError,
   NoAutenticadoError,
-  ValidacionError
+  ValidacionError,
+  CuentaEnRevisionError
 } from "../domain/security/ErroresAuth.ts";
 
 export const DEFAULT_ADMIN_USER = "tucangoadmin";
@@ -60,6 +63,12 @@ export interface RegistrarMotoristaDTO {
   soatVigente: boolean;
   numeroSoat?: string;
   password?: string;
+  estadoAprobacion?: EstadoAprobacionTucan;
+  fotoRostroUrl?: string;
+  fotoMotoUrl?: string;
+  fotoSoatUrl?: string;
+  fotoLicenciaUrl?: string;
+  compromisoAceptado?: boolean;
 }
 
 export class TucanGoFacade {
@@ -67,6 +76,7 @@ export class TucanGoFacade {
   private _estudiantes: Map<string, Estudiante> = new Map();
   private _motoristas: Map<string, Motorista> = new Map();
   private _viajes: Map<string, Viaje> = new Map();
+  private _notificacionesCorreo: NotificacionCorreoSnapshot[] = [];
   private _contadorViajes: number = 100;
   private readonly _repository?: SistemaRepository;
   private readonly _eventBus: EventBus;
@@ -268,6 +278,15 @@ export class TucanGoFacade {
         direccionGrados: m.direccionGrados,
         passwordHash: m.passwordHash,
         debeCambiarPassword: m.debeCambiarPassword,
+        estadoAprobacion: m.estadoAprobacion,
+        fotoRostroUrl: m.fotoRostroUrl,
+        fotoMotoUrl: m.fotoMotoUrl,
+        fotoSoatUrl: m.fotoSoatUrl,
+        fotoLicenciaUrl: m.fotoLicenciaUrl,
+        compromisoAceptado: m.compromisoAceptado,
+        motivoRechazo: m.motivoRechazo,
+        fechaAprobacion: m.fechaAprobacion?.toISOString(),
+        correoBienvenidaEnviado: m.correoBienvenidaEnviado,
         motos: m.motos.map((moto) => ({
           placa: moto.placa,
           marca: moto.marca,
@@ -278,6 +297,7 @@ export class TucanGoFacade {
           numeroSoat: moto.numeroSoat
         }))
       })),
+      notificacionesCorreo: this._notificacionesCorreo,
       viajes: this.obtenerTodosLosViajes().map((v) => ({
         codigoViaje: v.codigoViaje,
         estudianteId: v.estudiante.identificacion,
@@ -325,6 +345,10 @@ export class TucanGoFacade {
 
   private rehidratarDesdeSnapshot(snapshot: EstadoSistemaSnapshot): void {
     this._contadorViajes = snapshot.contadorViajes || 100;
+
+    if (snapshot.notificacionesCorreo) {
+      this._notificacionesCorreo = [...snapshot.notificacionesCorreo];
+    }
 
     if (snapshot.administradores && snapshot.administradores.length > 0) {
       for (const aSnap of snapshot.administradores) {
@@ -381,7 +405,16 @@ export class TucanGoFacade {
         ubicacion,
         motSnap.direccionGrados ?? 0,
         motSnap.passwordHash || hashPasswordSync(process.env.SEED_DRIVER_PASSWORD || "MotoristaSeguro*2026"),
-        Boolean(motSnap.debeCambiarPassword)
+        Boolean(motSnap.debeCambiarPassword),
+        motSnap.estadoAprobacion ?? "ACTIVO",
+        motSnap.fotoRostroUrl ?? "",
+        motSnap.fotoMotoUrl ?? "",
+        motSnap.fotoSoatUrl ?? "",
+        motSnap.fotoLicenciaUrl ?? "",
+        motSnap.compromisoAceptado ?? true,
+        motSnap.motivoRechazo,
+        motSnap.fechaAprobacion ? new Date(motSnap.fechaAprobacion) : undefined,
+        Boolean(motSnap.correoBienvenidaEnviado)
       );
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
@@ -590,6 +623,12 @@ export class TucanGoFacade {
     if (dto.password) {
       validarPoliticaPassword(dto.password);
     }
+    if (dto.compromisoAceptado === false) {
+      throw new ValidacionError("Debes aceptar solemnemente cumplir las políticas y normas de movilidad de la Universidad de la Amazonia para poder registrarte como Tucán.");
+    }
+
+    const estadoInicial: EstadoAprobacionTucan = dto.estadoAprobacion ?? "ACTIVO";
+    const disponibleInicial = estadoInicial === "ACTIVO";
 
     const moto = new Moto(
       dto.placa,
@@ -605,7 +644,17 @@ export class TucanGoFacade {
       dto.nombre,
       dto.telefono,
       dto.correoInstitucional,
-      true
+      disponibleInicial,
+      undefined,
+      0,
+      "",
+      false,
+      estadoInicial,
+      dto.fotoRostroUrl || "",
+      dto.fotoMotoUrl || "",
+      dto.fotoSoatUrl || "",
+      dto.fotoLicenciaUrl || "",
+      dto.compromisoAceptado ?? true
     );
     if (dto.password) {
       motorista.asignarPasswordHash(hashPasswordSync(dto.password));
@@ -617,9 +666,72 @@ export class TucanGoFacade {
     this.emitirEvento("MOTORISTA_REGISTRADO", {
       identificacion: motorista.identificacion,
       nombre: motorista.nombre,
-      placa: moto.placa
+      placa: moto.placa,
+      estadoAprobacion: motorista.estadoAprobacion
     });
     return motorista;
+  }
+
+  public obtenerTucanesPendientes(): Motorista[] {
+    return Array.from(this._motoristas.values()).filter(
+      (m) => m.estadoAprobacion === "PENDIENTE_APROBACION"
+    );
+  }
+
+  public aprobarTucan(identificacion: string): { tucan: Motorista; correo: NotificacionCorreoSnapshot } {
+    const mot = this._motoristas.get((identificacion || "").trim());
+    if (!mot) {
+      throw new ValidacionError(`No se encontró un Tucán con identificación ${identificacion}`);
+    }
+    mot.estadoAprobacion = "ACTIVO";
+    mot.fechaAprobacion = new Date();
+    mot.correoBienvenidaEnviado = true;
+
+    const correo: NotificacionCorreoSnapshot = {
+      id: `MAIL-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      destinatario: mot.correoInstitucional,
+      asunto: "¡Bienvenido a la Comunidad Tucán! Tu Licencia TucanGo ha sido aprobada",
+      enviadoEn: new Date().toISOString(),
+      tipo: "BIENVENIDA_TUCAN",
+      mensajeHtml: `Estimado(a) ${mot.nombre},\n\nNos complace informarte que la administración de la Universidad de la Amazonia ha auditado y aprobado satisfactoriamente tu documentación (SOAT, Licencia y Motocicleta con placa ${mot.obtenerMotoActiva()?.placa || ""}).\n\nTu Licencia Tucán se encuentra ahora ACTIVA. Puedes iniciar sesión en TucanGo con tu cédula o correo institucional y encender tu disponibilidad en el Radar del campus para brindar movilidad segura a nuestra comunidad.\n\nRecuerda tu compromiso de honor: velocidad máxima de 20 km/h en campus y uso estricto de casco reglamentario.\n\nAtentamente,\nComité de Movilidad y Bienestar Universitario\nUniversidad de la Amazonia\nwww.uniamazonia.edu.co`
+    };
+
+    this._notificacionesCorreo.unshift(correo);
+    this.persistir();
+
+    this.emitirEvento("TUCAN_APROBADO", {
+      identificacion: mot.identificacion,
+      nombre: mot.nombre,
+      correo: mot.correoInstitucional,
+      placa: mot.obtenerMotoActiva()?.placa,
+      fechaAprobacion: mot.fechaAprobacion.toISOString(),
+      correoId: correo.id
+    });
+
+    return { tucan: mot, correo };
+  }
+
+  public rechazarTucan(identificacion: string, motivo?: string): Motorista {
+    const mot = this._motoristas.get((identificacion || "").trim());
+    if (!mot) {
+      throw new ValidacionError(`No se encontró un Tucán con identificación ${identificacion}`);
+    }
+    mot.estadoAprobacion = "RECHAZADO";
+    mot.motivoRechazo = motivo || "Documentación no conforme con las normas institucionales de la Universidad de la Amazonia.";
+    mot.disponible = false;
+
+    this.persistir();
+    this.emitirEvento("TUCAN_RECHAZADO", {
+      identificacion: mot.identificacion,
+      nombre: mot.nombre,
+      motivo: mot.motivoRechazo
+    });
+
+    return mot;
+  }
+
+  public obtenerNotificacionesCorreo(): NotificacionCorreoSnapshot[] {
+    return [...this._notificacionesCorreo];
   }
 
   // --- Estrategias de Tarifa Disponibles ---
@@ -863,8 +975,8 @@ export class TucanGoFacade {
       };
     }
 
-    // 3. Motoristas (acepta motorista, 2001, GNX-45F, correo)
-    const esAliasMotorista = clave === "motorista" || clave === "conductor";
+    // 3. Motoristas / Tucanes (acepta motorista, tucan, 2001, GNX-45F, correo)
+    const esAliasMotorista = clave === "motorista" || clave === "conductor" || clave === "tucan";
     const mot = this.obtenerMotoristas().find(
       (m) =>
         (esAliasMotorista && (m.identificacion === "2001" || m.identificacion === "motorista")) ||
@@ -881,6 +993,20 @@ export class TucanGoFacade {
         match = true;
       }
       if (!match) throw new CredencialesInvalidasError();
+
+      if (mot.estadoAprobacion === "PENDIENTE_APROBACION") {
+        throw new CuentaEnRevisionError(
+          "Tu registro como Tucán está en revisión por la administración de la Universidad de la Amazonia. Cuando tus documentos y SOAT sean aprobados, recibirás tu correo institucional de bienvenida y se activará tu acceso."
+        );
+      }
+      if (mot.estadoAprobacion === "RECHAZADO") {
+        throw new AuthError(
+          `Tu solicitud como Tucán fue rechazada: ${mot.motivoRechazo || "Documentación no conforme con las normas universitarias"}.`,
+          403,
+          "TUCAN_RECHAZADO"
+        );
+      }
+
       const moto = mot.obtenerMotoActiva();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "motorista",

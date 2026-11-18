@@ -2267,3 +2267,181 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==================== AUDITORÍA Y APROBACIÓN DE TUCANES (ADMIN) ==================== */
+.btn-auditoria-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: #FFF3D1;
+  border: 1.5px solid #E5B94C;
+  color: #7A5400;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-auditoria-pill:hover {
+  background: #FFE7A8;
+  transform: translateY(-1px);
+}
+
+.btn-auditoria-pill svg {
+  width: 15px;
+  height: 15px;
+}
+
+.audit-list-container {
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.audit-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.audit-tucan-card {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  background: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.audit-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audit-face-img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #006837;
+  background: #EAF1ED;
+  flex-shrink: 0;
+}
+
+.audit-person-info {
+  flex: 1;
+}
+
+.audit-person-info h4 {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.audit-person-info p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.audit-docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  background: #F6F8F7;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.audit-moto-preview {
+  width: 100%;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+}
+
+.audit-card-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-aprobar-tucan {
+  background: #006837;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-aprobar-tucan:hover {
+  background: #004F29;
+}
+
+.btn-rechazar-tucan {
+  background: #FFF1F0;
+  color: #D7331B;
+  border: 1px solid #F5B8B2;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-rechazar-tucan:hover {
+  background: #D7331B;
+  color: #FFFFFF;
+}
+
+.audit-emails-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-email-card {
+  border: 1.5px solid #CFE3D8;
+  background: #F7FBF9;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audit-email-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #006837;
+  font-weight: 700;
+}
+
+.audit-email-subject {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.audit-email-body {
+  font-size: 12px;
+  color: var(--ink-muted);
+  white-space: pre-line;
+  line-height: 1.45;
+  background: #FFFFFF;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #E5ECE8;
+}

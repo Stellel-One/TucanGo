@@ -133,7 +133,17 @@ const els = {
   btnSimAceptar: document.getElementById("btn-sim-aceptar"),
   btnSimValidarPin: document.getElementById("btn-sim-validar-pin"),
   btnSimAvanzarGps: document.getElementById("btn-sim-avanzar-gps"),
-  btnSimFinalizar: document.getElementById("btn-sim-finalizar")
+  btnSimFinalizar: document.getElementById("btn-sim-finalizar"),
+  btnAbrirAuditoria: document.getElementById("btn-abrir-auditoria"),
+  countTucanesPendientes: document.getElementById("count-tucanes-pendientes"),
+  modalAuditoriaTucanes: document.getElementById("modal-auditoria-tucanes"),
+  btnCerrarAuditoria: document.getElementById("btn-cerrar-auditoria"),
+  listaTucanesPendientes: document.getElementById("lista-tucanes-pendientes"),
+  listaCorreosAuditoria: document.getElementById("lista-correos-auditoria"),
+  tabCountPendientes: document.getElementById("tab-count-pendientes"),
+  tabCountCorreos: document.getElementById("tab-count-correos"),
+  auditPanelPendientes: document.getElementById("audit-panel-pendientes"),
+  auditPanelCorreos: document.getElementById("audit-panel-correos")
 };
 
 function actualizarIconosLucide() {
@@ -928,6 +938,103 @@ function renderFeed(data) {
     .join("");
 }
 
+function renderAuditoriaTucanes(data) {
+  const esAdmin = state.authUser?.rol === "admin";
+  if (els.btnAbrirAuditoria) {
+    els.btnAbrirAuditoria.classList.toggle("hidden", !esAdmin);
+  }
+  const pendientes = data.tucanesPendientes || [];
+  const correos = data.notificacionesCorreo || [];
+
+  if (els.countTucanesPendientes) els.countTucanesPendientes.textContent = String(pendientes.length);
+  if (els.tabCountPendientes) els.tabCountPendientes.textContent = String(pendientes.length);
+  if (els.tabCountCorreos) els.tabCountCorreos.textContent = String(correos.length);
+
+  if (els.listaTucanesPendientes) {
+    if (pendientes.length === 0) {
+      els.listaTucanesPendientes.innerHTML = renderEmptyState(
+        "Sin solicitudes pendientes",
+        "Todos los aspirantes a Tucán han sido auditados."
+      );
+    } else {
+      els.listaTucanesPendientes.innerHTML = pendientes
+        .map((t) => {
+          const faceUrl =
+            t.fotoRostroUrl ||
+            "data:image/svg+xml;utf8," +
+              encodeURIComponent(
+                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#EAF1ED"/><text x="40" y="48" font-size="28" text-anchor="middle" fill="#006837">${esc(inicialesNombre(t.nombre))}</text></svg>`
+              );
+          const motoImg = t.fotoMotoUrl
+            ? `<img src="${esc(t.fotoMotoUrl)}" alt="Moto" class="audit-moto-preview" />`
+            : `<div class="audit-moto-preview" style="display:grid;place-items:center;color:#555;font-size:11px;">Sin foto de moto</div>`;
+
+          return `
+            <article class="audit-tucan-card">
+              <div class="audit-card-top">
+                <img src="${esc(faceUrl)}" alt="Foto facial de ${esc(t.nombre)}" class="audit-face-img" />
+                <div class="audit-person-info">
+                  <h4>${esc(t.nombre)}</h4>
+                  <p>C.C. ${esc(t.identificacion)} · Tel: ${esc(t.telefono)} · ${esc(t.correo)}</p>
+                </div>
+                <span class="chip-mono chip-ochre-soft">EN REVISIÓN</span>
+              </div>
+              <div class="audit-docs-grid">
+                <div>
+                  <strong>🏍️ Motocicleta:</strong><br/>
+                  <span>${esc(t.moto?.marca || "")} ${esc(t.moto?.modelo || "")} (${esc(t.moto?.cilindraje || "")}cc)</span><br/>
+                  <span>Placa: <strong class="mono-text">${esc(t.moto?.placa || "N/A")}</strong></span>
+                </div>
+                <div>
+                  <strong>📄 Marco Legal:</strong><br/>
+                  <span>SOAT: <strong>${esc(t.moto?.numeroSoat || "N/A")}</strong></span><br/>
+                  <span>Licencia: <strong>${esc(t.fotoLicenciaUrl || "Verificada A2")}</strong></span><br/>
+                  <span>Compromiso Honor: <strong style="color:#006837;">${t.compromisoAceptado ? "Aceptado ✓" : "Pendiente"}</strong></span>
+                </div>
+                <div>
+                  ${motoImg}
+                </div>
+              </div>
+              <div class="audit-card-actions">
+                <button type="button" class="btn-rechazar-tucan" data-rechazar-tucan="${esc(t.identificacion)}">
+                  ✕ Rechazar
+                </button>
+                <button type="button" class="btn-aprobar-tucan" data-aprobar-tucan="${esc(t.identificacion)}">
+                  ✓ Aprobar y Enviar Bienvenida
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+  }
+
+  if (els.listaCorreosAuditoria) {
+    if (correos.length === 0) {
+      els.listaCorreosAuditoria.innerHTML = renderEmptyState(
+        "Sin correos despachados",
+        "Al aprobar a un Tucán se generará aquí su correo institucional de bienvenida."
+      );
+    } else {
+      els.listaCorreosAuditoria.innerHTML = correos
+        .map(
+          (c) => `
+          <article class="audit-email-card">
+            <div class="audit-email-header">
+              <span>Para: ${esc(c.destinatario)}</span>
+              <span>${new Date(c.enviadoEn).toLocaleString("es-CO")}</span>
+            </div>
+            <div class="audit-email-subject">✉️ ${esc(c.asunto)}</div>
+            <div class="audit-email-body">${esc(c.mensajeHtml)}</div>
+          </article>
+        `
+        )
+        .join("");
+    }
+  }
+}
+
 function renderAll(data) {
   state.data = data;
   els.metricTotal.textContent = String(data.metricas.totalViajes);
@@ -941,6 +1048,7 @@ function renderAll(data) {
   renderSeguimientoEnVivo(data);
   renderMotorista(data);
   renderFeed(data);
+  renderAuditoriaTucanes(data);
   actualizarIconosLucide();
 }
 
@@ -1706,6 +1814,58 @@ els.btnSimValidarPin?.addEventListener("click", simularValidarPinEIniciar);
 els.btnSimAvanzarGps?.addEventListener("click", simularAvanzarGps);
 els.btnSimFinalizar?.addEventListener("click", simularFinalizarYCalificar);
 els.btnSimAutoAll?.addEventListener("click", ejecutarAutoDemoCompleta);
+
+// --- AUDITORÍA Y APROBACIÓN DE TUCANES (ADMIN) ---
+els.btnAbrirAuditoria?.addEventListener("click", () => {
+  els.modalAuditoriaTucanes?.classList.remove("hidden");
+  actualizarIconosLucide();
+});
+
+els.btnCerrarAuditoria?.addEventListener("click", () => {
+  els.modalAuditoriaTucanes?.classList.add("hidden");
+});
+
+document.querySelectorAll("[data-audit-tab]").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const mode = tab.dataset.auditTab;
+    document.querySelectorAll("[data-audit-tab]").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    els.auditPanelPendientes?.classList.toggle("hidden", mode !== "pendientes");
+    els.auditPanelCorreos?.classList.toggle("hidden", mode !== "correos");
+  });
+});
+
+document.addEventListener("click", async (e) => {
+  const btnAprobar = e.target.closest("[data-aprobar-tucan]");
+  const btnRechazar = e.target.closest("[data-rechazar-tucan]");
+
+  if (btnAprobar) {
+    const id = btnAprobar.dataset.aprobarTucan;
+    btnAprobar.disabled = true;
+    try {
+      const res = await postJson("/api/admin/tucanes/aprobar", { identificacion: id });
+      showToast(res.mensaje || "Tucán aprobado y bienvenida enviada", "success");
+      await cargarEstado(false);
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      btnAprobar.disabled = false;
+    }
+  } else if (btnRechazar) {
+    const id = btnRechazar.dataset.rechazarTucan;
+    const motivo = window.prompt("Motivo del rechazo (opcional):", "SOAT vencido o foto ilegible") || "Documentación no conforme";
+    btnRechazar.disabled = true;
+    try {
+      const res = await postJson("/api/admin/tucanes/rechazar", { identificacion: id, motivo });
+      showToast(res.mensaje || "Solicitud rechazada", "info");
+      await cargarEstado(false);
+    } catch (err) {
+      showToast(err.message, "error");
+    } finally {
+      btnRechazar.disabled = false;
+    }
+  }
+});
 
 // --- INIT ---
 iniciarAppAutenticada();

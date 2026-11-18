@@ -42,7 +42,25 @@ export interface MotoristaSnapshot {
   direccionGrados?: number;
   passwordHash?: string;
   debeCambiarPassword?: boolean;
+  estadoAprobacion?: "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
+  fotoRostroUrl?: string;
+  fotoMotoUrl?: string;
+  fotoSoatUrl?: string;
+  fotoLicenciaUrl?: string;
+  compromisoAceptado?: boolean;
+  motivoRechazo?: string;
+  fechaAprobacion?: string;
+  correoBienvenidaEnviado?: boolean;
   motos: MotoSnapshot[];
+}
+
+export interface NotificacionCorreoSnapshot {
+  id: string;
+  destinatario: string;
+  asunto: string;
+  mensajeHtml: string;
+  enviadoEn: string;
+  tipo: "BIENVENIDA_TUCAN" | "RECHAZO_TUCAN" | "GENERAL";
 }
 
 export interface CalificacionSnapshot {
@@ -86,6 +104,7 @@ export interface EstadoSistemaSnapshot {
   estudiantes: EstudianteSnapshot[];
   motoristas: MotoristaSnapshot[];
   viajes: ViajeSnapshot[];
+  notificacionesCorreo?: NotificacionCorreoSnapshot[];
 }
 
 export interface SistemaRepository {

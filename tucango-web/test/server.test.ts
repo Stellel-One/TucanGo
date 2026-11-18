@@ -510,6 +510,77 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
         })
       });
       assert.equal(motSolicitaRes.status, 403);
+
+      // Onboarding Tucán: registro con compromiso obligatorio, retención 403 en revisión y aprobación por Admin
+      const regTucanRes = await fetch(`${baseUrl}/api/tucanes/registro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "7001",
+          nombre: "Carlos Aspirante Tucán",
+          telefono: "3119998877",
+          correoInstitucional: "c.aspirante@uniamazonia.edu.co",
+          placa: "TUC-70G",
+          marca: "Yamaha",
+          modelo: "FZ 250",
+          cilindraje: 250,
+          soatVigente: true,
+          numeroSoat: "SOAT-2026-TUC70",
+          password: "CarlosTucan*2026",
+          compromisoAceptado: true
+        })
+      });
+      assert.equal(regTucanRes.status, 201);
+      const regTucanJson = (await regTucanRes.json()) as any;
+      assert.equal(regTucanJson.estadoAprobacion, "PENDIENTE_APROBACION");
+
+      // Intento de login antes de ser aprobado: debe recibir 403 CUENTA_EN_REVISION
+      const loginPendienteRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "7001", password: "CarlosTucan*2026" })
+      });
+      assert.equal(loginPendienteRes.status, 403);
+      const loginPendienteJson = (await loginPendienteRes.json()) as any;
+      assert.match(loginPendienteJson.error, /en revisión/i);
+
+      // Admin inicia sesión y consulta pendientes
+      const adminAuthRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "tucangoadmin", password: "AdminSeguro*2026" })
+      });
+      assert.equal(adminAuthRes.status, 200);
+      const adminAuthCookie = (adminAuthRes.headers.get("set-cookie") || "").split(";")[0];
+
+      const pendientesRes = await fetch(`${baseUrl}/api/admin/tucanes/pendientes`, {
+        headers: { Cookie: adminAuthCookie }
+      });
+      assert.equal(pendientesRes.status, 200);
+      const pendientesJson = (await pendientesRes.json()) as any;
+      assert.ok(pendientesJson.pendientes.some((p: any) => p.identificacion === "7001"));
+
+      // Admin aprueba al Tucán
+      const aprobarRes = await fetch(`${baseUrl}/api/admin/tucanes/aprobar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: adminAuthCookie },
+        body: JSON.stringify({ identificador: "7001" })
+      });
+      assert.equal(aprobarRes.status, 200);
+      const aprobarJson = (await aprobarRes.json()) as any;
+      assert.equal(aprobarJson.ok, true);
+      assert.ok(aprobarJson.correo);
+      assert.match(aprobarJson.correo.asunto, /bienvenido a la comunidad tucán/i);
+
+      // Ahora el Tucán puede iniciar sesión normalmente con 200
+      const loginAprobadoRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "7001", password: "CarlosTucan*2026" })
+      });
+      assert.equal(loginAprobadoRes.status, 200);
+      const loginAprobadoJson = (await loginAprobadoRes.json()) as any;
+      assert.equal(loginAprobadoJson.rol, "motorista");
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       repo.cerrar();

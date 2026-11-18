@@ -2,6 +2,8 @@ import { Persona } from "./Persona.ts";
 import { Moto } from "./Moto.ts";
 import { Coordenada } from "./Coordenada.ts";
 
+export type EstadoAprobacionTucan = "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
+
 function calcularRumboEntre(origen: Coordenada, destino: Coordenada): number {
   const lat1 = (origen.latitud * Math.PI) / 180;
   const lat2 = (destino.latitud * Math.PI) / 180;
@@ -19,6 +21,15 @@ export class Motorista extends Persona {
   private _motos: Moto[];
   private _ubicacionActual: Coordenada;
   private _direccionGrados: number;
+  private _estadoAprobacion: EstadoAprobacionTucan;
+  private _fotoRostroUrl: string;
+  private _fotoMotoUrl: string;
+  private _fotoSoatUrl: string;
+  private _fotoLicenciaUrl: string;
+  private _compromisoAceptado: boolean;
+  private _motivoRechazo?: string;
+  private _fechaAprobacion?: Date;
+  private _correoBienvenidaEnviado: boolean;
 
   constructor(
     identificacion: string,
@@ -29,7 +40,16 @@ export class Motorista extends Persona {
     ubicacionActual?: Coordenada,
     direccionGrados: number = 0,
     passwordHash: string = "",
-    debeCambiarPassword: boolean = false
+    debeCambiarPassword: boolean = false,
+    estadoAprobacion: EstadoAprobacionTucan = "ACTIVO",
+    fotoRostroUrl: string = "",
+    fotoMotoUrl: string = "",
+    fotoSoatUrl: string = "",
+    fotoLicenciaUrl: string = "",
+    compromisoAceptado: boolean = true,
+    motivoRechazo?: string,
+    fechaAprobacion?: Date,
+    correoBienvenidaEnviado: boolean = false
   ) {
     super(identificacion, nombre, telefono, correoInstitucional, passwordHash, debeCambiarPassword);
     this._disponible = disponible;
@@ -38,6 +58,15 @@ export class Motorista extends Persona {
     this._direccionGrados = Number.isFinite(direccionGrados)
       ? ((Math.round(direccionGrados) % 360) + 360) % 360
       : 0;
+    this._estadoAprobacion = estadoAprobacion;
+    this._fotoRostroUrl = fotoRostroUrl;
+    this._fotoMotoUrl = fotoMotoUrl;
+    this._fotoSoatUrl = fotoSoatUrl;
+    this._fotoLicenciaUrl = fotoLicenciaUrl;
+    this._compromisoAceptado = compromisoAceptado;
+    this._motivoRechazo = motivoRechazo;
+    this._fechaAprobacion = fechaAprobacion;
+    this._correoBienvenidaEnviado = correoBienvenidaEnviado;
   }
 
   public get disponible(): boolean {
@@ -45,7 +74,82 @@ export class Motorista extends Persona {
   }
 
   public set disponible(valor: boolean) {
+    if (this._estadoAprobacion !== "ACTIVO" && valor) {
+      throw new Error("Un Tucán no puede activarse si su estado no es ACTIVO y verificado por la administración.");
+    }
     this._disponible = valor;
+  }
+
+  public get estadoAprobacion(): EstadoAprobacionTucan {
+    return this._estadoAprobacion;
+  }
+
+  public set estadoAprobacion(valor: EstadoAprobacionTucan) {
+    this._estadoAprobacion = valor;
+  }
+
+  public get fotoRostroUrl(): string {
+    return this._fotoRostroUrl;
+  }
+
+  public set fotoRostroUrl(url: string) {
+    this._fotoRostroUrl = url;
+  }
+
+  public get fotoMotoUrl(): string {
+    return this._fotoMotoUrl;
+  }
+
+  public set fotoMotoUrl(url: string) {
+    this._fotoMotoUrl = url;
+  }
+
+  public get fotoSoatUrl(): string {
+    return this._fotoSoatUrl;
+  }
+
+  public set fotoSoatUrl(url: string) {
+    this._fotoSoatUrl = url;
+  }
+
+  public get fotoLicenciaUrl(): string {
+    return this._fotoLicenciaUrl;
+  }
+
+  public set fotoLicenciaUrl(url: string) {
+    this._fotoLicenciaUrl = url;
+  }
+
+  public get compromisoAceptado(): boolean {
+    return this._compromisoAceptado;
+  }
+
+  public set compromisoAceptado(valor: boolean) {
+    this._compromisoAceptado = valor;
+  }
+
+  public get motivoRechazo(): string | undefined {
+    return this._motivoRechazo;
+  }
+
+  public set motivoRechazo(motivo: string | undefined) {
+    this._motivoRechazo = motivo;
+  }
+
+  public get fechaAprobacion(): Date | undefined {
+    return this._fechaAprobacion;
+  }
+
+  public set fechaAprobacion(fecha: Date | undefined) {
+    this._fechaAprobacion = fecha;
+  }
+
+  public get correoBienvenidaEnviado(): boolean {
+    return this._correoBienvenidaEnviado;
+  }
+
+  public set correoBienvenidaEnviado(valor: boolean) {
+    this._correoBienvenidaEnviado = valor;
   }
 
   public get motos(): readonly Moto[] {

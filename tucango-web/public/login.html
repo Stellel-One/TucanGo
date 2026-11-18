@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="cream">
+<html lang="es" data-theme="uniamazonia">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>TucanGo · Acceso Universitario · Iniciar sesión</title>
+  <title>TucanGo · Acceso Universitario · Universidad de la Amazonia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=2.9" />
+  <link rel="stylesheet" href="/login.css?v=3.5" />
 </head>
 <body>
   <!-- F14: Banner de estado de conexión / API offline -->
@@ -19,31 +19,31 @@
     ⚠️ Sin conexión con el servidor TucanGo. Verifica tu conexión de red.
   </div>
 
-  <!-- Canvas invisible para preservar contrato de pruebas automatizadas -->
-  <canvas id="flow-scroll-canvas" style="display:none;" aria-hidden="true"></canvas>
+  <!-- CURVAS INSTITUCIONALES DE FONDO (PORTADA UNIAMAZONIA) -->
+  <div class="uniamazonia-bg-decor" aria-hidden="true">
+    <div class="decor-curve-top-green"></div>
+    <div class="decor-curve-top-red"></div>
+    <div class="decor-curve-bottom-green"></div>
+  </div>
 
   <main class="ios-app-viewport">
     <div class="ios-auth-card">
 
-      <!-- HEADER MINIMALISTA DE MARCA -->
+      <!-- HEADER INSTITUCIONAL UNIAMAZONIA -->
       <header class="ios-brand-header">
         <div class="brand-avatar-box">
           <img
-            src="/assets/portal/tucan-portal-badge.png?v=2.8"
-            alt="Emblema TucanGo"
-            width="44"
-            height="52"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            src="/assets/portal/uniamazonia-toucan-logo.svg"
+            alt="Emblema Universidad de la Amazonia - Tucán UA"
+            width="56"
+            height="64"
+            onerror="this.src='/assets/portal/tucan-portal-badge.png';"
           />
-          <svg viewBox="0 0 40 40" fill="none" class="badge-fallback-svg" style="display:none" aria-hidden="true">
-            <path d="M10 30C10 21 16 14 25 14H28V22C28 28 22 32 15 32H10V30Z" fill="#1B4532" />
-            <path d="M28 14C32 14 37 16 38 20C35 22 31 22 28 21V14Z" fill="#D7331B" />
-            <circle cx="23.5" cy="18.5" r="1.8" fill="#EEE2CB" />
-          </svg>
         </div>
         <div class="brand-title-wrap">
+          <span class="brand-institution-tag">UNIVERSIDAD DE LA AMAZONIA</span>
           <h1 class="brand-title">TucanGo</h1>
-          <span class="brand-subtitle">Universidad de la Amazonia</span>
+          <span class="brand-subtitle">Movilidad Estudiantil Segura · <em>"Pide un Tucán"</em></span>
         </div>
       </header>
 
@@ -98,15 +98,15 @@
           </button>
         </nav>
 
-        <!-- ==================== VISTA 1: INICIAR SESIÓN GENERAL ==================== -->
+        <!-- ==================== VISTA 1: INICIAR SESIÓN ==================== -->
         <div id="view-login" class="auth-view-tab" role="tabpanel" aria-labelledby="tab-btn-login">
-          <h2 class="view-heading">Ingresa con tu cuenta</h2>
+          <h2 class="view-heading">Acceso al Campus</h2>
 
-          <!-- ACCESOS RÁPIDOS DE PRUEBA -->
+          <!-- ACCESOS RÁPIDOS DE PRUEBA EVALUATIVA -->
           <div class="quick-credentials-strip" aria-label="Accesos de prueba rápida">
-            <span class="strip-label">Accesos rápidos de prueba (un clic):</span>
+            <span class="strip-label">Accesos rápidos de evaluación (un clic):</span>
             <div class="strip-pills">
-              <button type="button" class="quick-cred-pill" data-user="tucanadmin" data-pass="admin123" title="Admin: tucanadmin / admin123">
+              <button type="button" class="quick-cred-pill" data-user="tucangoadmin" data-pass="admin123" title="Admin: tucangoadmin / admin123">
                 <span class="pill-dot dot-admin"></span>
                 <strong>Admin:</strong> <code>admin123</code>
               </button>
@@ -114,9 +114,9 @@
                 <span class="pill-dot dot-student"></span>
                 <strong>Estudiante:</strong> <code>estudiante123</code>
               </button>
-              <button type="button" class="quick-cred-pill" data-user="motorista" data-pass="motorista123" title="Motorista: motorista / motorista123">
+              <button type="button" class="quick-cred-pill" data-user="motorista" data-pass="motorista123" title="Tucán: motorista / motorista123">
                 <span class="pill-dot dot-driver"></span>
-                <strong>Motorista:</strong> <code>motorista123</code>
+                <strong>Tucán:</strong> <code>motorista123</code>
               </button>
             </div>
           </div>
@@ -125,7 +125,7 @@
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="input-login-id" class="ios-input-label">
-                  Usuario, cédula, correo o placa
+                  Cédula, usuario, correo institucional o placa
                 </label>
                 <input
                   id="input-login-id"
@@ -136,7 +136,7 @@
                   spellcheck="false"
                   inputmode="text"
                   required
-                  placeholder="Ej. tucanadmin, estudiante o motorista"
+                  placeholder="Ej. 1006888999, tucangoadmin o placa"
                 />
               </div>
 
@@ -170,7 +170,6 @@
               </div>
             </div>
 
-            <!-- F2: Botón con estado busy/spinner -->
             <button type="submit" id="btn-login-submit" class="btn-tactile btn-tactile-primary">
               <span class="btn-spinner hidden" aria-hidden="true"></span>
               <span class="btn-text">Ingresar</span>
@@ -179,26 +178,26 @@
 
           <footer class="view-switch-footer">
             <button type="button" class="footer-link-btn" id="link-go-register">
-              ¿No tienes una cuenta? <strong>Regístrate aquí</strong>
+              ¿No tienes cuenta? <strong>Regístrate aquí</strong>
             </button>
           </footer>
         </div>
 
         <!-- ==================== VISTA 2: REGISTRO DE ROLES ==================== -->
         <div id="view-register" class="auth-view-tab hidden" role="tabpanel" aria-labelledby="tab-btn-register">
-          <h2 class="view-heading">Crear cuenta</h2>
+          <h2 class="view-heading">Crear Cuenta Universitaria</h2>
 
-          <!-- SELECTOR DE ROL PARA REGISTRO -->
+          <!-- SELECTOR DE ROL -->
           <div class="role-segmented-pills" role="radiogroup" aria-label="Rol a registrar">
             <button type="button" class="role-pill-btn active" data-reg-role="estudiante" role="radio" aria-checked="true">
-              Estudiante
+              Estudiante Uniamazonia
             </button>
             <button type="button" class="role-pill-btn" data-reg-role="motorista" role="radio" aria-checked="false">
-              Motorista + Moto
+              Aspirante a Tucán (Conductor)
             </button>
           </div>
 
-          <!-- FLUJO 1: REGISTRO DE ESTUDIANTE -->
+          <!-- ================= FLUJO 1: REGISTRO ESTUDIANTE ================= -->
           <form id="form-reg-estudiante" class="ios-form" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
@@ -254,7 +253,6 @@
                   placeholder="Mínimo 10 caracteres"
                 />
               </div>
-              <!-- F11: Confirmación de contraseña -->
               <div class="ios-input-row">
                 <label for="reg-est-password-confirm" class="ios-input-label">Confirmar contraseña</label>
                 <input
@@ -275,115 +273,285 @@
             </button>
           </form>
 
-          <!-- FLUJO 2: REGISTRO DE MOTORISTA + MOTOCICLETA -->
-          <form id="form-reg-motorista" class="ios-form hidden" novalidate>
-            <span class="form-group-title">Datos personales</span>
-            <div class="ios-grouped-inputs">
-              <div class="ios-input-row">
-                <label for="reg-mot-id" class="ios-input-label">Cédula de ciudadanía</label>
-                <input id="reg-mot-id" type="text" inputmode="numeric" pattern="[0-9]*" class="ios-input-field" required placeholder="Ej. 1117555444" />
+          <!-- ================= FLUJO 2: WIZARD ASPIRANTE A TUCÁN (NEQUI / DIDI FLOW) ================= -->
+          <div id="wizard-tucan-container" class="wizard-container hidden">
+
+            <!-- STEPPER HEADER -->
+            <div class="wizard-stepper-header" aria-label="Progreso del registro de Tucán">
+              <div class="wizard-step-node active" data-step-indicator="1">
+                <span class="step-num">1</span>
+                <span class="step-label">Datos</span>
               </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-nombre" class="ios-input-label">Nombre completo</label>
-                <input id="reg-mot-nombre" type="text" autocapitalize="words" autocomplete="name" class="ios-input-field" required placeholder="Ej. Andrés Rojas" />
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step-node" data-step-indicator="2">
+                <span class="step-num">2</span>
+                <span class="step-label">Selfie</span>
               </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-tel" class="ios-input-label">Teléfono celular</label>
-                <input id="reg-mot-tel" type="tel" inputmode="tel" autocomplete="tel" class="ios-input-field" required placeholder="Ej. 3200000000" />
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step-node" data-step-indicator="3">
+                <span class="step-num">3</span>
+                <span class="step-label">Moto</span>
               </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-correo" class="ios-input-label">Correo institucional (@uniamazonia.edu.co)</label>
-                <input
-                  id="reg-mot-correo"
-                  type="email"
-                  inputmode="email"
-                  autocapitalize="none"
-                  spellcheck="false"
-                  autocomplete="email"
-                  class="ios-input-field"
-                  required
-                  placeholder="Ej. a.rojas@uniamazonia.edu.co"
-                />
-              </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
-                <input
-                  id="reg-mot-password"
-                  type="password"
-                  minlength="10"
-                  class="ios-input-field"
-                  autocomplete="new-password"
-                  required
-                  placeholder="Mínimo 10 caracteres"
-                />
-              </div>
-              <!-- F11: Confirmación de contraseña -->
-              <div class="ios-input-row">
-                <label for="reg-mot-password-confirm" class="ios-input-label">Confirmar contraseña</label>
-                <input
-                  id="reg-mot-password-confirm"
-                  type="password"
-                  minlength="10"
-                  class="ios-input-field"
-                  autocomplete="new-password"
-                  required
-                  placeholder="Repite tu contraseña"
-                />
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step-node" data-step-indicator="4">
+                <span class="step-num">4</span>
+                <span class="step-label">Legal</span>
               </div>
             </div>
 
-            <span class="form-group-title">Datos de la motocicleta</span>
-            <div class="ios-grouped-inputs">
-              <div class="ios-input-row">
-                <label for="reg-mot-placa" class="ios-input-label">Placa de la moto</label>
-                <input id="reg-mot-placa" type="text" autocapitalize="characters" class="ios-input-field" required placeholder="Ej. AMZ-77G" />
-              </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-marca" class="ios-input-label">Marca</label>
-                <input id="reg-mot-marca" type="text" autocapitalize="words" class="ios-input-field" required placeholder="Ej. Suzuki" />
-              </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-modelo" class="ios-input-label">Modelo / Año</label>
-                <input id="reg-mot-modelo" type="text" class="ios-input-field" required placeholder="Ej. Gixxer 150 (2024)" />
-              </div>
-              <!-- F13: Campos SOAT limpios sin precarga -->
-              <div class="ios-input-row">
-                <label for="reg-mot-cc" class="ios-input-label">Cilindraje (CC)</label>
-                <input id="reg-mot-cc" type="number" min="50" class="ios-input-field" required placeholder="Ej. 150" />
-              </div>
-              <div class="ios-input-row">
-                <label for="reg-mot-soat" class="ios-input-label">Número de póliza SOAT</label>
-                <input id="reg-mot-soat" type="text" class="ios-input-field" required placeholder="Ej. SOAT-2026-FLR" />
-              </div>
-            </div>
+            <form id="form-wizard-tucan" class="ios-form" novalidate>
 
-            <!-- F13: Checkbox desmarcado por defecto -->
-            <label class="ios-checkbox-card">
-              <input id="reg-mot-soat-ok" type="checkbox" required />
-              <span class="checkbox-caption">
-                <strong>Certifico SOAT vigente y activo</strong>
-                <small>Requisito institucional obligatorio para operar en campus</small>
-              </span>
-            </label>
+              <!-- ETAPA 1: DATOS PERSONALES -->
+              <div class="wizard-step-content" data-step-panel="1">
+                <div class="wizard-step-intro">
+                  <h3>Paso 1: Datos Personales</h3>
+                  <p>Información básica para tu expediente de conductor en campus.</p>
+                </div>
 
-            <button type="submit" id="btn-reg-mot-submit" class="btn-tactile btn-tactile-forest">
-              <span class="btn-spinner hidden" aria-hidden="true"></span>
-              <span class="btn-text">Registrar motorista y motocicleta</span>
-            </button>
-          </form>
+                <div class="ios-grouped-inputs">
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-id" class="ios-input-label">Cédula de ciudadanía</label>
+                    <input id="reg-tucan-id" type="text" inputmode="numeric" pattern="[0-9]*" class="ios-input-field" required placeholder="Ej. 1117555444" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-nombre" class="ios-input-label">Nombre completo</label>
+                    <input id="reg-tucan-nombre" type="text" autocapitalize="words" class="ios-input-field" required placeholder="Ej. Andrés Rojas" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-tel" class="ios-input-label">Teléfono celular</label>
+                    <input id="reg-tucan-tel" type="tel" inputmode="tel" class="ios-input-field" required placeholder="Ej. 3200000000" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-correo" class="ios-input-label">Correo institucional (@uniamazonia.edu.co)</label>
+                    <input
+                      id="reg-tucan-correo"
+                      type="email"
+                      inputmode="email"
+                      autocapitalize="none"
+                      class="ios-input-field"
+                      required
+                      placeholder="Ej. a.rojas@uniamazonia.edu.co"
+                    />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
+                    <input
+                      id="reg-tucan-password"
+                      type="password"
+                      minlength="10"
+                      class="ios-input-field"
+                      required
+                      placeholder="Mínimo 10 caracteres"
+                    />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-password-confirm" class="ios-input-label">Confirmar contraseña</label>
+                    <input
+                      id="reg-tucan-password-confirm"
+                      type="password"
+                      minlength="10"
+                      class="ios-input-field"
+                      required
+                      placeholder="Repite tu contraseña"
+                    />
+                  </div>
+                </div>
+
+                <div class="wizard-actions">
+                  <button type="button" class="btn-tactile btn-tactile-forest btn-next-step" data-next="2">
+                    <span>Siguiente: Reconocimiento Facial →</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ETAPA 2: RECONOCIMIENTO FACIAL (SELFIE DE SEGURIDAD) -->
+              <div class="wizard-step-content hidden" data-step-panel="2">
+                <div class="wizard-step-intro">
+                  <h3>Paso 2: Reconocimiento Facial</h3>
+                  <p>Sube una selfie nítida con fondo claro para que los estudiantes te identifiquen en portería.</p>
+                </div>
+
+                <div class="photo-upload-container">
+                  <div class="photo-preview-circle" id="preview-box-face">
+                    <img id="img-preview-face" src="" alt="Vista previa selfie" class="hidden" />
+                    <div class="photo-placeholder" id="placeholder-face">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36" aria-hidden="true">
+                        <circle cx="12" cy="8" r="5" />
+                        <path d="M20 21a8 8 0 1 0-16 0" />
+                      </svg>
+                      <span>Tomar o subir foto</span>
+                    </div>
+                  </div>
+
+                  <input type="file" id="input-file-face" accept="image/*" class="hidden" />
+                  <div class="photo-btn-row">
+                    <button type="button" class="btn-subtle" id="btn-trigger-face">
+                      📷 Subir foto de perfil
+                    </button>
+                    <button type="button" class="btn-subtle" id="btn-demo-face">
+                      ⚡ Usar foto de demostración
+                    </button>
+                  </div>
+                </div>
+
+                <div class="wizard-info-note">
+                  🔒 Esta foto será visible en el HUD del estudiante durante el viaje para garantizar confianza y trazabilidad en el campus.
+                </div>
+
+                <div class="wizard-actions-row">
+                  <button type="button" class="btn-tactile btn-tactile-secondary btn-prev-step" data-prev="1">
+                    <span>← Anterior</span>
+                  </button>
+                  <button type="button" class="btn-tactile btn-tactile-forest btn-next-step" data-next="3">
+                    <span>Siguiente: Datos de la Moto →</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ETAPA 3: LA MOTO DEL TUCÁN -->
+              <div class="wizard-step-content hidden" data-step-panel="3">
+                <div class="wizard-step-intro">
+                  <h3>Paso 3: La Moto del Tucán</h3>
+                  <p>Identificación técnica y fotografía de tu vehículo registrado.</p>
+                </div>
+
+                <div class="ios-grouped-inputs">
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-placa" class="ios-input-label">Placa de la motocicleta</label>
+                    <input id="reg-tucan-placa" type="text" autocapitalize="characters" class="ios-input-field" required placeholder="Ej. AMZ-77G" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-marca" class="ios-input-label">Marca</label>
+                    <input id="reg-tucan-marca" type="text" autocapitalize="words" class="ios-input-field" required placeholder="Ej. Suzuki, Yamaha, Bajaj" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-modelo" class="ios-input-label">Línea / Modelo</label>
+                    <input id="reg-tucan-modelo" type="text" class="ios-input-field" required placeholder="Ej. Gixxer 150 FI (2024)" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-cc" class="ios-input-label">Cilindraje (CC)</label>
+                    <input id="reg-tucan-cc" type="number" min="50" class="ios-input-field" required placeholder="Ej. 150" />
+                  </div>
+                </div>
+
+                <div class="photo-upload-box">
+                  <span class="upload-label">Fotografía lateral de la motocicleta:</span>
+                  <div class="photo-preview-rect" id="preview-box-moto">
+                    <img id="img-preview-moto" src="" alt="Vista previa moto" class="hidden" />
+                    <div class="photo-placeholder" id="placeholder-moto">
+                      <span>🏍️ Foto de la moto visible</span>
+                    </div>
+                  </div>
+                  <input type="file" id="input-file-moto" accept="image/*" class="hidden" />
+                  <div class="photo-btn-row">
+                    <button type="button" class="btn-subtle" id="btn-trigger-moto">
+                      Subir foto de moto
+                    </button>
+                    <button type="button" class="btn-subtle" id="btn-demo-moto">
+                      ⚡ Usar moto demo
+                    </button>
+                  </div>
+                </div>
+
+                <div class="wizard-actions-row">
+                  <button type="button" class="btn-tactile btn-tactile-secondary btn-prev-step" data-prev="2">
+                    <span>← Anterior</span>
+                  </button>
+                  <button type="button" class="btn-tactile btn-tactile-forest btn-next-step" data-next="4">
+                    <span>Siguiente: Legal y Compromiso →</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ETAPA 4: MARCO LEGAL, SOAT Y COMPROMISO DE HONOR OBLIGATORIO -->
+              <div class="wizard-step-content hidden" data-step-panel="4">
+                <div class="wizard-step-intro">
+                  <h3>Paso 4: Marco Legal y Compromiso</h3>
+                  <p>Auditoría de póliza de seguro y aceptación del Código de Honor Uniamazonia.</p>
+                </div>
+
+                <div class="ios-grouped-inputs">
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-soat" class="ios-input-label">Número de póliza SOAT</label>
+                    <input id="reg-tucan-soat" type="text" class="ios-input-field" required placeholder="Ej. SOAT-2026-FLR" />
+                  </div>
+                  <div class="ios-input-row">
+                    <label for="reg-tucan-licencia" class="ios-input-label">Número de Licencia de Conducción (Cat. A2)</label>
+                    <input id="reg-tucan-licencia" type="text" class="ios-input-field" required placeholder="Ej. LIC-1117555-A2" />
+                  </div>
+                </div>
+
+                <!-- COMPROMISO DE HONOR Y POLÍTICAS CON REVOCACIÓN -->
+                <div class="honor-commitment-card">
+                  <div class="honor-header">
+                    <span class="honor-shield">🛡️</span>
+                    <strong>Compromiso de Honor y Políticas Tucán</strong>
+                  </div>
+                  <p class="honor-text">
+                    Prometo y me comprometo solemnemente a cumplir las políticas institucionales, normas de convivencia y el límite de velocidad máxima (20 km/h) en el campus de la Universidad de la Amazonia, garantizando siempre el uso de casco reglamentario.
+                    <br /><br />
+                    <strong>Advertencia de cumplimiento:</strong> Entiendo y acepto expresamente que cualquier infracción, conducta riesgosa o incumplimiento conllevará la <em>revocación inmediata e irrevocable de mi Licencia Tucán</em> y la expulsión definitiva del servicio.
+                  </p>
+                  <label class="honor-checkbox-label">
+                    <input id="reg-tucan-compromiso-check" type="checkbox" required />
+                    <span><strong>Prometo cumplir este código de honor</strong> y acepto las sanciones y revocación en caso de infracción.</span>
+                  </label>
+                </div>
+
+                <div class="wizard-actions-row">
+                  <button type="button" class="btn-tactile btn-tactile-secondary btn-prev-step" data-prev="3">
+                    <span>← Anterior</span>
+                  </button>
+                  <button type="submit" id="btn-submit-wizard-tucan" class="btn-tactile btn-tactile-primary">
+                    <span class="btn-spinner hidden" aria-hidden="true"></span>
+                    <span class="btn-text">Enviar a Auditoría de Administración</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- ETAPA 5: TARJETA DE CONFIRMACIÓN / EN REVISIÓN -->
+              <div class="wizard-step-content hidden" data-step-panel="5">
+                <div class="status-pending-card">
+                  <div class="pending-icon-circle">⏳</div>
+                  <h3>¡Solicitud de Licencia Tucán Enviada!</h3>
+                  <p>
+                    Tus documentos, SOAT y fotografías han entrado en la <strong>cola de auditoría de la administración de la Universidad de la Amazonia</strong>.
+                  </p>
+                  <div class="pending-info-box">
+                    <span>👤 <strong id="pending-tucan-nombre">Aspirante</strong></span>
+                    <span>🏍️ Placa: <strong id="pending-tucan-placa">AMZ-00X</strong></span>
+                    <span>📋 Estado: <strong class="text-ochre">PENDIENTE DE APROBACIÓN</strong></span>
+                  </div>
+                  <p class="pending-sub">
+                    Una vez el Administrador audite y apruebe tu expediente, recibirás un <strong>correo institucional de bienvenida</strong> y se habilitará tu acceso al Radar del campus.
+                  </p>
+                  <button type="button" class="btn-tactile btn-tactile-primary" id="btn-pending-go-login">
+                    <span>Volver a Inicio de Sesión</span>
+                  </button>
+                </div>
+              </div>
+
+            </form>
+          </div>
 
           <footer class="view-switch-footer">
             <button type="button" class="footer-link-btn" id="link-go-login">
-              ¿Ya tienes una cuenta? <strong>Inicia sesión</strong>
+              ¿Ya tienes cuenta? <strong>Inicia sesión</strong>
             </button>
           </footer>
         </div>
 
       </section>
 
-      <!-- PIE DE PÁGINA LIMPIO -->
-      <footer class="ios-app-footer">
-        <span>TucanGo v2.8 · Florencia, Caquetá</span>
+      <!-- PIE DE PÁGINA INSTITUCIONAL UNIAMAZONIA -->
+      <footer class="ios-app-footer uniamazonia-footer">
+        <div class="footer-accent-stripe"></div>
+        <div class="footer-bar-green">
+          <span class="footer-brand-text">Universidad de la Amazonia · Lógica y Algoritmos II · 2026</span>
+          <a href="https://www.uniamazonia.edu.co" target="_blank" rel="noopener noreferrer" class="footer-url-link">
+            www.uniamazonia.edu.co
+          </a>
+        </div>
       </footer>
 
     </div>
@@ -391,6 +559,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=2.9"></script>
+  <script src="/login.js?v=3.5"></script>
 </body>
 </html>

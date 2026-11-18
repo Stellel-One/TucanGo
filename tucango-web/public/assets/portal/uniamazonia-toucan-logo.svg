@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="100%" height="100%">
+  <defs>
+    <style>
+      .ua-green { fill: #006837; }
+      .ua-red { fill: #E30613; }
+      .ua-white { fill: #FFFFFF; }
+      .ua-text { font-family: 'Times New Roman', Times, 'Georgia', serif; fill: #1A1A1A; }
+    </style>
+  </defs>
+
+  <!-- PICO Y CABEZA DEL TUCÁN (ROJO INSTITUCIONAL) -->
+  <g id="tucan-head">
+    <!-- Base roja del pico y cabeza -->
+    <path class="ua-red" d="M125 150 C125 80 180 25 270 25 C310 25 335 45 345 65 C320 60 280 65 240 85 C205 102 185 125 175 150 Z" />
+    <path class="ua-red" d="M175 140 C175 90 220 50 295 45 C280 75 250 110 210 140 Z" />
+    <!-- Línea y detalle del ojo -->
+    <circle cx="165" cy="90" r="14" class="ua-white" />
+    <circle cx="165" cy="90" r="9" class="ua-red" />
+    <circle cx="165" cy="90" r="4" class="ua-white" />
+    <!-- Contorno blanco característico de las ranuras del pico -->
+    <path d="M175 35 L180 80 M210 30 L220 75 M245 35 L260 85 M125 120 C145 110 160 120 175 130" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" />
+    <!-- Mandíbula inferior roja -->
+    <path class="ua-red" d="M125 125 L125 152 C155 152 185 148 215 135 L200 125 C175 135 150 135 125 125 Z" />
+  </g>
+
+  <!-- MONOGRAMA 'UA' (VERDE AMAZONIA) -->
+  <g id="ua-monogram">
+    <!-- Letra U con remate curvado hacia la izquierda -->
+    <path class="ua-green" d="M110 160 C125 160 140 165 150 178 L150 235 C150 265 170 285 200 285 C230 285 250 265 250 235 L250 190 C250 175 260 165 275 165 C290 165 300 175 300 190 L300 240 C300 295 260 330 200 330 C140 330 100 295 100 240 L100 190 C100 175 105 160 110 160 Z" />
+    <!-- Letra A entrelazada a la derecha -->
+    <path class="ua-green" d="M260 215 C260 185 285 165 320 165 C355 165 380 185 380 220 L380 320 C380 328 375 330 365 330 C350 330 345 325 345 310 C335 325 315 330 295 330 C260 330 235 305 235 270 C235 235 260 215 300 215 L345 215 L345 210 C345 190 335 180 315 180 C300 180 290 188 285 200 Z M345 240 L305 240 C280 240 268 252 268 270 C268 288 280 300 302 300 C325 300 345 285 345 265 Z" />
+    <!-- Remate superior izquierdo decorativo de la U -->
+    <path class="ua-green" d="M85 175 C85 165 100 155 125 155 L125 185 C105 185 85 185 85 175 Z" />
+  </g>
+
+  <!-- TEXTO INSTITUCIONAL "Universidad de la. Amazonia" -->
+  <g id="ua-text">
+    <text x="200" y="375" text-anchor="middle" class="ua-text" font-size="34" font-weight="400" letter-spacing="0.5">
+      Universidad de la<tspan font-size="28" font-weight="bold" fill="#000000"> •</tspan>
+    </text>
+    <text x="200" y="440" text-anchor="middle" class="ua-text" font-size="68" font-weight="700" letter-spacing="-1">
+      Amazonia
+    </text>
+  </g>
+</svg>

@@ -58,6 +58,11 @@
           <span id="session-user-name">Cargando sesión...</span>
         </button>
 
+        <button type="button" id="btn-abrir-auditoria" class="btn-auditoria-pill hidden" title="Auditar y aprobar aspirantes a Tucán">
+          <i data-lucide="shield-check"></i>
+          <span>Auditoría Tucanes (<strong id="count-tucanes-pendientes">0</strong>)</span>
+        </button>
+
         <span id="role-locked-badge" class="role-locked-pill mono-text" aria-label="Rol activo autenticado">
           PASAJERO
         </span>
@@ -801,10 +806,41 @@
     </div>
   </div>
 
+  <!-- MODAL DE AUDITORÍA Y APROBACIÓN DE TUCANES (ADMIN) -->
+  <div id="modal-auditoria-tucanes" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-auditoria-title">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-header">
+        <div>
+          <div class="sim-badge"><i data-lucide="shield-check"></i> <span>Comité de Movilidad Uniamazonia</span></div>
+          <h3 id="modal-auditoria-title">Auditoría y Aprobación de Tucanes</h3>
+          <p class="muted-sub">Verifica documentos legales, fotografía facial, moto y envía el correo oficial de bienvenida</p>
+        </div>
+        <button type="button" class="btn-close" id="btn-cerrar-auditoria" aria-label="Cerrar modal">&times;</button>
+      </div>
+
+      <div class="modal-tabs" style="margin-bottom: 14px;">
+        <button type="button" class="modal-tab active" data-audit-tab="pendientes">
+          Solicitudes Pendientes (<span id="tab-count-pendientes">0</span>)
+        </button>
+        <button type="button" class="modal-tab" data-audit-tab="correos">
+          Correos de Bienvenida Enviados (<span id="tab-count-correos">0</span>)
+        </button>
+      </div>
+
+      <div id="audit-panel-pendientes" class="audit-list-container">
+        <div id="lista-tucanes-pendientes" class="audit-cards-grid"></div>
+      </div>
+
+      <div id="audit-panel-correos" class="audit-list-container hidden">
+        <div id="lista-correos-auditoria" class="audit-emails-list"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
   <script src="/vendor/lucide/lucide.min.js"></script>
-  <script src="app.js?v=3.4"></script>
+  <script src="app.js?v=3.5"></script>
 </body>
 </html>

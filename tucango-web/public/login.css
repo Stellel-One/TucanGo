@@ -1,24 +1,24 @@
-/* TucanGo · Sistema de Diseño 60-30-10 & iOS Figma Duolingo Style */
+/* TucanGo · Identidad Institucional Universidad de la Amazonia */
 :root {
-  /* 60% Dominante - Classic Cream */
-  --canvas-bg: #EEE2CB;
-  --card-bg: #FFFDF9;
-  --card-border: #D8C7A5;
-  --hairline: #E8DCC4;
+  /* 60% Dominante - Blanco y Crema Institucional */
+  --canvas-bg: #F6F8F7;
+  --card-bg: #FFFFFF;
+  --card-border: #D9E4DD;
+  --hairline: #E5ECE8;
   --input-bg: #FFFFFF;
-  --segment-bg: #E4D5BC;
+  --segment-bg: #EAF1ED;
 
-  /* 30% Estructural - Forest Fir Green */
-  --ink: #1B4532;
-  --ink-muted: #4B6E5B;
-  --forest-green: #1B4532;
-  --forest-shadow: #0D241A;
-  --forest-light: #2D6A4F;
+  /* 30% Estructural - Verde Institucional Uniamazonia */
+  --ink: #112A1E;
+  --ink-muted: #4C695A;
+  --forest-green: #006837;
+  --forest-shadow: #004725;
+  --forest-light: #15844F;
 
-  /* 10% Acento de Conversión - Tomato Red (WCAG AA Compliant) */
-  --tomato-red: #D7331B;
-  --tomato-shadow: #9E2413;
-  --tomato-light: #EE4129;
+  /* 10% Acento - Rojo Institucional Uniamazonia */
+  --tomato-red: #E30613;
+  --tomato-shadow: #A8040E;
+  --tomato-light: #F22E3A;
 
   /* Tipografías */
   --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -26,7 +26,7 @@
   --font-mono: "JetBrains Mono", monospace;
 
   /* Sombras y elevaciones */
-  --shadow-card: 0 8px 30px rgba(27, 69, 50, 0.08);
+  --shadow-card: 0 12px 36px rgba(0, 104, 55, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -751,4 +751,381 @@ body {
 
 @keyframes btn-spin {
   to { transform: rotate(360deg); }
+}
+
+/* ==================== CURVAS Y FOOTER INSTITUCIONAL UNIAMAZONIA ==================== */
+.uniamazonia-bg-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.decor-curve-top-green {
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: var(--forest-green);
+  opacity: 0.92;
+}
+
+.decor-curve-top-red {
+  position: absolute;
+  top: -90px;
+  right: -70px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  border: 3px solid var(--tomato-red);
+}
+
+.decor-curve-bottom-green {
+  position: absolute;
+  bottom: -140px;
+  left: -140px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  border: 3px solid var(--forest-green);
+  opacity: 0.35;
+}
+
+.ios-app-viewport {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-institution-tag {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--forest-green);
+  margin-bottom: 1px;
+}
+
+.ios-auth-card {
+  padding-bottom: 0 !important;
+  overflow: hidden;
+}
+
+.uniamazonia-footer {
+  margin: 16px -22px 0;
+  padding: 0;
+  border-top: none;
+}
+
+.footer-accent-stripe {
+  height: 4px;
+  background: var(--tomato-red);
+  width: 100%;
+}
+
+.footer-bar-green {
+  background: var(--forest-green);
+  color: #FFFFFF;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.footer-brand-text {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.footer-url-link {
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 12.5px;
+  text-decoration: none;
+  letter-spacing: 0.4px;
+}
+
+.footer-url-link:hover {
+  text-decoration: underline;
+}
+
+/* ==================== WIZARD ONBOARDING TUCÁN (ESTILO NEQUI / DIDI) ==================== */
+.wizard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wizard-stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 6px;
+  background: var(--segment-bg);
+  border-radius: 14px;
+}
+
+.wizard-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.wizard-step-node.active {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.wizard-step-node.completed {
+  opacity: 0.95;
+}
+
+.wizard-step-node .step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid var(--card-border);
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.wizard-step-node.active .step-num {
+  background: var(--forest-green);
+  border-color: var(--forest-green);
+  color: #FFFFFF;
+}
+
+.wizard-step-node.completed .step-num {
+  background: var(--forest-light);
+  border-color: var(--forest-light);
+  color: #FFFFFF;
+}
+
+.wizard-step-node .step-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.wizard-step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--card-border);
+  margin: 0 4px 14px;
+}
+
+.wizard-step-intro h3 {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--forest-green);
+  margin-bottom: 3px;
+}
+
+.wizard-step-intro p {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+.photo-upload-container,
+.photo-upload-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--segment-bg);
+  border-radius: 16px;
+  border: 1.5px dashed var(--card-border);
+}
+
+.photo-preview-circle {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 3px solid var(--forest-green);
+  background: #FFFFFF;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 14px rgba(0, 104, 55, 0.14);
+}
+
+.photo-preview-circle img,
+.photo-preview-rect img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-preview-rect {
+  width: 100%;
+  height: 130px;
+  border-radius: 12px;
+  border: 2px solid var(--card-border);
+  background: #FFFFFF;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px;
+}
+
+.photo-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-subtle {
+  background: #FFFFFF;
+  border: 1.5px solid var(--card-border);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-subtle:hover {
+  border-color: var(--forest-green);
+  color: var(--forest-green);
+}
+
+.wizard-info-note {
+  background: rgba(0, 104, 55, 0.08);
+  border-left: 3px solid var(--forest-green);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.wizard-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* TARJETA DE COMPROMISO DE HONOR Y POLÍTICAS */
+.honor-commitment-card {
+  background: #FFF9EB;
+  border: 1.5px solid #E5B94C;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.honor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7A5400;
+  font-size: 13.5px;
+}
+
+.honor-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #4A380E;
+}
+
+.honor-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #FFFFFF;
+  border: 1px solid #E5C97B;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.honor-checkbox-label input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--forest-green);
+  flex-shrink: 0;
+}
+
+/* TARJETA DE CONFIRMACIÓN / EN REVISIÓN */
+.status-pending-card {
+  text-align: center;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pending-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #FFF3D1;
+  border: 2px solid #E5B94C;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+}
+
+.status-pending-card h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--forest-green);
+}
+
+.status-pending-card p {
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.pending-info-box {
+  width: 100%;
+  background: var(--segment-bg);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.text-ochre {
+  color: #B4690E;
 }

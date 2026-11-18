@@ -58,3 +58,10 @@ export class CuerpoExcesivoError extends AuthError {
     this.name = "CuerpoExcesivoError";
   }
 }
+
+export class CuentaEnRevisionError extends AuthError {
+  constructor(message: string = "Tu solicitud como Tucán está en revisión por la administración de la Universidad de la Amazonia.") {
+    super(message, 403, "CUENTA_EN_REVISION");
+    this.name = "CuentaEnRevisionError";
+  }
+}

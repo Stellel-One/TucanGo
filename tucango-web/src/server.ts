@@ -471,7 +471,30 @@ function construirEstadoDTO(facade: TucanGoFacade) {
     sectores: facade.obtenerSectoresCampus().map(serializarSector),
     estudiantes,
     motoristas,
-    viajes
+    viajes,
+    tucanesPendientes: facade.obtenerTucanesPendientes().map((m) => ({
+      identificacion: m.identificacion,
+      nombre: m.nombre,
+      telefono: m.telefono,
+      correo: m.correoInstitucional,
+      estadoAprobacion: m.estadoAprobacion,
+      fotoRostroUrl: m.fotoRostroUrl,
+      fotoMotoUrl: m.fotoMotoUrl,
+      fotoSoatUrl: m.fotoSoatUrl,
+      fotoLicenciaUrl: m.fotoLicenciaUrl,
+      compromisoAceptado: m.compromisoAceptado,
+      moto: m.obtenerMotoActiva()
+        ? {
+            placa: m.obtenerMotoActiva()!.placa,
+            marca: m.obtenerMotoActiva()!.marca,
+            modelo: m.obtenerMotoActiva()!.modelo,
+            cilindraje: m.obtenerMotoActiva()!.cilindraje,
+            soatVigente: m.obtenerMotoActiva()!.soatVigente,
+            numeroSoat: m.obtenerMotoActiva()!.numeroSoat
+          }
+        : null
+    })),
+    notificacionesCorreo: facade.obtenerNotificacionesCorreo()
   };
 }
 
@@ -815,8 +838,8 @@ export function crearServidor(
         return;
       }
 
-      // B13: Registro público de motorista con SOAT y password obligatoria
-      if (pathname === "/api/motoristas" && req.method === "POST") {
+      // Registro de Motorista / Onboarding Aspirante a Tucán (con Políticas y Compromiso Institucional)
+      if ((pathname === "/api/tucanes/registro" || pathname === "/api/motoristas") && req.method === "POST") {
         const ip = obtenerClienteIp(req);
         const rateCheck = verificarRateLimit(`reg:${ip}`, 10, 600000);
         if (!rateCheck.permitido) {
@@ -841,6 +864,12 @@ export function crearServidor(
           soatVigente: boolean;
           numeroSoat?: string;
           password?: string;
+          fotoRostroUrl?: string;
+          fotoMotoUrl?: string;
+          fotoSoatUrl?: string;
+          fotoLicenciaUrl?: string;
+          compromisoAceptado?: boolean;
+          estadoAprobacion?: "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
         }>(req);
 
         if (!body.password || body.password.trim().length === 0) {
@@ -848,12 +877,117 @@ export function crearServidor(
           return;
         }
 
-        const mot = facade.registrarMotoristaConMoto(body);
+        if (pathname === "/api/tucanes/registro" && body.compromisoAceptado === false) {
+          sendJson(res, 422, {
+            error: "Debes aceptar solemnemente cumplir las políticas y normas de movilidad de la Universidad de la Amazonia para postular tu Licencia Tucán."
+          });
+          return;
+        }
+
+        const esRutaTucanes = pathname === "/api/tucanes/registro";
+        const estadoAprobacion = esRutaTucanes
+          ? "PENDIENTE_APROBACION"
+          : (body.estadoAprobacion ?? "ACTIVO");
+
+        const mot = facade.registrarMotoristaConMoto({
+          ...body,
+          estadoAprobacion
+        });
+
         sendJson(res, 201, {
-          mensaje: "Motorista y motocicleta verificados con SOAT vigente",
+          mensaje:
+            estadoAprobacion === "PENDIENTE_APROBACION"
+              ? "Solicitud de Licencia Tucán recibida. Tus documentos y SOAT están en proceso de auditoría y aprobación por la administración de la Universidad de la Amazonia."
+              : "Motorista y motocicleta verificados con SOAT vigente",
           identificacion: mot.identificacion,
           nombre: mot.nombre,
-          placa: mot.obtenerMotoActiva()?.placa || null
+          placa: mot.obtenerMotoActiva()?.placa || null,
+          estadoAprobacion: mot.estadoAprobacion
+        });
+        return;
+      }
+
+      // Endpoints de Auditoría y Aprobación de Tucanes (Exclusivo Administrador)
+      if (pathname === "/api/admin/tucanes/pendientes" && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        const pendientes = facade.obtenerTucanesPendientes().map((m) => ({
+          identificacion: m.identificacion,
+          nombre: m.nombre,
+          telefono: m.telefono,
+          correo: m.correoInstitucional,
+          estadoAprobacion: m.estadoAprobacion,
+          fotoRostroUrl: m.fotoRostroUrl,
+          fotoMotoUrl: m.fotoMotoUrl,
+          fotoSoatUrl: m.fotoSoatUrl,
+          fotoLicenciaUrl: m.fotoLicenciaUrl,
+          compromisoAceptado: m.compromisoAceptado,
+          moto: m.obtenerMotoActiva()
+            ? {
+                placa: m.obtenerMotoActiva()!.placa,
+                marca: m.obtenerMotoActiva()!.marca,
+                modelo: m.obtenerMotoActiva()!.modelo,
+                cilindraje: m.obtenerMotoActiva()!.cilindraje,
+                soatVigente: m.obtenerMotoActiva()!.soatVigente,
+                numeroSoat: m.obtenerMotoActiva()!.numeroSoat
+              }
+            : null
+        }));
+        sendJson(res, 200, { pendientes, total: pendientes.length });
+        return;
+      }
+
+      if (pathname === "/api/admin/tucanes/aprobar" && req.method === "POST") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        const body = await parseJsonBody<{ identificacion?: string; identificador?: string }>(req);
+        const identificacion = (body.identificacion || body.identificador || "").trim();
+        if (!identificacion) {
+          sendJson(res, 422, { error: "La identificación del Tucán es obligatoria." });
+          return;
+        }
+        const { tucan, correo } = facade.aprobarTucan(identificacion);
+        sendJson(res, 200, {
+          ok: true,
+          mensaje: `Tucán ${tucan.nombre} aprobado exitosamente. Se ha emitido y enviado el correo institucional de bienvenida.`,
+          tucan: {
+            identificacion: tucan.identificacion,
+            nombre: tucan.nombre,
+            estadoAprobacion: tucan.estadoAprobacion
+          },
+          correo
+        });
+        return;
+      }
+
+      if (pathname === "/api/admin/tucanes/rechazar" && req.method === "POST") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        const body = await parseJsonBody<{ identificacion?: string; identificador?: string; motivo?: string }>(req);
+        const identificacion = (body.identificacion || body.identificador || "").trim();
+        if (!identificacion) {
+          sendJson(res, 422, { error: "La identificación del Tucán es obligatoria." });
+          return;
+        }
+        const tucan = facade.rechazarTucan(identificacion, body.motivo);
+        sendJson(res, 200, {
+          ok: true,
+          mensaje: `Solicitud del Tucán ${tucan.nombre} rechazada.`,
+          tucan: {
+            identificacion: tucan.identificacion,
+            nombre: tucan.nombre,
+            estadoAprobacion: tucan.estadoAprobacion,
+            motivo: tucan.motivoRechazo
+          }
+        });
+        return;
+      }
+
+      if (pathname === "/api/admin/notificaciones" && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        sendJson(res, 200, {
+          notificaciones: facade.obtenerNotificacionesCorreo()
         });
         return;
       }
