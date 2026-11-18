@@ -407,93 +407,95 @@
       });
     }
 
+    // ==================== VALIDACIÓN EN TIEMPO REAL (MDN CONSTRAINT VALIDATION API) ====================
+    // Los helpers viven en el alcance del módulo: el bloque que ata los listeners
+    // corre al cargar la página, fuera de validarPasoWizard, y los necesita.
+    const customMessages = {
+      "reg-tucan-id": "Ingresa una cédula válida de 6 a 10 dígitos numéricos.",
+      "reg-tucan-nombre": "Ingresa tu nombre completo (mínimo 3 caracteres).",
+      "reg-tucan-tel": "Ingresa un celular/WhatsApp colombiano válido de 10 dígitos (ej. 3201234567).",
+      "reg-tucan-correo": "Ingresa un correo electrónico personal válido (ej. andres@gmail.com).",
+      "reg-tucan-password": "La contraseña debe tener al menos 10 caracteres.",
+      "reg-tucan-password-confirm": "Las contraseñas no coinciden.",
+      "reg-tucan-placa": "Formato de placa colombiana inválido (ej. AMZ-77G o AMZ77G).",
+      "reg-tucan-marca": "Ingresa la marca de la motocicleta (mínimo 2 caracteres).",
+      "reg-tucan-modelo": "Ingresa la línea o modelo (mínimo 2 caracteres).",
+      "reg-tucan-cc": "El cilindraje debe estar entre 50 y 1500 cc.",
+      "reg-tucan-soat": "Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).",
+      "reg-tucan-licencia": "Ingresa un número de licencia de conducción válido (mínimo 5 caracteres)."
+    };
+
+    function obtenerMensajeErrorCampo(inputEl) {
+      if (!inputEl) return "";
+      const v = inputEl.validity;
+      if (v.valueMissing) return "Este campo es obligatorio.";
+      if (inputEl.id === "reg-tucan-correo") {
+        const val = inputEl.value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
+          return customMessages["reg-tucan-correo"];
+        }
+      }
+      if (inputEl.id === "reg-tucan-password-confirm") {
+        if (inputEl.value !== (els.regTucanPassword?.value || "")) {
+          return customMessages["reg-tucan-password-confirm"];
+        }
+      }
+      if (v.typeMismatch || v.patternMismatch || v.tooShort || v.tooLong || v.rangeUnderflow || v.rangeOverflow) {
+        return customMessages[inputEl.id] || inputEl.validationMessage;
+      }
+      return "";
+    }
+
+    function validarCampoEnTiempoReal(inputEl) {
+      if (!inputEl) return true;
+      const errSpan = document.getElementById(`${inputEl.id}-error`);
+      const msg = obtenerMensajeErrorCampo(inputEl);
+
+      if (msg) {
+        inputEl.classList.remove("is-valid");
+        inputEl.classList.add("is-invalid");
+        inputEl.setAttribute("aria-invalid", "true");
+        if (errSpan) errSpan.textContent = msg;
+        return false;
+      } else {
+        inputEl.classList.remove("is-invalid");
+        inputEl.classList.add("is-valid");
+        inputEl.setAttribute("aria-invalid", "false");
+        if (errSpan) errSpan.textContent = "";
+        return true;
+      }
+    }
+
+    function actualizarMedidorFuerza(pass) {
+      const bar = document.getElementById("tucan-pass-strength-bar");
+      const label = document.getElementById("tucan-pass-strength-label");
+      if (!bar || !label) return;
+
+      let score = 0;
+      if (pass.length >= 10) score++;
+      if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+      if (/[0-9]/.test(pass)) score++;
+      if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+      if (!pass) {
+        bar.style.width = "0%";
+        label.textContent = "Seguridad: --";
+      } else if (score <= 1 || pass.length < 10) {
+        bar.style.width = "33%";
+        bar.style.backgroundColor = "#E30613";
+        label.textContent = "Seguridad: Débil";
+      } else if (score === 2 || score === 3) {
+        bar.style.width = "68%";
+        bar.style.backgroundColor = "#D97706";
+        label.textContent = "Seguridad: Media";
+      } else {
+        bar.style.width = "100%";
+        bar.style.backgroundColor = "#006837";
+        label.textContent = "Seguridad: Fuerte";
+      }
+    }
+
     function validarPasoWizard(pasoActual) {
-      // ==================== VALIDACIÓN EN TIEMPO REAL (MDN CONSTRAINT VALIDATION API) ====================
-      const customMessages = {
-        "reg-tucan-id": "Ingresa una cédula válida de 6 a 10 dígitos numéricos.",
-        "reg-tucan-nombre": "Ingresa tu nombre completo (mínimo 3 caracteres).",
-        "reg-tucan-tel": "Ingresa un celular/WhatsApp colombiano válido de 10 dígitos (ej. 3201234567).",
-        "reg-tucan-correo": "Ingresa un correo electrónico personal válido (ej. andres@gmail.com).",
-        "reg-tucan-password": "La contraseña debe tener al menos 10 caracteres.",
-        "reg-tucan-password-confirm": "Las contraseñas no coinciden.",
-        "reg-tucan-placa": "Formato de placa colombiana inválido (ej. AMZ-77G o AMZ77G).",
-        "reg-tucan-marca": "Ingresa la marca de la motocicleta (mínimo 2 caracteres).",
-        "reg-tucan-modelo": "Ingresa la línea o modelo (mínimo 2 caracteres).",
-        "reg-tucan-cc": "El cilindraje debe estar entre 50 y 1500 cc.",
-        "reg-tucan-soat": "Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).",
-        "reg-tucan-licencia": "Ingresa un número de licencia de conducción válido (mínimo 5 caracteres)."
-      };
-
-      function obtenerMensajeErrorCampo(inputEl) {
-        if (!inputEl) return "";
-        const v = inputEl.validity;
-        if (v.valueMissing) return "Este campo es obligatorio.";
-        if (inputEl.id === "reg-tucan-correo") {
-          const val = inputEl.value.trim();
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
-            return customMessages["reg-tucan-correo"];
-          }
-        }
-        if (inputEl.id === "reg-tucan-password-confirm") {
-          if (inputEl.value !== (els.regTucanPassword?.value || "")) {
-            return customMessages["reg-tucan-password-confirm"];
-          }
-        }
-        if (v.typeMismatch || v.patternMismatch || v.tooShort || v.tooLong || v.rangeUnderflow || v.rangeOverflow) {
-          return customMessages[inputEl.id] || inputEl.validationMessage;
-        }
-        return "";
-      }
-
-      function validarCampoEnTiempoReal(inputEl) {
-        if (!inputEl) return true;
-        const errSpan = document.getElementById(`${inputEl.id}-error`);
-        const msg = obtenerMensajeErrorCampo(inputEl);
-
-        if (msg) {
-          inputEl.classList.remove("is-valid");
-          inputEl.classList.add("is-invalid");
-          inputEl.setAttribute("aria-invalid", "true");
-          if (errSpan) errSpan.textContent = msg;
-          return false;
-        } else {
-          inputEl.classList.remove("is-invalid");
-          inputEl.classList.add("is-valid");
-          inputEl.setAttribute("aria-invalid", "false");
-          if (errSpan) errSpan.textContent = "";
-          return true;
-        }
-      }
-
-      function actualizarMedidorFuerza(pass) {
-        const bar = document.getElementById("tucan-pass-strength-bar");
-        const label = document.getElementById("tucan-pass-strength-label");
-        if (!bar || !label) return;
-
-        let score = 0;
-        if (pass.length >= 10) score++;
-        if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
-        if (/[0-9]/.test(pass)) score++;
-        if (/[^A-Za-z0-9]/.test(pass)) score++;
-
-        if (!pass) {
-          bar.style.width = "0%";
-          label.textContent = "Seguridad: --";
-        } else if (score <= 1 || pass.length < 10) {
-          bar.style.width = "33%";
-          bar.style.backgroundColor = "#E30613";
-          label.textContent = "Seguridad: Débil";
-        } else if (score === 2 || score === 3) {
-          bar.style.width = "68%";
-          bar.style.backgroundColor = "#D97706";
-          label.textContent = "Seguridad: Media";
-        } else {
-          bar.style.width = "100%";
-          bar.style.backgroundColor = "#006837";
-          label.textContent = "Seguridad: Fuerte";
-        }
-      }
-
       if (pasoActual === 1) {
         const camposPaso1 = [
           els.regTucanId,
