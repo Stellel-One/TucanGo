@@ -11,7 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/login.css?v=3.9" />
+  <link rel="stylesheet" href="/login.css?v=4.0" />
 </head>
 <body>
   <!-- F14: Banner de estado de conexión / API offline -->
@@ -34,11 +34,11 @@
       <header class="ios-brand-header">
         <div class="brand-avatar-box">
           <img
-            src="/assets/portal/uniamazonia-toucan-logo.svg"
-            alt="Emblema Universidad de la Amazonia - Tucán UA"
-            width="56"
-            height="64"
-            onerror="this.src='/assets/portal/tucan-portal-badge.png';"
+            src="/assets/brand/tucango-moto-logo.svg"
+            alt="Logotipo TucanGo: Tucán en motocicleta llevando a un estudiante"
+            width="54"
+            height="54"
+            onerror="this.src='/assets/brand/tucango-brandmark-geometric.png';"
           />
         </div>
         <div class="brand-title-wrap">
@@ -47,6 +47,70 @@
           <span class="brand-subtitle">Movilidad Estudiantil Segura · <em>"Pide un Tucán"</em></span>
         </div>
       </header>
+
+      <!-- VITRINA VISUAL ANIMADA DE IDENTIDAD TUCANGO -->
+      <section id="tucango-story-reel" class="story-reel-card" aria-label="Identidad y pilares de TucanGo">
+        <div class="story-reel-stage">
+          <article class="story-slide active" data-story-index="0">
+            <img
+              src="/assets/brand/tucango-web-hero-campus.png"
+              alt="Movilidad estudiantil TucanGo frente al campus de la Universidad de la Amazonia"
+              fetchpriority="high"
+              decoding="async"
+            />
+            <div class="story-slide-overlay">
+              <span class="story-live-pill"><span class="story-pulse-dot" aria-hidden="true"></span>Campus Uniamazonia</span>
+              <p class="story-slide-title">Pide un Tucán entre sedes en segundos</p>
+            </div>
+          </article>
+
+          <article class="story-slide" data-story-index="1">
+            <img
+              src="/assets/brand/tucango-seguridad-pin-soat.png"
+              alt="Verificación de abordaje seguro con PIN de 4 dígitos y SOAT activo"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="story-slide-overlay">
+              <span class="story-live-pill"><span class="story-pulse-dot" aria-hidden="true"></span>PIN + SOAT Activo</span>
+              <p class="story-slide-title">Abordaje verificado con código de 4 dígitos</p>
+            </div>
+          </article>
+
+          <article class="story-slide" data-story-index="2">
+            <img
+              src="/assets/brand/tucango-rutas-sedes-florencia.png"
+              alt="Red de rutas GPS en Florencia conectando Sede Porvenir y Centro IDEMA"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="story-slide-overlay">
+              <span class="story-live-pill"><span class="story-pulse-dot" aria-hidden="true"></span>GPS Florencia</span>
+              <p class="story-slide-title">Porvenir ↔ Centro IDEMA en tiempo real</p>
+            </div>
+          </article>
+
+          <article class="story-slide" data-story-index="3">
+            <img
+              src="/assets/brand/tucango-tarifa-pagos-moviles.png"
+              alt="Tarifa fija estudiantil y pagos digitales rápidos"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="story-slide-overlay">
+              <span class="story-live-pill"><span class="story-pulse-dot" aria-hidden="true"></span>Tarifa Estudiantil</span>
+              <p class="story-slide-title">Desde $2.500 COP · Efectivo, Nequi o QR</p>
+            </div>
+          </article>
+        </div>
+
+        <nav class="story-dots-nav" aria-label="Navegar pilares de TucanGo">
+          <button type="button" class="story-dot active" data-story-idx="0" aria-label="Campus Uniamazonia"></button>
+          <button type="button" class="story-dot" data-story-idx="1" aria-label="PIN y SOAT Activo"></button>
+          <button type="button" class="story-dot" data-story-idx="2" aria-label="GPS Florencia"></button>
+          <button type="button" class="story-dot" data-story-idx="3" aria-label="Tarifa Estudiantil"></button>
+        </nav>
+      </section>
 
       <!-- F3: Resumen accesible de errores inline -->
       <div id="auth-alert-summary" class="auth-alert-summary hidden" role="alert" aria-live="assertive"></div>
@@ -571,6 +635,6 @@
 
   <div id="portal-toast" class="ios-toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/login.js?v=3.9"></script>
+  <script src="/login.js?v=4.0"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@
   const els = {
     // Alertas y Banners
     networkBanner: document.getElementById("network-offline-banner"),
+    storyReel: document.getElementById("tucango-story-reel"),
     alertSummary: document.getElementById("auth-alert-summary"),
     toast: document.getElementById("portal-toast"),
 
@@ -137,6 +138,7 @@
 
       els.viewLogin.classList.add("hidden");
       els.viewRegister.classList.remove("hidden");
+      els.storyReel?.classList.add("hidden");
       document.title = "TucanGo · Registro universitario";
     } else {
       els.tabBtnRegister.classList.remove("active");
@@ -146,6 +148,7 @@
 
       els.viewRegister.classList.add("hidden");
       els.viewLogin.classList.remove("hidden");
+      els.storyReel?.classList.remove("hidden");
       document.title = "TucanGo · Iniciar sesión";
       els.inputLoginId?.focus();
     }
@@ -622,7 +625,68 @@
     }
   }
 
+  function iniciarStoryReel() {
+    const reel = els.storyReel;
+    if (!reel) return;
+
+    const slides = Array.from(reel.querySelectorAll(".story-slide"));
+    const dots = Array.from(reel.querySelectorAll(".story-dot"));
+    if (slides.length === 0) return;
+
+    let indiceActual = 0;
+    let timerId = null;
+    let pausado = false;
+
+    function activarSlide(nuevoIndice) {
+      indiceActual = ((nuevoIndice % slides.length) + slides.length) % slides.length;
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle("active", idx === indiceActual);
+      });
+      dots.forEach((dot, idx) => {
+        const esActivo = idx === indiceActual;
+        dot.classList.toggle("active", esActivo);
+        dot.setAttribute("aria-current", esActivo ? "true" : "false");
+      });
+    }
+
+    function reiniciarAutoplay() {
+      if (timerId) window.clearInterval(timerId);
+      timerId = window.setInterval(() => {
+        if (!pausado && !reel.classList.contains("hidden")) {
+          activarSlide(indiceActual + 1);
+        }
+      }, 4200);
+    }
+
+    dots.forEach((dot) => {
+      dot.addEventListener("click", () => {
+        const idx = Number(dot.dataset.storyIdx);
+        if (Number.isInteger(idx)) {
+          activarSlide(idx);
+          reiniciarAutoplay();
+        }
+      });
+    });
+
+    reel.addEventListener("mouseenter", () => {
+      pausado = true;
+    });
+    reel.addEventListener("mouseleave", () => {
+      pausado = false;
+    });
+    reel.addEventListener("focusin", () => {
+      pausado = true;
+    });
+    reel.addEventListener("focusout", () => {
+      pausado = false;
+    });
+
+    activarSlide(0);
+    reiniciarAutoplay();
+  }
+
   inicializarConectividad();
   verificarSesionActual();
   inicializarEventos();
+  iniciarStoryReel();
 })();

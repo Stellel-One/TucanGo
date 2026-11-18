@@ -358,6 +358,17 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.match(spriteText, /id="iconly-shield-done"/);
       assert.match(spriteText, /id="tg-moto"/);
 
+      const brandLogoRes = await fetch(`${baseUrl}/assets/brand/tucango-moto-logo.svg`);
+      assert.equal(brandLogoRes.status, 200);
+      assert.match(brandLogoRes.headers.get("content-type") || "", /image\/svg\+xml/);
+      const brandLogoText = await brandLogoRes.text();
+      assert.match(brandLogoText, /id="tg-wheel-front"/);
+      assert.match(brandLogoText, /id="tg-moto-body"/);
+      assert.match(brandLogoText, /id="passenger-student"/);
+      assert.match(brandLogoText, /id="rider-tucan"/);
+      assert.match(html, /tucango-story-reel/);
+      assert.match(html, /tucango-moto-logo\.svg/);
+
       const anonMeRes = await fetch(`${baseUrl}/api/auth/me`);
       assert.equal(anonMeRes.status, 200);
       const anonMe = (await anonMeRes.json()) as { autenticado: boolean };

@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Logotipo TucanGo: Tucán en motocicleta llevando a un estudiante">
+  <defs>
+    <style>
+      .tg-road-dash {
+        stroke: #112A1E;
+        stroke-opacity: 0.25;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-dasharray: 9 7;
+        animation: tgRoadScroll 0.8s linear infinite;
+      }
+      .tg-wheel-back,
+      .tg-wheel-front {
+        transform-box: fill-box;
+        transform-origin: center;
+        animation: tgWheelSpin 1.6s linear infinite;
+      }
+      .tg-moto-body {
+        transform-box: fill-box;
+        transform-origin: center bottom;
+        animation: tgSuspension 0.65s ease-in-out infinite;
+      }
+      .tg-wind-line-1 {
+        animation: tgWind 1.1s ease-in-out infinite;
+      }
+      .tg-wind-line-2 {
+        animation: tgWind 1.1s ease-in-out 0.35s infinite;
+      }
+
+      @keyframes tgWheelSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes tgSuspension {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2.2px); }
+      }
+      @keyframes tgRoadScroll {
+        from { stroke-dashoffset: 0; }
+        to { stroke-dashoffset: -16; }
+      }
+      @keyframes tgWind {
+        0%, 100% { opacity: 0.25; transform: translateX(0); }
+        50% { opacity: 0.85; transform: translateX(-3px); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .tg-road-dash,
+        .tg-wheel-back,
+        .tg-wheel-front,
+        .tg-moto-body,
+        .tg-wind-line-1,
+        .tg-wind-line-2 {
+          animation: none !important;
+        }
+      }
+    </style>
+  </defs>
+
+  <!-- Línea de carretera animada -->
+  <line class="tg-road-dash" x1="10" y1="104" x2="112" y2="104" />
+
+  <!-- Rueda trasera (centro 31, 87) -->
+  <g id="tg-wheel-back" class="tg-wheel-back">
+    <circle cx="31" cy="87" r="14.5" fill="#112A1E" />
+    <circle cx="31" cy="87" r="7.5" fill="#FAF8F4" />
+    <rect x="29.6" y="79.5" width="2.8" height="15" rx="1.4" fill="#006837" />
+    <rect x="23.5" y="85.6" width="15" height="2.8" rx="1.4" fill="#006837" />
+    <circle cx="31" cy="87" r="3" fill="#112A1E" />
+  </g>
+
+  <!-- Rueda delantera (centro 89, 87) -->
+  <g id="tg-wheel-front" class="tg-wheel-front">
+    <circle cx="89" cy="87" r="14.5" fill="#112A1E" />
+    <circle cx="89" cy="87" r="7.5" fill="#FAF8F4" />
+    <rect x="87.6" y="79.5" width="2.8" height="15" rx="1.4" fill="#006837" />
+    <rect x="81.5" y="85.6" width="15" height="2.8" rx="1.4" fill="#006837" />
+    <circle cx="89" cy="87" r="3" fill="#112A1E" />
+  </g>
+
+  <!-- Conjunto Chasis + Tucán Conductor + Estudiante Pasajero (suspensión animada) -->
+  <g id="tg-moto-body" class="tg-moto-body">
+    <!-- Estelas de velocidad -->
+    <g class="tg-wind-lines">
+      <path class="tg-wind-line-1" d="M8 40 H17" stroke="#006837" stroke-width="2.4" stroke-linecap="round" />
+      <path class="tg-wind-line-2" d="M6 48 H15" stroke="#E30613" stroke-width="2.2" stroke-linecap="round" />
+    </g>
+
+    <!-- Guardabarros y chasis de motocicleta -->
+    <path d="M17 75 C21 67 34 66 43 72 L45 75 C36 71 25 71 19 77 Z" fill="#112A1E" />
+    <path d="M77 73 C84 67 95 68 101 75 L98 77 C93 72 84 71 79 75 Z" fill="#006837" />
+
+    <!-- Escape y bloque inferior motor -->
+    <path d="M29 85 L44 85 L47 89 L29 89 Z" fill="#006837" />
+    <path d="M44 68 L74 68 L69 87 L48 87 C45 87 43 85 43 82 Z" fill="#112A1E" />
+    <rect x="49" y="74" width="16" height="8" rx="3" fill="#006837" />
+
+    <!-- Tanque y carrocería verde + acento rojo -->
+    <path d="M26 65 L52 63 C58 58 67 55 76 58 L73 69 L45 71 L26 68 Z" fill="#006837" />
+    <path d="M55 64 L73 61 L71 65 L54 67 Z" fill="#E30613" />
+
+    <!-- Horquilla delantera y manubrio -->
+    <path d="M73 50 L89 87" stroke="#006837" stroke-width="4.5" stroke-linecap="round" />
+    <path d="M70 49 L79 50" stroke="#112A1E" stroke-width="3.6" stroke-linecap="round" />
+    <!-- Faro frontal -->
+    <path d="M80 51 L86 51 C88 51 89 53 89 55 C89 57 87 58 85 58 L80 57 Z" fill="#112A1E" />
+    <circle cx="87.5" cy="54.5" r="1.6" fill="#FAF8F4" />
+
+    <!-- ESTUDIANTE PASAJERO (atrás) -->
+    <g id="passenger-student">
+      <!-- Morral universitario -->
+      <rect x="18" y="42" width="10.5" height="17" rx="4.5" fill="#112A1E" />
+      <rect x="19.5" y="49" width="5.5" height="7.5" rx="2" fill="#006837" />
+      <!-- Pierna y calzado -->
+      <path d="M30 62 L39 63 L39 76 L34 76 L34 67 L28 67 Z" fill="#006837" />
+      <rect x="33.5" y="75" width="7.5" height="3.6" rx="1.8" fill="#112A1E" />
+      <!-- Torso y brazo sujetándose -->
+      <path d="M26 44 C26 41 29 39 33 39 L37 39 C39 39 41 42 40 46 L38 63 L27 63 Z" fill="#006837" />
+      <path d="M35 48 L47 50 C48.5 50.2 49.5 51.5 49 52.8 C48.6 54 47.2 54.4 45.8 54.2 L35 52.5 Z" fill="#006837" stroke="#FAF8F4" stroke-width="1" />
+      <!-- Cabeza y casco del estudiante -->
+      <circle cx="34.5" cy="33" r="6" fill="#FAF8F4" stroke="#112A1E" stroke-width="1.4" />
+      <path d="M27.5 32.5 C27.5 27 32 23.5 37 24.5 C40.2 25.2 42 27.8 42.2 30.8 L35 31.2 C33 31.2 31.5 33 31.5 36.2 L28.2 36 C27.7 34.8 27.5 33.7 27.5 32.5 Z" fill="#006837" />
+      <path d="M38.5 28.8 L43.5 29.8" stroke="#006837" stroke-width="2" stroke-linecap="round" />
+      <circle cx="37.8" cy="33.2" r="1.1" fill="#112A1E" />
+    </g>
+
+    <!-- TUCÁN CONDUCTOR (al frente) -->
+    <g id="rider-tucan">
+      <!-- Pierna y bota del conductor -->
+      <path d="M47 61 L59 61 L56 79 L49 79 L51 67 L46 67 Z" fill="#112A1E" />
+      <rect x="49" y="78" width="9.5" height="4.2" rx="2" fill="#006837" />
+      <!-- Torso / chaqueta verde bosque -->
+      <path d="M44 40 C46 37 51 36 56 38 L61 45 L58 62 L44 62 Z" fill="#112A1E" />
+      <!-- Brazo hacia el manubrio -->
+      <path d="M54 44 L71 49 C72.8 49.4 73.5 51 73 52.5 C72.4 53.8 70.8 54.2 69.2 53.8 L52 49 Z" fill="#112A1E" stroke="#FAF8F4" stroke-width="1" />
+      <!-- Cuello y parche facial blanco característico del tucán -->
+      <path d="M52 24 C59 22 68 25 69 33 C69.5 38 66 43 59 44 C54 44.5 51 39 51 32 Z" fill="#FFFFFF" stroke="#112A1E" stroke-width="1.6" />
+      <!-- Ojo del tucán -->
+      <circle cx="62.8" cy="30.5" r="2.3" fill="#112A1E" />
+      <circle cx="63.5" cy="29.8" r="0.7" fill="#FFFFFF" />
+      <!-- Casco protector verde bosque con franja roja curva -->
+      <path d="M48 28.5 C48 18.5 56.5 13 66 15.5 C70.5 16.8 72.5 20.5 72.5 24 L61 24 C57.5 24 55 26.8 55 31.2 L48.8 31 C48.2 30 48 29.3 48 28.5 Z" fill="#112A1E" />
+      <path d="M52 24.5 C54.5 18.5 61 16.2 67 17.8" fill="none" stroke="#E30613" stroke-width="2.6" stroke-linecap="round" />
+
+      <!-- PICO CURVO ROJO INSTITUCIONAL UNIAMAZONIA -->
+      <path d="M68.5 22.8 C83 22 96 27.5 101.5 37.5 C95.5 36.2 88.5 35.6 69.2 35.6 Z" fill="#E30613" stroke="#FFFFFF" stroke-width="1" stroke-linejoin="round" />
+      <!-- Ranura / pico inferior en rojo con línea blanca divisoria -->
+      <path d="M69.2 31.2 C82 31 92 32.5 98.5 36.5" fill="none" stroke="#FAF8F4" stroke-width="1.6" stroke-linecap="round" />
+      <path d="M92 30.2 C96.5 32 99.8 34.8 101.5 37.5 C97.5 36.5 94 35.8 92 34.2 Z" fill="#112A1E" opacity="0.3" />
+    </g>
+  </g>
+</svg>

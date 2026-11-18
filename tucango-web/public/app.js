@@ -77,6 +77,7 @@ const els = {
   trackingProgressBar: document.getElementById("tracking-progress-bar"),
   trackingProgressPct: document.getElementById("tracking-progress-pct"),
   trackingEtaLive: document.getElementById("tracking-eta-live"),
+  trackingRadarStage: document.getElementById("tracking-radar-stage"),
   trackingDriverBox: document.getElementById("tracking-driver-box"),
   trackingDriverInitials: document.getElementById("tracking-driver-initials"),
   trackingDriverName: document.getElementById("tracking-driver-name"),
@@ -1178,6 +1179,9 @@ function renderSeguimientoEnVivo(data) {
         : `ETA ~${etaRestante} min`;
 
   const btns = [];
+  if (els.trackingRadarStage) {
+    els.trackingRadarStage.classList.toggle("hidden", viajeActivo.estado !== "SOLICITADO");
+  }
   if (viajeActivo.estado === "SOLICITADO") {
     els.trackingStageBadge.textContent = `RADAR ACTIVO · ${viajeActivo.codigo}`;
     els.trackingTitle.textContent = "Buscando motorista verificado...";

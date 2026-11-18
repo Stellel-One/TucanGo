@@ -11,7 +11,7 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css?v=1.9.4" />
-  <link rel="stylesheet" href="styles.css?v=3.9" />
+  <link rel="stylesheet" href="styles.css?v=4.0" />
 </head>
 <body>
   <header class="topbar">
@@ -19,10 +19,11 @@
       <div class="brand-group">
         <div class="brand-emblem" aria-hidden="true">
           <img
-            src="/assets/portal/uniamazonia-toucan-logo.svg"
-            alt="Emblema TucanGo Uniamazonia"
-            width="28"
-            height="28"
+            src="/assets/brand/tucango-moto-logo.svg"
+            alt="Logotipo TucanGo: Tucán en motocicleta llevando a un estudiante"
+            width="36"
+            height="36"
+            onerror="this.src='/assets/brand/tucango-brandmark-geometric.png';"
           />
         </div>
         <div class="brand-copy">
@@ -199,6 +200,22 @@
                   <div class="pin-security-box" title="Entrega este PIN de 4 dígitos al motorista al subir">
                     <span>PIN SEGURIDAD</span>
                     <strong class="mono-text" id="tracking-pin">0000</strong>
+                  </div>
+                </div>
+
+                <div id="tracking-radar-stage" class="tracking-radar-stage hidden">
+                  <div class="radar-wave-ring ring-1" aria-hidden="true"></div>
+                  <div class="radar-wave-ring ring-2" aria-hidden="true"></div>
+                  <img
+                    src="/assets/brand/tucango-moto-logo.svg"
+                    alt="Tucán en moto buscando conductor cercano"
+                    class="tracking-tucan-moto-svg"
+                    width="58"
+                    height="58"
+                  />
+                  <div class="tracking-radar-copy">
+                    <span class="radar-pulse-tag">CONECTANDO CON TUCANES CERCANOS</span>
+                    <span class="radar-sub-hint">Verificando SOAT vigente y disponibilidad en el sector...</span>
                   </div>
                 </div>
 
@@ -809,6 +826,6 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
-  <script src="app.js?v=3.9"></script>
+  <script src="app.js?v=4.0"></script>
 </body>
 </html>
