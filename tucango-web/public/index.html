@@ -11,7 +11,7 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css?v=1.9.4" />
-  <link rel="stylesheet" href="styles.css?v=2.8" />
+  <link rel="stylesheet" href="styles.css?v=3.0" />
 </head>
 <body>
   <header class="topbar">
@@ -47,17 +47,10 @@
         </div>
       </div>
 
-      <nav class="campus-quick-nav" aria-label="Sedes frecuentes">
-        <button type="button" class="quick-sector-btn active" data-pan-sector="PORVENIR">Campus Porvenir</button>
-        <button type="button" class="quick-sector-btn" data-pan-sector="CENTRO">Sede Centro</button>
-        <button type="button" class="quick-sector-btn" data-pan-sector="BALCANES">Granja Balcanes</button>
-        <button type="button" class="quick-sector-btn" data-pan-sector="LA_VEGA">Barrio La Vega</button>
-      </nav>
-
       <div class="topbar-actions">
         <div id="sse-pill" class="sse-pill" title="Sincronización automática por Server-Sent Events">
           <span class="sse-dot"></span>
-          <span id="sse-label">Conectando SSE</span>
+          <span id="sse-label">SSE Activo</span>
         </div>
 
         <button type="button" id="btn-sesion-topbar" class="btn-session-pill" title="Cuenta autenticada y configuración de mapas">
@@ -112,7 +105,7 @@
             <button
               type="button"
               id="btn-abrir-login-badge"
-              class="map-promo-circle"
+              class="map-promo-circle hidden"
               title="Beneficios y seguridad Uniamazonia"
               aria-label="Beneficios y cuenta"
             >
@@ -163,24 +156,13 @@
             </div>
           </div>
 
-          <div class="map-footer-bar">
-            <span>Florencia, Caquetá · Cobertura Campus &amp; Motos Activas</span>
-            <span class="mono-text" id="map-coords-readout">Lat 1.6203 N · Lon -75.6042 W</span>
-          </div>
+          <span class="hidden" id="map-coords-readout">Lat 1.6203 N · Lon -75.6042 W</span>
         </div>
       </section>
 
       <!-- COLUMNA DERECHA: BOTTOM SHEET / DOCK ESTILO DIDI -->
       <section class="sheet-column">
         <div class="didi-sheet">
-          <!-- Cinta superior azul estilo DiDi: "Detección continua, más protección" -->
-          <div class="safety-ribbon" id="safety-banner">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 14l-3.5-3.5 1.41-1.41L11 13.17l4.59-4.59L17 10l-6 6z" />
-            </svg>
-            <span>Detección continua, más protección · Protocolo SOAT y PIN Uniamazonia</span>
-          </div>
-
           <div class="sheet-surface">
             <button
               type="button"
@@ -192,6 +174,22 @@
               <span class="sheet-handle" aria-hidden="true"></span>
               <span id="sheet-toggle-hint" class="sheet-handle-hint">Ver más mapa</span>
             </button>
+
+            <!-- NAVEGACIÓN MODULAR DE PESTAÑAS (DESKTOP & TABLET) -->
+            <div class="sheet-tabs-bar" role="tablist">
+              <button type="button" class="sheet-tab-btn active" data-tab="viajar" role="tab">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Pedir Moto</span>
+              </button>
+              <button type="button" class="sheet-tab-btn hidden" data-tab="motorista" id="tab-motorista-desktop" role="tab">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h3l2 5h-5.5l-2.5 5H6"/></svg>
+                <span>Radar Moto</span>
+              </button>
+              <button type="button" class="sheet-tab-btn" data-tab="actividad" role="tab">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>Actividad</span>
+              </button>
+            </div>
 
             <!-- VISTA PASAJERO ESTILO DIDI -->
             <section id="panel-pasajero" class="ops-stack">
@@ -233,33 +231,14 @@
                 <div class="tracking-actions" id="tracking-actions-row"></div>
               </div>
 
-              <!-- Buscador DiDi: ¿A dónde vamos? -->
-              <div class="didi-search-box" id="didi-search-trigger" role="button" tabindex="0">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <div class="search-text-group">
-                  <span class="search-placeholder">¿A dónde vamos?</span>
-                  <small id="search-active-summary">Campus Porvenir → Sede Centro · Moto Estudiantil</small>
-                </div>
-                <span class="search-moto-chip">MOTO</span>
-              </div>
+              <!-- Elementos de compatibilidad JS invisibles -->
+              <div id="didi-search-trigger" class="hidden"><span id="search-active-summary"></span></div>
+              <button type="button" id="btn-tarifa-inteligente" class="hidden"></button>
+              <button type="button" id="btn-elegir-cuenta" class="hidden"></button>
+              <div class="recent-places-list hidden"></div>
 
-              <!-- Banner de tarifa inteligente estilo DiDi -->
-              <button type="button" class="didi-smart-banner" id="btn-tarifa-inteligente">
-                <div class="smart-left">
-                  <span class="smart-ai-badge">IA</span>
-                  <span>Deja que Tarifa Inteligente optimice tu viaje</span>
-                </div>
-                <span class="smart-arrow">&rsaquo;</span>
-              </button>
-
-              <!-- Accesos rápidos horizontales estilo DiDi (Casa / Campus / Elegir cuenta) -->
-              <div class="didi-shortcuts-row" aria-label="Destinos rápidos">
-                <button type="button" class="shortcut-pill" data-quick-dest="LA_VEGA">
-                  <span>🏠</span> La Vega
-                </button>
+              <!-- Accesos rápidos a campus principales -->
+              <div class="didi-shortcuts-row" aria-label="Destinos frecuentes">
                 <button type="button" class="shortcut-pill" data-quick-dest="PORVENIR">
                   <span>🎓</span> Porvenir
                 </button>
@@ -269,35 +248,14 @@
                 <button type="button" class="shortcut-pill" data-quick-dest="BALCANES">
                   <span>🌾</span> Balcanes
                 </button>
-                <button type="button" class="shortcut-pill" id="btn-elegir-cuenta">
-                  <span>👤</span> Cuenta
+                <button type="button" class="shortcut-pill" data-quick-dest="LA_VEGA">
+                  <span>🏠</span> La Vega
                 </button>
               </div>
 
-              <!-- Destinos recientes estilo DiDi con ícono de reloj -->
-              <div class="recent-places-list">
-                <button type="button" class="recent-place-item" data-recent-route="PORVENIR|TERMINAL">
-                  <span class="clock-badge" aria-hidden="true">🕒</span>
-                  <div>
-                    <strong>Terminal de Transportes de Florencia</strong>
-                    <small>Av. Circunvalar Sur · ~3 min en moto</small>
-                  </div>
-                </button>
-                <button type="button" class="recent-place-item" data-recent-route="PORVENIR|PLAZA_PIZARRO">
-                  <span class="clock-badge" aria-hidden="true">🕒</span>
-                  <div>
-                    <strong>Plaza Pizarro / Centro Comercial</strong>
-                    <small>Parque Santander · Zona comercial Florencia</small>
-                  </div>
-                </button>
-              </div>
-
-              <!-- Configurador completo de viaje y estrategias -->
+              <!-- Configurador de ruta y solicitud de moto -->
               <form id="form-solicitar" class="form-stack didi-quote-panel">
-                <div class="field-group">
-                  <label for="select-estudiante">Pasajero autenticado</label>
-                  <select id="select-estudiante" required disabled></select>
-                </div>
+                <select id="select-estudiante" class="hidden" required disabled></select>
 
                 <div class="route-selectors">
                   <div class="field-group">
@@ -322,18 +280,18 @@
                   </div>
 
                   <div class="field-group">
-                    <label for="select-destino">Destino campus / sector</label>
+                    <label for="select-destino">Destino</label>
                     <select id="select-destino" required></select>
                   </div>
                 </div>
 
                 <div class="field-group">
-                  <label>Modalidad DiDi Moto / Estrategia tarifaria</label>
+                  <label>Modalidad de Viaje</label>
                   <div class="strategy-grid">
                     <label class="strategy-option">
                       <input type="radio" name="tarifa" value="estudiantil" checked />
                       <span class="strategy-body">
-                        <strong>TucanGo Moto Fija</strong>
+                        <strong>Fija Estudiantil</strong>
                         <small class="mono-text">$2.500 COP</small>
                       </span>
                     </label>
@@ -341,21 +299,21 @@
                       <input type="radio" name="tarifa" value="distancia" />
                       <span class="strategy-body">
                         <strong>Por Kilómetro</strong>
-                        <small class="mono-text">$800 / km + base</small>
+                        <small class="mono-text">$800/km + base</small>
                       </span>
                     </label>
                     <label class="strategy-option">
                       <input type="radio" name="tarifa" value="lluvia" />
                       <span class="strategy-body">
-                        <strong>Dinámica Lluvia</strong>
-                        <small class="mono-text">+$1.200 recargo</small>
+                        <strong>Lluvia</strong>
+                        <small class="mono-text">+$1.200</small>
                       </span>
                     </label>
                     <label class="strategy-option">
                       <input type="radio" name="tarifa" value="nocturna" />
                       <span class="strategy-body">
                         <strong>Nocturna</strong>
-                        <small class="mono-text">+$1.500 seguridad</small>
+                        <small class="mono-text">+$1.500</small>
                       </span>
                     </label>
                   </div>
@@ -369,7 +327,7 @@
                       <span>Efectivo</span>
                     </label>
                     <label class="payment-option">
-                      <input type="radio" name="metodoPago" value="NEQUI" />
+                      <input type="radio" name="NEQUI" value="NEQUI" />
                       <span>Nequi</span>
                     </label>
                     <label class="payment-option">
@@ -381,30 +339,18 @@
 
                 <div class="fare-summary-box">
                   <div>
-                    <span class="fare-caption">Tarifa estimada del trayecto</span>
-                    <strong class="fare-subnote">Incluye PIN de abordaje, trazabilidad GPS y SOAT</strong>
+                    <span class="fare-caption">Tarifa estimada</span>
+                    <strong class="fare-subnote">Incluye PIN de abordaje y SOAT</strong>
                   </div>
                   <div class="fare-amount mono-text" id="preview-tarifa-cop">$2.500 COP</div>
                 </div>
 
                 <button type="submit" id="btn-solicitar-viaje" class="btn-didi-cta">
-                  Pedir Moto TucanGo Ahora
+                  Pedir Moto TucanGo
                 </button>
               </form>
 
-              <!-- Tarjetas promocionales estilo DiDi adaptadas a Uniamazonia -->
-              <div class="didi-promo-grid" id="didi-promo-cards">
-                <article class="promo-card promo-orange">
-                  <span class="promo-tag">TucanGo Campus</span>
-                  <strong>Tarifa plana estudiantil $2.500</strong>
-                  <small>Corredor Porvenir ↔ Centro sin recargos ocultos</small>
-                </article>
-                <article class="promo-card promo-gold">
-                  <span class="promo-tag">Protección Activa</span>
-                  <strong>PIN 4 dígitos + SOAT verificado</strong>
-                  <small>Seguimiento GPS continuo hasta llegar a portería</small>
-                </article>
-              </div>
+              <div id="didi-promo-cards" class="hidden"></div>
             </section>
 
             <!-- VISTA MOTORISTA (DIDI MOTO CONDUCTOR HUD) -->
@@ -474,8 +420,8 @@
               </div>
             </section>
 
-            <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD -->
-            <section id="section-actividad" class="feed-section">
+            <!-- FEED COMPARTIDO: VIAJES ACTIVOS Y TRAZABILIDAD (PESTAÑA ACTIVIDAD) -->
+            <section id="section-actividad" class="feed-section hidden">
               <div id="section-telemetria" class="telemetry-grid" aria-label="Métricas operativas en tiempo real">
                 <article class="kpi-card">
                   <div class="kpi-head">
@@ -732,6 +678,6 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
-  <script src="app.js?v=3.1"></script>
+  <script src="app.js?v=3.2"></script>
 </body>
 </html>

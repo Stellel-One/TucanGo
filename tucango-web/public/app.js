@@ -190,10 +190,31 @@ function actualizarBannerSesion() {
   }
 }
 
-function actualizarTabMovilActiva(tabName) {
-  els.mobileTabBtns.forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.mobileTab === tabName);
+function switchTab(tabName) {
+  state.currentTab = tabName;
+
+  document.querySelectorAll("[data-tab], [data-mobile-tab]").forEach((btn) => {
+    const t = btn.dataset.tab || btn.dataset.mobileTab;
+    btn.classList.toggle("active", t === tabName);
   });
+
+  const esMotorista = tabName === "motorista";
+  const esActividad = tabName === "actividad";
+  const esViajar = tabName === "viajar" || tabName === "tracking";
+
+  if (els.panelPasajero) els.panelPasajero.classList.toggle("hidden", !esViajar);
+  if (els.panelMotorista) els.panelMotorista.classList.toggle("hidden", !esMotorista);
+  if (els.sectionActividad) els.sectionActividad.classList.toggle("hidden", !esActividad);
+
+  if (tabName === "tracking") {
+    if (els.liveTrackingCard && !els.liveTrackingCard.classList.contains("hidden")) {
+      els.liveTrackingCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  if (state.map) {
+    setTimeout(() => state.map.invalidateSize(), 200);
+  }
 }
 
 function setRole(role) {
@@ -206,8 +227,19 @@ function setRole(role) {
     els.roleLockedBadge.textContent = esAdmin ? "ADMIN" : esPasajero ? "PASAJERO" : "MOTORISTA";
     els.roleLockedBadge.classList.toggle("is-driver", !esPasajero);
   }
-  els.panelPasajero.classList.toggle("hidden", !esPasajero);
-  els.panelMotorista.classList.toggle("hidden", esPasajero);
+
+  const tabMotoristaDesktop = document.getElementById("tab-motorista-desktop");
+  if (tabMotoristaDesktop) {
+    tabMotoristaDesktop.classList.toggle("hidden", !esAdmin && esPasajero);
+  }
+  const tabMotoristaMobile = document.querySelector('[data-mobile-tab="motorista"]');
+  if (tabMotoristaMobile) {
+    tabMotoristaMobile.classList.toggle("hidden", !esAdmin && esPasajero);
+  }
+
+  if (els.btnSimularTracking) {
+    els.btnSimularTracking.classList.toggle("hidden", !esAdmin);
+  }
 
   if (els.selectEstudiante) {
     els.selectEstudiante.disabled = !esAdmin && state.authUser?.rol === "pasajero";
@@ -221,7 +253,7 @@ function setRole(role) {
     btn.classList.toggle("hidden", !esAdmin && Boolean(forRole && forRole !== rolFinal));
   });
 
-  actualizarTabMovilActiva(esPasajero ? "viajar" : "motorista");
+  switchTab(esPasajero ? "viajar" : "motorista");
   actualizarBannerSesion();
 }
 
@@ -1031,9 +1063,9 @@ if (els.btnToggleSheet && els.didiStage) {
   });
 }
 
-els.mobileTabBtns.forEach((btn) => {
+document.querySelectorAll("[data-tab], [data-mobile-tab]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    const tab = btn.dataset.mobileTab;
+    const tab = btn.dataset.tab || btn.dataset.mobileTab;
     if (els.didiStage && els.didiStage.classList.contains("sheet-peek")) {
       els.didiStage.classList.remove("sheet-peek");
       if (els.btnToggleSheet) els.btnToggleSheet.setAttribute("aria-expanded", "true");
@@ -1044,55 +1076,42 @@ els.mobileTabBtns.forEach((btn) => {
     if (tab === "motorista") {
       if (state.authUser?.rol === "admin" && state.role !== "motorista") {
         setRole("motorista");
+        return;
       }
       if (state.role !== "motorista") return;
-      els.panelMotorista.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
     }
 
-    if (tab === "actividad") {
-      actualizarTabMovilActiva("actividad");
-      els.sectionActividad?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
-    if (state.authUser?.rol === "admin" && state.role !== "pasajero") {
-      setRole("pasajero");
-    }
-    if (state.role !== "pasajero") return;
-    actualizarTabMovilActiva(tab);
-    if (tab === "tracking") {
-      if (!els.liveTrackingCard.classList.contains("hidden")) {
-        els.liveTrackingCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
-        showToast("Sin viaje en curso. Solicita una moto en '¿A dónde vamos?'");
-        els.didiSearchTrigger.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (tab === "viajar" || tab === "tracking") {
+      if (state.authUser?.rol === "admin" && state.role !== "pasajero") {
+        setRole("pasajero");
+        return;
       }
-    } else {
-      els.didiSearchTrigger.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+
+    switchTab(tab);
   });
 });
 
-els.btnSimularTracking.addEventListener("click", () => {
-  const activo = (state.data?.viajes || []).find(
-    (v) => v.estado === "ACEPTADO" || v.estado === "EN_CURSO"
-  );
-  if (activo) toggleAutoSimulacion(activo.codigo);
+if (els.btnSimularTracking) {
+  els.btnSimularTracking.addEventListener("click", () => {
+    const activo = (state.data?.viajes || []).find(
+      (v) => v.estado === "ACEPTADO" || v.estado === "EN_CURSO"
+    );
+    if (activo) toggleAutoSimulacion(activo.codigo);
+  });
+}
+
+els.didiSearchTrigger?.addEventListener("click", () => {
+  els.selectDestino?.focus();
+  els.formSolicitar?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
 
-els.didiSearchTrigger.addEventListener("click", () => {
-  els.selectDestino.focus();
-  els.formSolicitar.scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
-
-els.btnTarifaInteligente.addEventListener("click", () => {
+els.btnTarifaInteligente?.addEventListener("click", () => {
   const opt = document.querySelector('input[name="tarifa"][value="estudiantil"]');
   if (opt) {
     opt.checked = true;
     actualizarPreviewTarifa();
   }
-  showToast("Tarifa Estudiantil Inteligente aplicada ($2.500 COP)", "success");
 });
 
 els.btnElegirCuenta?.addEventListener("click", () => abrirModalLogin("cuenta"));

@@ -665,6 +665,45 @@ body {
   color: var(--text-secondary);
 }
 
+/* SHEET TABS (MODULAR WORKSPACE) */
+.sheet-tabs-bar {
+  display: flex;
+  background: #F4EFE6;
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 14px;
+  border: 1px solid #E5DFD3;
+}
+
+.sheet-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6C7A72;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.sheet-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.sheet-tab-btn.active {
+  background: #FFFFFF;
+  color: #0F6B36;
+  box-shadow: 0 2px 8px rgba(15, 107, 54, 0.12);
+}
+
 .ops-stack {
   display: flex;
   flex-direction: column;
@@ -1982,9 +2021,7 @@ button:disabled {
   }
 
   .mobile-bottom-nav {
-    position: static;
-    border-radius: 0 0 24px 24px;
-    flex-shrink: 0;
+    display: none !important;
   }
 
   .telemetry-grid {
