@@ -321,7 +321,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
 
       const resTracking = await fetch(`${baseUrl}/api/viajes/tracking`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: motCookie },
         body: JSON.stringify({ codigoViaje: sol.codigo, incremento: 30 })
       });
       assert.equal(resTracking.status, 200);
@@ -714,6 +714,7 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(analiticaJson.ok, true);
       assert.equal(Array.isArray(analiticaJson.analitica.barriosEstudiantes), true);
       assert.equal(Array.isArray(analiticaJson.analitica.corredoresComunes), true);
+      assert.equal(Array.isArray(analiticaJson.analitica.puntosRecurrentesMapa), true);
 
       // Admin aprueba al Tucán
       const aprobarRes = await fetch(`${baseUrl}/api/admin/tucanes/aprobar`, {
@@ -736,6 +737,112 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(loginAprobadoRes.status, 200);
       const loginAprobadoJson = (await loginAprobadoRes.json()) as any;
       assert.equal(loginAprobadoJson.rol, "motorista");
+      const tucanCookie = (loginAprobadoRes.headers.get("set-cookie") || "").split(";")[0];
+
+      // Estudiante 1001 guarda lugar recurrente y aparece anonimizado en puntosRecurrentesMapa
+      const loginEstRes = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "1001", password: "estudiante123" })
+      });
+      const estCookie = (loginEstRes.headers.get("set-cookie") || "").split(";")[0];
+      const savePlaceRes = await fetch(`${baseUrl}/api/estudiante/ubicaciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: estCookie },
+        body: JSON.stringify({
+          etiqueta: "Casa",
+          nombre: "Mi Casa La Vega",
+          barrio: "La Vega",
+          latitud: 1.6238,
+          longitud: -75.6121
+        })
+      });
+      assert.equal(savePlaceRes.status, 201);
+
+      const analiticaConPuntoRes = await fetch(`${baseUrl}/api/admin/analitica`, {
+        headers: { Cookie: adminAuthCookie }
+      });
+      const analiticaConPuntoJson = (await analiticaConPuntoRes.json()) as any;
+      const puntoRec = analiticaConPuntoJson.analitica.puntosRecurrentesMapa.find(
+        (p: any) => p.barrio === "La Vega"
+      );
+      assert.ok(puntoRec);
+      assert.equal(puntoRec.etiqueta, "Casa");
+      assert.equal(puntoRec.registros, 1);
+
+      // Estudiante solicita viaje -> otro estudiante NO puede confirmar llegada segura ni cancelar (403 IDOR)
+      const solRes = await fetch(`${baseUrl}/api/viajes/solicitar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: estCookie },
+        body: JSON.stringify({
+          origen: "Sede Porvenir",
+          destino: "Sede Centro / IDEMA",
+          distanciaKm: 1.4,
+          tipoTarifa: "estudiantil",
+          metodoPago: "EFECTIVO"
+        })
+      });
+      const solJson = (await solRes.json()) as any;
+      assert.equal(solRes.status, 201);
+
+      // Registrar segundo estudiante e intentar cancelar/llegada-segura ajena -> 403
+      const regEst2Res = await fetch(`${baseUrl}/api/estudiantes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identificacion: "1098",
+          nombre: "Otro Estudiante",
+          telefono: "3120001199",
+          correoInstitucional: "otro@udla.edu.co",
+          codigoEstudiantil: "20269999",
+          carrera: "Biología",
+          password: "OtroSeguro*2026"
+        })
+      });
+      assert.equal(regEst2Res.status, 201);
+      const loginEst2Res = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "1098", password: "OtroSeguro*2026" })
+      });
+      const est2Cookie = (loginEst2Res.headers.get("set-cookie") || "").split(";")[0];
+      const cancelAjenoRes = await fetch(`${baseUrl}/api/viajes/cancelar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: est2Cookie },
+        body: JSON.stringify({ codigoViaje: solJson.codigo, motivo: "Intento ajeno" })
+      });
+      assert.equal(cancelAjenoRes.status, 403);
+
+      // Tucán aprobado activa disponibilidad y acepta; PIN incorrecto es rechazado por el dominio
+      const dispRes = await fetch(`${baseUrl}/api/motoristas/disponibilidad`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: tucanCookie },
+        body: JSON.stringify({ disponible: true })
+      });
+      assert.equal(dispRes.status, 200);
+
+      const aceptarRes = await fetch(`${baseUrl}/api/viajes/aceptar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: tucanCookie },
+        body: JSON.stringify({ codigoViaje: solJson.codigo })
+      });
+      assert.equal(aceptarRes.status, 200);
+      const aceptarJson = (await aceptarRes.json()) as any;
+      assert.equal(aceptarJson.pinSeguridad, undefined);
+
+      const pinMaloRes = await fetch(`${baseUrl}/api/viajes/iniciar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: tucanCookie },
+        body: JSON.stringify({ codigoViaje: solJson.codigo, pinSeguridad: "0000" })
+      });
+      assert.equal(pinMaloRes.status, 400);
+
+      const pinOkRes = await fetch(`${baseUrl}/api/viajes/iniciar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: tucanCookie },
+        body: JSON.stringify({ codigoViaje: solJson.codigo, pinSeguridad: solJson.pinSeguridad })
+      });
+      assert.equal(pinOkRes.status, 200);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       repo.cerrar();

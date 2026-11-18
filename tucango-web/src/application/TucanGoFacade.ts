@@ -151,11 +151,8 @@ export class TucanGoFacade {
     const polilinea = TucanGoFacade.construirPolilinea(origen.coordenada, destino.coordenada, 10);
     const p0 = polilinea[0];
     const p1 = polilinea[1] ?? p0;
-    const direccionInicialGrados = TucanGoFacade.calcularRumbo(
-      p0.latitud,
-      p0.longitud,
-      p1.latitud,
-      p1.longitud
+    const direccionInicialGrados = new Coordenada(p0.latitud, p0.longitud).rumboHacia(
+      new Coordenada(p1.latitud, p1.longitud)
     );
 
     return {
@@ -180,11 +177,8 @@ export class TucanGoFacade {
     const polilinea = TucanGoFacade.construirPolilinea(cOrig, cDest, 10);
     const p0 = polilinea[0];
     const p1 = polilinea[1] ?? p0;
-    const direccionInicialGrados = TucanGoFacade.calcularRumbo(
-      p0.latitud,
-      p0.longitud,
-      p1.latitud,
-      p1.longitud
+    const direccionInicialGrados = new Coordenada(p0.latitud, p0.longitud).rumboHacia(
+      new Coordenada(p1.latitud, p1.longitud)
     );
 
     return {
@@ -209,18 +203,6 @@ export class TucanGoFacade {
       polilinea,
       direccionInicialGrados
     };
-  }
-
-  private static calcularRumbo(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    if (lat1 === lat2 && lng1 === lng2) return 0;
-    const rLat1 = (lat1 * Math.PI) / 180;
-    const rLat2 = (lat2 * Math.PI) / 180;
-    const dLon = ((lng2 - lng1) * Math.PI) / 180;
-    const y = Math.sin(dLon) * Math.cos(rLat2);
-    const x =
-      Math.cos(rLat1) * Math.sin(rLat2) -
-      Math.sin(rLat1) * Math.cos(rLat2) * Math.cos(dLon);
-    return Math.round((((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360);
   }
 
   private static construirPolilinea(
@@ -269,7 +251,9 @@ export class TucanGoFacade {
     const b = puntos[idx + 1];
     const latitud = Number((a.latitud + (b.latitud - a.latitud) * localT).toFixed(6));
     const longitud = Number((a.longitud + (b.longitud - a.longitud) * localT).toFixed(6));
-    const direccionGrados = TucanGoFacade.calcularRumbo(a.latitud, a.longitud, b.latitud, b.longitud);
+    const direccionGrados = new Coordenada(a.latitud, a.longitud).rumboHacia(
+      new Coordenada(b.latitud, b.longitud)
+    );
     return { latitud, longitud, direccionGrados };
   }
 
@@ -849,12 +833,12 @@ export class TucanGoFacade {
     return viaje;
   }
 
-  public iniciarViaje(codigoViaje: string): Viaje {
+  public iniciarViaje(codigoViaje: string, pinIngresado?: string): Viaje {
     const viaje = this._viajes.get(codigoViaje);
     if (!viaje) {
       throw new Error(`Viaje con código ${codigoViaje} no existe.`);
     }
-    viaje.iniciar();
+    viaje.iniciar(pinIngresado);
     this.persistir();
     this.emitirEvento("VIAJE_INICIADO", { codigo: viaje.codigoViaje });
     return viaje;
@@ -968,15 +952,7 @@ export class TucanGoFacade {
         identificacion: admin.identificacion,
         nombre: admin.nombre
       });
-      return {
-        rol: "admin",
-        identificacion: admin.identificacion,
-        nombre: admin.nombre,
-        correo: admin.correoInstitucional,
-        telefono: admin.telefono,
-        detalle: `ADMIN · ${admin.cargo}`,
-        debeCambiarPassword: admin.debeCambiarPassword
-      };
+      return admin.construirResumenSesion();
     }
 
     // 2. Estudiantes (acepta estudiante, 1001, correo, código)
@@ -1002,15 +978,7 @@ export class TucanGoFacade {
         identificacion: est.identificacion,
         nombre: est.nombre
       });
-      return {
-        rol: "pasajero",
-        identificacion: est.identificacion,
-        nombre: est.nombre,
-        correo: est.correoInstitucional,
-        telefono: est.telefono,
-        detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
-        debeCambiarPassword: est.debeCambiarPassword
-      };
+      return est.construirResumenSesion();
     }
 
     // 3. Motoristas / Tucanes (acepta motorista, tucan, 2001, GNX-45F, correo)
@@ -1045,21 +1013,12 @@ export class TucanGoFacade {
         );
       }
 
-      const moto = mot.obtenerMotoActiva();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "motorista",
         identificacion: mot.identificacion,
         nombre: mot.nombre
       });
-      return {
-        rol: "motorista",
-        identificacion: mot.identificacion,
-        nombre: mot.nombre,
-        correo: mot.correoInstitucional,
-        telefono: mot.telefono,
-        detalle: moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo",
-        debeCambiarPassword: mot.debeCambiarPassword
-      };
+      return mot.construirResumenSesion();
     }
 
     // Usuario no existe: ejecutar timing de protección contra enumeración (B10)
@@ -1085,43 +1044,18 @@ export class TucanGoFacade {
     if (rol === "admin") {
       const admin = this.obtenerAdministradores().find((a) => a.identificacion.toLowerCase() === id);
       if (!admin) throw new NoAutenticadoError("Sesión inválida: administrador no encontrado.");
-      return {
-        rol: "admin",
-        identificacion: admin.identificacion,
-        nombre: admin.nombre,
-        correo: admin.correoInstitucional,
-        telefono: admin.telefono,
-        detalle: `ADMIN · ${admin.cargo}`,
-        debeCambiarPassword: admin.debeCambiarPassword
-      };
+      return admin.construirResumenSesion();
     }
 
     if (rol === "motorista") {
       const mot = this.obtenerMotoristas().find((m) => m.identificacion.toLowerCase() === id);
       if (!mot) throw new NoAutenticadoError("Sesión inválida: motorista no encontrado.");
-      const moto = mot.obtenerMotoActiva();
-      return {
-        rol: "motorista",
-        identificacion: mot.identificacion,
-        nombre: mot.nombre,
-        correo: mot.correoInstitucional,
-        telefono: mot.telefono,
-        detalle: moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo",
-        debeCambiarPassword: mot.debeCambiarPassword
-      };
+      return mot.construirResumenSesion();
     }
 
     const est = this.obtenerEstudiantes().find((e) => e.identificacion.toLowerCase() === id);
     if (!est) throw new NoAutenticadoError("Sesión inválida: estudiante no encontrado.");
-    return {
-      rol: "pasajero",
-      identificacion: est.identificacion,
-      nombre: est.nombre,
-      correo: est.correoInstitucional,
-      telefono: est.telefono,
-      detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
-      debeCambiarPassword: est.debeCambiarPassword
-    };
+    return est.construirResumenSesion();
   }
 
   public async cambiarPassword(
@@ -1395,6 +1329,91 @@ export class TucanGoFacade {
       mapaDias.set(dia, (mapaDias.get(dia) || 0) + 1);
     }
 
+    // 5. Puntos recurrentes anonimizados para Mapa General Admin (Ley 1581 de 2012)
+    const mapaPuntos = new Map<
+      string,
+      {
+        id: string;
+        etiqueta: string;
+        barrio: string;
+        latSum: number;
+        lngSum: number;
+        registros: number;
+        viajes: number;
+        origenDato: "UBICACION_RECURRENTE" | "SECTOR_DESTINO";
+      }
+    >();
+
+    for (const est of estudiantes) {
+      for (const u of est.ubicacionesFrecuentes) {
+        const key = `${u.latitud.toFixed(3)},${u.longitud.toFixed(3)}`;
+        const prev = mapaPuntos.get(key) || {
+          id: `REC_${key.replace(/[.,-]/g, "_")}`,
+          etiqueta: u.etiqueta || "Punto recurrente",
+          barrio: u.barrio || est.barrioResidencia || "Sin especificar",
+          latSum: 0,
+          lngSum: 0,
+          registros: 0,
+          viajes: 0,
+          origenDato: "UBICACION_RECURRENTE" as const
+        };
+        prev.latSum += u.latitud;
+        prev.lngSum += u.longitud;
+        prev.registros += 1;
+        if (!prev.barrio || prev.barrio === "Sin especificar") {
+          prev.barrio = u.barrio || est.barrioResidencia || "Sin especificar";
+        }
+        mapaPuntos.set(key, prev);
+      }
+    }
+
+    for (const v of viajes) {
+      const sectorDest = SECTORES_FLORENCIA.find(
+        (s) => s.nombre.toLowerCase() === v.destino.toLowerCase() || s.id.toLowerCase() === v.destino.toLowerCase()
+      );
+      if (sectorDest && sectorDest.id !== "PORVENIR" && sectorDest.id !== "CENTRO") {
+        const key = `${sectorDest.coordenada.latitud.toFixed(3)},${sectorDest.coordenada.longitud.toFixed(3)}`;
+        const prev = mapaPuntos.get(key) || {
+          id: `SEC_${sectorDest.id}`,
+          etiqueta: sectorDest.nombre,
+          barrio: sectorDest.referencia || sectorDest.nombre,
+          latSum: sectorDest.coordenada.latitud,
+          lngSum: sectorDest.coordenada.longitud,
+          registros: 0,
+          viajes: 0,
+          origenDato: "SECTOR_DESTINO" as const
+        };
+        prev.viajes += 1;
+        mapaPuntos.set(key, prev);
+      } else {
+        for (const p of mapaPuntos.values()) {
+          if (
+            v.destino.toLowerCase().includes(p.etiqueta.toLowerCase()) ||
+            v.destino.toLowerCase().includes(p.barrio.toLowerCase()) ||
+            v.origen.toLowerCase().includes(p.barrio.toLowerCase())
+          ) {
+            p.viajes += 1;
+          }
+        }
+      }
+    }
+
+    const puntosRecurrentesMapa = Array.from(mapaPuntos.values())
+      .map((p) => {
+        const divisor = Math.max(1, p.registros || 1);
+        return {
+          id: p.id,
+          etiqueta: p.etiqueta,
+          barrio: p.barrio,
+          latitud: Number((p.latSum / divisor).toFixed(5)),
+          longitud: Number((p.lngSum / divisor).toFixed(5)),
+          registros: p.registros,
+          viajes: p.viajes,
+          origenDato: p.origenDato
+        };
+      })
+      .sort((a, b) => b.registros + b.viajes - (a.registros + a.viajes));
+
     const tucanesActivos = motoristas.filter((m) => m.estadoAprobacion === "ACTIVO");
     const tucanesPendientes = motoristas.filter((m) => m.estadoAprobacion === "PENDIENTE_APROBACION");
 
@@ -1433,6 +1452,7 @@ export class TucanGoFacade {
       actividadPorDia: Array.from(mapaDias.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([fecha, cantidad]) => ({ fecha, cantidad })),
+      puntosRecurrentesMapa,
       comunidad: {
         estudiantes: estudiantes.map((e) => ({
           identificacion: e.identificacion,
@@ -1556,15 +1576,7 @@ export class TucanGoFacade {
           a.correoInstitucional.toLowerCase() === clave
       );
       if (admin) {
-        return {
-          rol: "admin" as const,
-          identificacion: admin.identificacion,
-          nombre: admin.nombre,
-          correo: admin.correoInstitucional,
-          telefono: admin.telefono,
-          detalle: `ADMIN · ${admin.cargo}`,
-          debeCambiarPassword: admin.debeCambiarPassword
-        };
+        return admin.construirResumenSesion();
       }
     }
 
@@ -1582,15 +1594,7 @@ export class TucanGoFacade {
           identificacion: est.identificacion,
           nombre: est.nombre
         });
-        return {
-          rol: "pasajero" as const,
-          identificacion: est.identificacion,
-          nombre: est.nombre,
-          correo: est.correoInstitucional,
-          telefono: est.telefono,
-          detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
-          debeCambiarPassword: est.debeCambiarPassword
-        };
+        return est.construirResumenSesion();
       }
     }
 
@@ -1602,21 +1606,12 @@ export class TucanGoFacade {
         (m.obtenerMotoActiva()?.placa || "").toLowerCase() === clave
     );
     if (mot) {
-      const moto = mot.obtenerMotoActiva();
       this.emitirEvento("USUARIO_AUTENTICADO", {
         rol: "motorista",
         identificacion: mot.identificacion,
         nombre: mot.nombre
       });
-      return {
-        rol: "motorista" as const,
-        identificacion: mot.identificacion,
-        nombre: mot.nombre,
-        correo: mot.correoInstitucional,
-        telefono: mot.telefono,
-        detalle: moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo",
-        debeCambiarPassword: mot.debeCambiarPassword
-      };
+      return mot.construirResumenSesion();
     }
 
     throw new Error(`No se encontró ningún usuario registrado para '${identificador}'.`);
@@ -1715,12 +1710,7 @@ export class TucanGoFacade {
       lng = Number(
         (actualLng + (sectorOrigen.coordenada.longitud - actualLng) * fraccionPaso).toFixed(6)
       );
-      rumbo = TucanGoFacade.calcularRumbo(
-        actualLat,
-        actualLng,
-        sectorOrigen.coordenada.latitud,
-        sectorOrigen.coordenada.longitud
-      );
+      rumbo = new Coordenada(actualLat, actualLng).rumboHacia(sectorOrigen.coordenada);
     } else {
       const polilinea = TucanGoFacade.construirPolilinea(
         sectorOrigen.coordenada,

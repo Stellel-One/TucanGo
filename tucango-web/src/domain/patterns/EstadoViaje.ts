@@ -18,12 +18,20 @@ export class EstadoSolicitado implements EstadoViaje {
   }
 
   public aceptar(viaje: Viaje, motorista: Motorista): void {
+    if (motorista.estadoAprobacion !== "ACTIVO") {
+      throw new Error(
+        `El motorista ${motorista.nombre} aún no está aprobado para operar en TucanGo.`
+      );
+    }
     if (!motorista.disponible) {
       throw new Error(`El motorista ${motorista.nombre} no se encuentra disponible.`);
     }
     const moto = motorista.obtenerMotoActiva();
     if (!moto) {
       throw new Error(`El motorista ${motorista.nombre} no tiene una moto activa asignada.`);
+    }
+    if (!moto.soatVigente) {
+      throw new Error(`La moto ${moto.placa} de ${motorista.nombre} no tiene SOAT vigente.`);
     }
     viaje.asignarMotorista(motorista);
     motorista.disponible = false;

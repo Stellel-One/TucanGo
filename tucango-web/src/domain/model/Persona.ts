@@ -134,5 +134,29 @@ export abstract class Persona {
     return verifyPassword(plain, this._passwordHash);
   }
 
+  public construirResumenSesion(): {
+    rol: "pasajero" | "motorista" | "admin";
+    identificacion: string;
+    nombre: string;
+    correo: string;
+    telefono: string;
+    detalle: string;
+    debeCambiarPassword: boolean;
+  } {
+    return {
+      rol: this.obtenerRolApp(),
+      identificacion: this._identificacion,
+      nombre: this._nombre,
+      correo: this._correoInstitucional,
+      telefono: this._telefono,
+      detalle: this.construirDetalle(),
+      debeCambiarPassword: this._debeCambiarPassword
+    };
+  }
+
+  public abstract obtenerRolApp(): "pasajero" | "motorista" | "admin";
+
+  public abstract construirDetalle(): string;
+
   public abstract obtenerRol(): string;
 }

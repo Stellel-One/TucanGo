@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { ejecutarSimulacionCampusPOO } from "../src/simulation/SimuladorCampusPOO.ts";
 
 import { Coordenada } from "../src/domain/model/Coordenada.ts";
 import {
@@ -332,5 +333,21 @@ describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () =
     assert.equal(tipos.includes("TRACKING_VIAJE_ACTUALIZADO"), true);
 
     desuscribir();
+  });
+
+  it("SimuladorCampusPOO valida polimorfismo, rumboHacia, rechazo de Tucán pendiente y PIN en dominio", () => {
+    const sim = ejecutarSimulacionCampusPOO();
+    assert.equal(sim.actoresPolimorficos.length, 3);
+    assert.deepEqual(
+      sim.actoresPolimorficos.map((a) => a.rol),
+      ["admin", "pasajero", "motorista"]
+    );
+    assert.ok(sim.distanciaKm > 0);
+    assert.ok(sim.rumboGrados >= 0 && sim.rumboGrados < 360);
+    assert.equal(sim.rechazoMotoristaPendiente, true);
+    assert.equal(sim.pinValidado, true);
+    assert.equal(sim.llegadaSegura, true);
+    assert.deepEqual(sim.estadosRecorridos, ["SOLICITADO", "ACEPTADO", "EN_CURSO", "FINALIZADO"]);
+    assert.equal(sim.eventosEmitidos, 3);
   });
 });

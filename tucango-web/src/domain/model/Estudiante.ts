@@ -150,6 +150,14 @@ export class Estudiante extends Persona {
     }
   }
 
+  public override obtenerRolApp(): "pasajero" {
+    return "pasajero";
+  }
+
+  public override construirDetalle(): string {
+    return `${this._carrera} · ${this._codigoEstudiantil}`;
+  }
+
   public override obtenerRol(): string {
     return "ESTUDIANTE";
   }

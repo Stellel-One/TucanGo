@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test test/*.test.ts",
     "start": "node src/server.ts",
-    "dev": "node --watch src/server.ts"
+    "dev": "node --watch src/server.ts",
+    "sim": "node src/simulation/SimuladorCampusPOO.ts"
   },
   "keywords": [
     "tucango",

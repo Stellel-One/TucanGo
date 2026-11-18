@@ -16,12 +16,14 @@ const state = {
   mapEngine: "leaflet",
   gmapsLoaded: false,
   mapConfig: null,
+  mapConfigPromise: null,
   trafficLayer: null,
   trafficEnabled: false,
   geocoder: null,
   infoWindow: null,
   markers: new Map(),
   savedPlaceMarkers: new Map(),
+  adminHeatmapCircles: [],
   userGpsMarker: null,
   realGps: null,
   prevGps: null,
@@ -394,23 +396,29 @@ function buscarLugarPorId(id) {
 }
 
 async function cargarConfigMapa() {
-  try {
-    const res = await fetch("/api/mapa/config");
-    if (!res.ok) return;
-    state.mapConfig = await res.json();
-    const esGoogle =
-      state.mapConfig.proveedorActivo === "google_maps" &&
-      Boolean(state.mapConfig.googleMapsApiKey);
+  if (state.mapConfigPromise) {
+    return state.mapConfigPromise;
+  }
+  state.mapConfigPromise = (async () => {
+    try {
+      const res = await fetch("/api/mapa/config");
+      if (!res.ok) return;
+      state.mapConfig = await res.json();
+      const esGoogle =
+        state.mapConfig.proveedorActivo === "google_maps" &&
+        Boolean(state.mapConfig.googleMapsApiKey);
 
-    if (esGoogle) {
-      const ok = await cargarScriptGoogleMaps(state.mapConfig.googleMapsApiKey);
-      state.mapEngine = ok ? "google" : "leaflet";
-    } else {
+      if (esGoogle) {
+        const ok = await cargarScriptGoogleMaps(state.mapConfig.googleMapsApiKey);
+        state.mapEngine = ok ? "google" : "leaflet";
+      } else {
+        state.mapEngine = "leaflet";
+      }
+    } catch {
       state.mapEngine = "leaflet";
     }
-  } catch {
-    state.mapEngine = "leaflet";
-  }
+  })();
+  return state.mapConfigPromise;
 }
 
 function cargarScriptGoogleMaps(apiKey) {
@@ -873,14 +881,114 @@ function renderMarcadoresEnVivo(data) {
   const esGoogle = state.mapEngine === "google" && window.google?.maps;
   if (!esGoogle && typeof window.L === "undefined") return;
 
-  // Marcadores de lugares guardados por el estudiante (Casa, Trabajo, etc.)
+  // Marcadores de lugares guardados (Estudiante) o puntos recurrentes estudiantiles (Admin)
   for (const mk of state.savedPlaceMarkers.values()) {
     if (typeof mk.setMap === "function") mk.setMap(null);
     else if (typeof mk.remove === "function") mk.remove();
   }
   state.savedPlaceMarkers.clear();
 
-  if (state.role === "pasajero") {
+  for (const c of state.adminHeatmapCircles || []) {
+    if (typeof c.setMap === "function") c.setMap(null);
+    else if (typeof c.remove === "function") c.remove();
+  }
+  state.adminHeatmapCircles = [];
+
+  if (state.authUser?.rol === "admin" && state.adminShowMap) {
+    const puntos = data?.analiticaAdmin?.puntosRecurrentesMapa || [];
+    const AdvancedMarker = window.google?.maps?.marker?.AdvancedMarkerElement;
+    const PinElement = window.google?.maps?.marker?.PinElement;
+
+    for (const p of puntos) {
+      const intensidad = Number(p.registros || 0) + Number(p.viajes || 0);
+      const esHotspot = intensidad >= 2;
+      const colorPin = esHotspot ? "#C8232C" : "#D97706";
+      const titulo = `${p.etiqueta} · ${p.barrio}`;
+      const infoHtml = `<div style="font-family:sans-serif;padding:3px 5px;max-width:220px;">
+        <strong>📍 ${esc(p.etiqueta)}</strong><br/>
+        <span style="font-size:12px;color:#374151;">Barrio / Sector: <strong>${esc(p.barrio)}</strong></span><br/>
+        <span style="font-size:11px;color:#0F6B36;font-weight:600;">${p.registros} registro(s) · ${p.viajes} viaje(s)</span><br/>
+        <span style="font-size:10px;color:#6B7280;">Dato agregado (Ley 1581 de 2012)</span>
+      </div>`;
+
+      if (esGoogle) {
+        const pos = { lat: p.latitud, lng: p.longitud };
+        let marker;
+        if (AdvancedMarker && PinElement && state.mapConfig?.googleMapsMapId) {
+          const pin = new PinElement({
+            background: colorPin,
+            borderColor: "#FFFFFF",
+            glyphColor: "#FFFFFF",
+            scale: esHotspot ? 1.05 : 0.92
+          });
+          marker = new AdvancedMarker({
+            map: state.map,
+            position: pos,
+            title: titulo,
+            content: pin.element
+          });
+        } else {
+          marker = new window.google.maps.Marker({
+            map: state.map,
+            position: pos,
+            title: titulo
+          });
+        }
+        marker.addListener("click", () => {
+          state.infoWindow?.setContent(infoHtml);
+          state.infoWindow?.open({ anchor: marker, map: state.map });
+        });
+        state.savedPlaceMarkers.set(p.id, marker);
+
+        const circle = new window.google.maps.Circle({
+          map: state.map,
+          center: pos,
+          radius: Math.min(260, 80 + intensidad * 30),
+          strokeColor: colorPin,
+          strokeOpacity: 0.55,
+          strokeWeight: 1.5,
+          fillColor: colorPin,
+          fillOpacity: 0.16,
+          clickable: false
+        });
+        state.adminHeatmapCircles.push(circle);
+      } else {
+        const lm = window.L.marker([p.latitud, p.longitud]).addTo(state.map);
+        lm.bindPopup(infoHtml);
+        state.savedPlaceMarkers.set(p.id, lm);
+        const lc = window.L.circle([p.latitud, p.longitud], {
+          radius: Math.min(260, 80 + intensidad * 30),
+          color: colorPin,
+          fillColor: colorPin,
+          fillOpacity: 0.16,
+          weight: 1.5
+        }).addTo(state.map);
+        state.adminHeatmapCircles.push(lc);
+      }
+    }
+
+    const totalRegistros = puntos.reduce((acc, item) => acc + Number(item.registros || 0), 0);
+    if (els.overlayDist) {
+      els.overlayDist.textContent = `${puntos.length} ${puntos.length === 1 ? "punto recurrente" : "puntos recurrentes"}`;
+    }
+    if (els.overlayEta) {
+      els.overlayEta.textContent = `${totalRegistros} ubicaciones guardadas`;
+    }
+    if (els.overlayTrafficBadge) {
+      els.overlayTrafficBadge.textContent = "Ley 1581 · Anonimizado";
+      els.overlayTrafficBadge.classList.remove("heavy");
+    }
+    if (els.overlayCorridor) {
+      els.overlayCorridor.textContent =
+        "Mapa General Uniamazonia · Destinos y barrios frecuentes de estudiantes";
+    }
+    if (els.coordsReadout) {
+      els.coordsReadout.textContent =
+        puntos.length > 0
+          ? "Toca cada marcador para consultar el barrio y frecuencia de viajes estudiantiles."
+          : "Aún no hay ubicaciones recurrentes registradas por estudiantes; mostrando sedes campus.";
+    }
+  } else if (state.role === "pasajero") {
     const AdvancedMarker = window.google?.maps?.marker?.AdvancedMarkerElement;
     const PinElement = window.google?.maps?.marker?.PinElement;
     for (const u of state.ubicacionesGuardadas || []) {
@@ -1034,6 +1142,33 @@ function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
 
 function pintarRutaEnMapa(ajustarEncuadre = true) {
   if (!state.data || !state.map) return;
+
+  if (state.authUser?.rol === "admin" && state.adminShowMap) {
+    if (state.routeLine) {
+      if (typeof state.routeLine.setMap === "function") state.routeLine.setMap(null);
+      else if (typeof state.routeLine.remove === "function") state.routeLine.remove();
+      state.routeLine = null;
+    }
+    if (state.routeLineCasing) {
+      if (typeof state.routeLineCasing.setMap === "function") state.routeLineCasing.setMap(null);
+      state.routeLineCasing = null;
+    }
+    renderMarcadoresEnVivo(state.data);
+    if (ajustarEncuadre) {
+      const sedes = obtenerSedesActivas(state.data.sectores || []);
+      const puntos = state.data?.analiticaAdmin?.puntosRecurrentesMapa || [];
+      const objetivos = [...sedes, ...puntos];
+      if (objetivos.length > 0 && state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
+        state.map.fitBoundsCompat(objetivos, 15);
+      } else if (state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
+        state.map.fitBoundsCompat(FLORENCIA_BOUNDS_COORDS, 15);
+      } else if (state.florenciaBounds && typeof state.map.fitBounds === "function") {
+        state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
+      }
+    }
+    return;
+  }
+
   const origen = buscarLugarPorId(els.selectOrigen.value);
   const destino = buscarLugarPorId(els.selectDestino.value);
 
@@ -1850,8 +1985,18 @@ function upsertChart(canvasId, config) {
   if (typeof window.Chart === "undefined") return;
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  if (state.charts[canvasId]) {
-    state.charts[canvasId].destroy();
+  const existente = state.charts[canvasId];
+  if (existente && existente.config?.type === config.type) {
+    existente.data.labels = config.data.labels || [];
+    existente.data.datasets = (config.data.datasets || []).map((ds, idx) => ({
+      ...(existente.data.datasets?.[idx] || {}),
+      ...ds
+    }));
+    existente.update("none");
+    return;
+  }
+  if (existente) {
+    existente.destroy();
   }
   state.charts[canvasId] = new window.Chart(canvas, config);
 }
@@ -2023,7 +2168,10 @@ function exportarCsvAdmin() {
 function renderAll(data) {
   state.data = data;
   renderMetricasPorRol(data);
-  initMap(data.sectores || []);
+  const debeMostrarMapa = state.authUser?.rol !== "admin" || state.adminShowMap;
+  if (debeMostrarMapa && (state.map || state.mapConfig)) {
+    initMap(data.sectores || []);
+  }
   renderSelectores(data);
   renderMarcadoresEnVivo(data);
   renderSeguimientoEnVivo(data);
@@ -2071,22 +2219,34 @@ async function cerrarSesionActual() {
   window.location.replace("/login");
 }
 
+async function abrirMapaAdmin() {
+  state.adminShowMap = true;
+  aplicarLayoutPorRol();
+  await cargarConfigMapa();
+  initMap(state.data?.sectores || []);
+  state.map?.invalidateSize?.();
+  setTimeout(() => {
+    state.map?.invalidateSize?.();
+    pintarRutaEnMapa(true);
+  }, 180);
+}
+
 // --- EVENTOS UI ---
 els.btnCerrarSesionApp?.addEventListener("click", cerrarSesionActual);
-els.btnSesionTopbar?.addEventListener("click", () => {
+els.btnSesionTopbar?.addEventListener("click", async () => {
   if (state.authUser?.rol === "admin") {
-    state.adminShowMap = true;
-    aplicarLayoutPorRol();
+    await abrirMapaAdmin();
   }
   switchTab("perfil");
 });
 
-els.btnAdminToggleMap?.addEventListener("click", () => {
-  state.adminShowMap = !state.adminShowMap;
-  aplicarLayoutPorRol();
-  if (state.adminShowMap) {
-    setTimeout(() => pintarRutaEnMapa(true), 250);
+els.btnAdminToggleMap?.addEventListener("click", async () => {
+  if (!state.adminShowMap) {
+    await abrirMapaAdmin();
+    return;
   }
+  state.adminShowMap = false;
+  aplicarLayoutPorRol();
 });
 
 els.btnAdminExportCsv?.addEventListener("click", exportarCsvAdmin);
@@ -2603,11 +2763,9 @@ async function iniciarAppAutenticada() {
     setRole(data.usuario.rol === "motorista" ? "motorista" : "pasajero");
     conectarSse();
     if (data.usuario.rol === "admin") {
-      // Para Admin, cargar el dashboard y las gráficas de inmediato sin esperar al script del mapa
+      // Precargar Google Maps en paralelo sin inicializar mapa oculto hasta abrir "Ver Mapa"
+      cargarConfigMapa();
       await cargarEstado(false);
-      cargarConfigMapa().then(() => {
-        if (state.adminShowMap) initMap(state.data?.sectores || []);
-      });
     } else {
       await cargarConfigMapa();
       await cargarUbicacionesEstudiante();
@@ -2619,10 +2777,9 @@ async function iniciarAppAutenticada() {
 }
 
 if (els.roleLockedBadge) {
-  els.roleLockedBadge.addEventListener("click", () => {
+  els.roleLockedBadge.addEventListener("click", async () => {
     if (state.authUser?.rol !== "admin") return;
-    state.adminShowMap = true;
-    aplicarLayoutPorRol();
+    await abrirMapaAdmin();
     setRole(state.role === "pasajero" ? "motorista" : "pasajero");
     showToast(`Vista operativa: ${state.role.toUpperCase()}`, "info");
   });

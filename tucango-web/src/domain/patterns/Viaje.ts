@@ -187,7 +187,10 @@ export class Viaje {
     this._direccionMotoristaGrados = motorista.direccionGrados;
   }
 
-  public iniciar(): void {
+  public iniciar(pinIngresado?: string): void {
+    if (pinIngresado !== undefined && pinIngresado.trim() !== this._pinSeguridad) {
+      throw new Error("El PIN de seguridad ingresado no coincide con el código del estudiante.");
+    }
     this._estado.iniciar(this);
     this._etapaTracking = "EN_VIAJE";
     this._progresoRuta = 0;

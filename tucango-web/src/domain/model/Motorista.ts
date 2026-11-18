@@ -4,18 +4,6 @@ import { Coordenada } from "./Coordenada.ts";
 
 export type EstadoAprobacionTucan = "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
 
-function calcularRumboEntre(origen: Coordenada, destino: Coordenada): number {
-  const lat1 = (origen.latitud * Math.PI) / 180;
-  const lat2 = (destino.latitud * Math.PI) / 180;
-  const dLon = ((destino.longitud - origen.longitud) * Math.PI) / 180;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  const brng = (Math.atan2(y, x) * 180) / Math.PI;
-  return Math.round((brng + 360) % 360);
-}
-
 export class Motorista extends Persona {
   private _disponible: boolean;
   private _motos: Moto[];
@@ -177,7 +165,7 @@ export class Motorista extends Persona {
       this._ubicacionActual.latitud !== nuevaUbicacion.latitud ||
       this._ubicacionActual.longitud !== nuevaUbicacion.longitud
     ) {
-      this._direccionGrados = calcularRumboEntre(this._ubicacionActual, nuevaUbicacion);
+      this._direccionGrados = this._ubicacionActual.rumboHacia(nuevaUbicacion);
     }
     this._ubicacionActual = nuevaUbicacion;
   }
@@ -243,6 +231,15 @@ export class Motorista extends Persona {
         numeroSoat: datos.numeroSoat
       });
     }
+  }
+
+  public override obtenerRolApp(): "motorista" {
+    return "motorista";
+  }
+
+  public override construirDetalle(): string {
+    const moto = this.obtenerMotoActiva();
+    return moto ? `${moto.marca} ${moto.modelo} · Placa ${moto.placa}` : "Motorista TucanGo";
   }
 
   public override obtenerRol(): string {

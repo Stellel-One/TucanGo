@@ -40,6 +40,14 @@ export class Administrador extends Persona {
     }
   }
 
+  public override obtenerRolApp(): "admin" {
+    return "admin";
+  }
+
+  public override construirDetalle(): string {
+    return `ADMIN · ${this._cargo}`;
+  }
+
   public override obtenerRol(): string {
     return "ADMIN";
   }

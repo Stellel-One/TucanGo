@@ -384,7 +384,7 @@ function requerirRol(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   facade: TucanGoFacade,
-  rolRequerido: "pasajero" | "motorista"
+  rolRequerido: "pasajero" | "motorista" | "admin"
 ): NonNullable<ReturnType<typeof obtenerSesionRequest>> | null {
   const sesion = requerirSesion(req, res, facade);
   if (!sesion) return null;
@@ -394,6 +394,36 @@ function requerirRol(
     return null;
   }
   return sesion;
+}
+
+function verificarPropiedadViaje(
+  res: http.ServerResponse,
+  facade: TucanGoFacade,
+  auth: NonNullable<ReturnType<typeof obtenerSesionRequest>>,
+  codigoViaje: string,
+  tipoPropiedad: "pasajero" | "motorista" | "participante"
+): boolean {
+  const viaje = facade.obtenerViaje(codigoViaje);
+  if (!viaje) {
+    sendJson(res, 404, { error: `Viaje con código ${codigoViaje} no existe.` });
+    return false;
+  }
+  if (auth.rol === "admin") return true;
+
+  const esPasajero = viaje.estudiante.identificacion === auth.identificacion;
+  const esMotorista = viaje.motorista?.identificacion === auth.identificacion;
+  const autorizado =
+    tipoPropiedad === "pasajero"
+      ? esPasajero
+      : tipoPropiedad === "motorista"
+        ? esMotorista
+        : esPasajero || esMotorista;
+
+  if (!autorizado) {
+    sendJson(res, 403, { error: "No tienes permisos sobre este viaje." });
+    return false;
+  }
+  return true;
 }
 
 function serializarSector(sector: SectorCampus) {
@@ -529,7 +559,7 @@ function construirEstadoDTO(
     motivoCancelacion: v.motivoCancelacion ?? null,
     llegadaSeguraConfirmada: v.llegadaSeguraConfirmada,
     fechaLlegadaSegura: v.fechaLlegadaSegura ? v.fechaLlegadaSegura.toISOString() : null,
-    pinSeguridad: v.pinSeguridad,
+    pinSeguridad: rol === "motorista" ? null : v.pinSeguridad,
     progresoRuta: v.progresoRuta,
     etapaTracking: v.etapaTracking,
     ubicacionMotoristaLat: v.ubicacionMotoristaLat ?? null,
@@ -1344,14 +1374,18 @@ export function crearServidor(
           mensaje: "Viaje aceptado por el motorista",
           codigo: viaje.codigoViaje,
           estado: viaje.estado.nombre,
-          motorista: viaje.motorista?.nombre,
-          pinSeguridad: viaje.pinSeguridad
+          motorista: viaje.motorista?.nombre
         });
         return;
       }
 
       if (pathname === "/api/viajes/tracking" && req.method === "POST") {
+        const auth = requerirSesion(req, res, facade);
+        if (!auth) return;
+
         const body = await parseJsonBody<{ codigoViaje: string; incremento?: number }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "participante")) return;
+
         const viaje = facade.avanzarSimulacionViaje(body.codigoViaje, body.incremento ?? 25);
         sendJson(res, 200, {
           codigo: viaje.codigoViaje,
@@ -1369,8 +1403,10 @@ export function crearServidor(
         const auth = requerirRol(req, res, facade, "motorista");
         if (!auth) return;
 
-        const body = await parseJsonBody<{ codigoViaje: string }>(req);
-        const viaje = facade.iniciarViaje(body.codigoViaje);
+        const body = await parseJsonBody<{ codigoViaje: string; pinSeguridad?: string }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "motorista")) return;
+
+        const viaje = facade.iniciarViaje(body.codigoViaje, body.pinSeguridad);
         sendJson(res, 200, {
           mensaje: "Viaje en marcha",
           codigo: viaje.codigoViaje,
@@ -1384,6 +1420,8 @@ export function crearServidor(
         if (!auth) return;
 
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "motorista")) return;
+
         const viaje = facade.finalizarViaje(body.codigoViaje);
         sendJson(res, 200, {
           mensaje: "Viaje finalizado y pago procesado",
@@ -1399,6 +1437,8 @@ export function crearServidor(
         if (!auth) return;
 
         const body = await parseJsonBody<{ codigoViaje: string }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "pasajero")) return;
+
         const viaje = facade.marcarLlegadaSegura(body.codigoViaje);
         sendJson(res, 200, {
           mensaje: "Llegada segura confirmada en campus",
@@ -1414,6 +1454,8 @@ export function crearServidor(
         if (!auth) return;
 
         const body = await parseJsonBody<{ codigoViaje: string; motivo: string }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "participante")) return;
+
         const viaje = facade.cancelarViaje(body.codigoViaje, body.motivo || "Cancelado por usuario");
         sendJson(res, 200, {
           mensaje: "Viaje cancelado",
@@ -1432,6 +1474,8 @@ export function crearServidor(
           puntuacion: number;
           comentario: string;
         }>(req);
+        if (!verificarPropiedadViaje(res, facade, auth, body.codigoViaje, "pasajero")) return;
+
         const autorId = auth.identificacion;
         const viaje = facade.calificarViaje(
           body.codigoViaje,

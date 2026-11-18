@@ -44,6 +44,20 @@ export class Coordenada {
     return Math.round(distancia * 100) / 100;
   }
 
+  public rumboHacia(destino: Coordenada): number {
+    if (this._latitud === destino.latitud && this._longitud === destino.longitud) {
+      return 0;
+    }
+    const lat1 = Coordenada.aRadianes(this._latitud);
+    const lat2 = Coordenada.aRadianes(destino.latitud);
+    const dLon = Coordenada.aRadianes(destino.longitud - this._longitud);
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x =
+      Math.cos(lat1) * Math.sin(lat2) -
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    return Math.round((((Math.atan2(y, x) * 180) / Math.PI) + 360) % 360);
+  }
+
   private static aRadianes(grados: number): number {
     return (grados * Math.PI) / 180;
   }
