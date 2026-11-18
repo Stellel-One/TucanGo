@@ -909,30 +909,94 @@ function pintarRutaEnMapa(ajustarEncuadre = true) {
   renderMarcadoresEnVivo(state.data);
 }
 
+const googleRoutesCache = new Map();
+
+async function intentarGoogleRoutesApi(origen, destino, key) {
+  const apiKey = state.mapConfig?.googleMapsApiKey;
+  if (!apiKey || !window.google?.maps?.geometry?.encoding?.decodePath) return false;
+
+  if (googleRoutesCache.has(key)) {
+    const cached = googleRoutesCache.get(key);
+    if (state.lastOsrmKey === key) {
+      state.lastPolilinea = cached.polilinea;
+      if (cached.distanciaKm) {
+        state.routeKm = cached.distanciaKm;
+        els.overlayDist.textContent = `${state.routeKm.toFixed(2)} km`;
+      }
+      if (cached.duracionMin) {
+        state.routeMin = cached.duracionMin;
+        els.overlayEta.textContent = `${state.routeMin} min`;
+      }
+      if (els.previewRutaKm) {
+        els.previewRutaKm.textContent = `${state.routeKm.toFixed(2)} km · ${state.routeMin} min`;
+      }
+      pintarRutaEnMapa(true);
+    }
+    return true;
+  }
+
+  for (const travelMode of ["TWO_WHEELER", "DRIVE"]) {
+    try {
+      const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
+        },
+        body: JSON.stringify({
+          origin: { location: { latLng: { latitude: origen.latitud, longitude: origen.longitud } } },
+          destination: { location: { latLng: { latitude: destino.latitud, longitude: destino.longitud } } },
+          travelMode,
+          routingPreference: "TRAFFIC_AWARE",
+          polylineQuality: "HIGH_QUALITY"
+        })
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+      const route = json?.routes?.[0];
+      const encoded = route?.polyline?.encodedPolyline;
+      if (!encoded) continue;
+
+      const decoded = window.google.maps.geometry.encoding.decodePath(encoded);
+      if (!Array.isArray(decoded) || decoded.length < 2) continue;
+
+      const polilinea = decoded.map((pt) => ({ latitud: pt.lat(), longitud: pt.lng() }));
+      const distanciaKm = route.distanceMeters ? Math.max(0.5, Number(route.distanceMeters) / 1000) : null;
+      const duracionSeg = route.duration ? parseInt(String(route.duration).replace("s", ""), 10) : NaN;
+      const duracionMin = Number.isFinite(duracionSeg) ? Math.max(1, Math.round(duracionSeg / 60)) : null;
+
+      googleRoutesCache.set(key, { polilinea, distanciaKm, duracionMin });
+      if (state.lastOsrmKey === key) {
+        state.lastPolilinea = polilinea;
+        if (distanciaKm) {
+          state.routeKm = distanciaKm;
+          els.overlayDist.textContent = `${state.routeKm.toFixed(2)} km`;
+        }
+        if (duracionMin) {
+          state.routeMin = duracionMin;
+          els.overlayEta.textContent = `${state.routeMin} min`;
+        }
+        if (els.previewRutaKm) {
+          els.previewRutaKm.textContent = `${state.routeKm.toFixed(2)} km · ${state.routeMin} min`;
+        }
+        pintarRutaEnMapa(true);
+      }
+      return true;
+    } catch {
+      // Intenta siguiente modo o cae a OSRM
+    }
+  }
+  return false;
+}
+
 async function intentarOsrmRuta(origen, destino, key) {
   if (origen.id === destino.id) return;
 
-  // Si Google Maps está activo, intentamos primero DirectionsService oficial calle por calle
-  if (state.mapEngine === "google" && window.google?.maps?.DirectionsService) {
-    try {
-      const ds = new window.google.maps.DirectionsService();
-      const result = await ds.route({
-        origin: { lat: origen.latitud, lng: origen.longitud },
-        destination: { lat: destino.latitud, lng: destino.longitud },
-        travelMode: window.google.maps.TravelMode.DRIVING
-      });
-      const overview = result?.routes?.[0]?.overview_path;
-      if (Array.isArray(overview) && overview.length >= 2 && state.lastOsrmKey === key) {
-        state.lastPolilinea = overview.map((pt) => ({
-          latitud: pt.lat(),
-          longitud: pt.lng()
-        }));
-        pintarRutaEnMapa(true);
-        return;
-      }
-    } catch {
-      // Continúa a respaldo OSRM si DirectionsService no tiene permiso o falla
-    }
+  // Si Google Maps está activo, usamos la nueva Routes API (v2:computeRoutes) con caché
+  if (state.mapEngine === "google") {
+    const okGoogle = await intentarGoogleRoutesApi(origen, destino, key);
+    if (okGoogle) return;
   }
 
   if (typeof AbortController === "undefined") return;
