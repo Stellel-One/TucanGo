@@ -54,6 +54,7 @@ export interface MotoristaSnapshot {
   fotoMotoUrl?: string;
   fotoSoatUrl?: string;
   fotoLicenciaUrl?: string;
+  fotoCedulaUrl?: string;
   compromisoAceptado?: boolean;
   motivoRechazo?: string;
   fechaAprobacion?: string;

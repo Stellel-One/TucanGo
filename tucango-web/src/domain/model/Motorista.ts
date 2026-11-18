@@ -14,6 +14,7 @@ export class Motorista extends Persona {
   private _fotoMotoUrl: string;
   private _fotoSoatUrl: string;
   private _fotoLicenciaUrl: string;
+  private _fotoCedulaUrl: string;
   private _compromisoAceptado: boolean;
   private _motivoRechazo?: string;
   private _fechaAprobacion?: Date;
@@ -37,7 +38,8 @@ export class Motorista extends Persona {
     compromisoAceptado: boolean = true,
     motivoRechazo?: string,
     fechaAprobacion?: Date,
-    correoBienvenidaEnviado: boolean = false
+    correoBienvenidaEnviado: boolean = false,
+    fotoCedulaUrl: string = ""
   ) {
     super(identificacion, nombre, telefono, correoInstitucional, passwordHash, debeCambiarPassword);
     this._disponible = disponible;
@@ -51,6 +53,7 @@ export class Motorista extends Persona {
     this._fotoMotoUrl = fotoMotoUrl;
     this._fotoSoatUrl = fotoSoatUrl;
     this._fotoLicenciaUrl = fotoLicenciaUrl;
+    this._fotoCedulaUrl = fotoCedulaUrl;
     this._compromisoAceptado = compromisoAceptado;
     this._motivoRechazo = motivoRechazo;
     this._fechaAprobacion = fechaAprobacion;
@@ -106,6 +109,14 @@ export class Motorista extends Persona {
 
   public set fotoLicenciaUrl(url: string) {
     this._fotoLicenciaUrl = url;
+  }
+
+  public get fotoCedulaUrl(): string {
+    return this._fotoCedulaUrl;
+  }
+
+  public set fotoCedulaUrl(url: string) {
+    this._fotoCedulaUrl = url;
   }
 
   public get compromisoAceptado(): boolean {

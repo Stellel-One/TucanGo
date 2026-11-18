@@ -71,6 +71,7 @@
   let toastTimer = null;
   let wizardPhotos = {
     face: "",
+    cedula: "",
     moto: ""
   };
 
@@ -407,45 +408,162 @@
     }
 
     function validarPasoWizard(pasoActual) {
-      if (pasoActual === 1) {
-        const id = els.regTucanId?.value.trim() || "";
-        const nombre = els.regTucanNombre?.value.trim() || "";
-        const tel = els.regTucanTel?.value.trim() || "";
-        const correo = els.regTucanCorreo?.value.trim().toLowerCase() || "";
-        const pass = els.regTucanPassword?.value || "";
-        const passConfirm = els.regTucanPasswordConfirm?.value || "";
+      // ==================== VALIDACIÓN EN TIEMPO REAL (MDN CONSTRAINT VALIDATION API) ====================
+      const customMessages = {
+        "reg-tucan-id": "Ingresa una cédula válida de 6 a 10 dígitos numéricos.",
+        "reg-tucan-nombre": "Ingresa tu nombre completo (mínimo 3 caracteres).",
+        "reg-tucan-tel": "Ingresa un celular/WhatsApp colombiano válido de 10 dígitos (ej. 3201234567).",
+        "reg-tucan-correo": "Ingresa un correo electrónico personal válido (ej. andres@gmail.com).",
+        "reg-tucan-password": "La contraseña debe tener al menos 10 caracteres.",
+        "reg-tucan-password-confirm": "Las contraseñas no coinciden.",
+        "reg-tucan-placa": "Formato de placa colombiana inválido (ej. AMZ-77G o AMZ77G).",
+        "reg-tucan-marca": "Ingresa la marca de la motocicleta (mínimo 2 caracteres).",
+        "reg-tucan-modelo": "Ingresa la línea o modelo (mínimo 2 caracteres).",
+        "reg-tucan-cc": "El cilindraje debe estar entre 50 y 1500 cc.",
+        "reg-tucan-soat": "Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).",
+        "reg-tucan-licencia": "Ingresa un número de licencia de conducción válido (mínimo 5 caracteres)."
+      };
 
-        if (!id || !nombre || !tel) {
-          mostrarAlertaInline("Completa tu cédula, nombre completo y teléfono celular.", "error");
-          return false;
+      function obtenerMensajeErrorCampo(inputEl) {
+        if (!inputEl) return "";
+        const v = inputEl.validity;
+        if (v.valueMissing) return "Este campo es obligatorio.";
+        if (inputEl.id === "reg-tucan-correo") {
+          const val = inputEl.value.trim();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
+            return customMessages["reg-tucan-correo"];
+          }
         }
-        if (!correo.endsWith("@uniamazonia.edu.co") && !correo.endsWith("@udla.edu.co")) {
-          mostrarAlertaInline("Debes ingresar un correo institucional (@uniamazonia.edu.co).", "error");
-          els.regTucanCorreo?.focus();
-          return false;
+        if (inputEl.id === "reg-tucan-password-confirm") {
+          if (inputEl.value !== (els.regTucanPassword?.value || "")) {
+            return customMessages["reg-tucan-password-confirm"];
+          }
         }
-        if (pass.length < 10) {
-          mostrarAlertaInline("La contraseña debe tener al menos 10 caracteres.", "error");
-          els.regTucanPassword?.focus();
-          return false;
+        if (v.typeMismatch || v.patternMismatch || v.tooShort || v.tooLong || v.rangeUnderflow || v.rangeOverflow) {
+          return customMessages[inputEl.id] || inputEl.validationMessage;
         }
-        if (pass !== passConfirm) {
-          mostrarAlertaInline("Las contraseñas no coinciden.", "error");
-          els.regTucanPasswordConfirm?.focus();
+        return "";
+      }
+
+      function validarCampoEnTiempoReal(inputEl) {
+        if (!inputEl) return true;
+        const errSpan = document.getElementById(`${inputEl.id}-error`);
+        const msg = obtenerMensajeErrorCampo(inputEl);
+
+        if (msg) {
+          inputEl.classList.remove("is-valid");
+          inputEl.classList.add("is-invalid");
+          inputEl.setAttribute("aria-invalid", "true");
+          if (errSpan) errSpan.textContent = msg;
+          return false;
+        } else {
+          inputEl.classList.remove("is-invalid");
+          inputEl.classList.add("is-valid");
+          inputEl.setAttribute("aria-invalid", "false");
+          if (errSpan) errSpan.textContent = "";
+          return true;
+        }
+      }
+
+      function actualizarMedidorFuerza(pass) {
+        const bar = document.getElementById("tucan-pass-strength-bar");
+        const label = document.getElementById("tucan-pass-strength-label");
+        if (!bar || !label) return;
+
+        let score = 0;
+        if (pass.length >= 10) score++;
+        if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+        if (/[0-9]/.test(pass)) score++;
+        if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+        if (!pass) {
+          bar.style.width = "0%";
+          label.textContent = "Seguridad: --";
+        } else if (score <= 1 || pass.length < 10) {
+          bar.style.width = "33%";
+          bar.style.backgroundColor = "#E30613";
+          label.textContent = "Seguridad: Débil";
+        } else if (score === 2 || score === 3) {
+          bar.style.width = "68%";
+          bar.style.backgroundColor = "#D97706";
+          label.textContent = "Seguridad: Media";
+        } else {
+          bar.style.width = "100%";
+          bar.style.backgroundColor = "#006837";
+          label.textContent = "Seguridad: Fuerte";
+        }
+      }
+
+      if (els.formWizardTucan) {
+        els.formWizardTucan.querySelectorAll("input.ios-input-field").forEach((inputEl) => {
+          inputEl.addEventListener("blur", () => {
+            inputEl.dataset.dirty = "true";
+            validarCampoEnTiempoReal(inputEl);
+          });
+          inputEl.addEventListener("input", () => {
+            if (inputEl.id === "reg-tucan-password") {
+              actualizarMedidorFuerza(inputEl.value);
+              if (els.regTucanPasswordConfirm?.dataset.dirty === "true") {
+                validarCampoEnTiempoReal(els.regTucanPasswordConfirm);
+              }
+            }
+            if (inputEl.id === "reg-tucan-placa") {
+              inputEl.value = inputEl.value.toUpperCase();
+            }
+            if (inputEl.dataset.dirty === "true" || inputEl.classList.contains("is-invalid")) {
+              validarCampoEnTiempoReal(inputEl);
+            }
+          });
+        });
+      }
+
+      if (pasoActual === 1) {
+        const camposPaso1 = [
+          els.regTucanId,
+          els.regTucanNombre,
+          els.regTucanTel,
+          els.regTucanCorreo,
+          els.regTucanPassword,
+          els.regTucanPasswordConfirm
+        ];
+        let primerInvalido = null;
+        for (const c of camposPaso1) {
+          if (c) c.dataset.dirty = "true";
+          if (!validarCampoEnTiempoReal(c) && !primerInvalido) {
+            primerInvalido = c;
+          }
+        }
+        if (primerInvalido) {
+          mostrarAlertaInline("Corrige los campos marcados en rojo antes de continuar.", "error");
+          primerInvalido.focus();
           return false;
         }
       } else if (pasoActual === 2) {
         if (!wizardPhotos.face) {
-          mostrarAlertaInline("Por favor sube una fotografía de perfil para tu verificación facial.", "error");
+          mostrarAlertaInline("Por favor sube o toma tu Selfie de reconocimiento facial.", "error");
+          return false;
+        }
+        if (!wizardPhotos.cedula) {
+          mostrarAlertaInline("Por favor escanea o sube la fotografía de tu Cédula de Ciudadanía.", "error");
           return false;
         }
       } else if (pasoActual === 3) {
-        const placa = els.regTucanPlaca?.value.trim() || "";
-        const marca = els.regTucanMarca?.value.trim() || "";
-        const modelo = els.regTucanModelo?.value.trim() || "";
-        const cc = parseInt(els.regTucanCc?.value.trim() || "0", 10);
-        if (!placa || !marca || !modelo || cc < 50) {
-          mostrarAlertaInline("Completa los datos técnicos de tu motocicleta (placa, marca, modelo, cilindraje).", "error");
+        const camposPaso3 = [
+          els.regTucanPlaca,
+          els.regTucanMarca,
+          els.regTucanModelo,
+          els.regTucanCc
+        ];
+        let primerInvalido = null;
+        for (const c of camposPaso3) {
+          if (c) c.dataset.dirty = "true";
+          if (!validarCampoEnTiempoReal(c) && !primerInvalido) {
+            primerInvalido = c;
+          }
+        }
+        if (primerInvalido) {
+          mostrarAlertaInline("Corrige los datos técnicos de tu motocicleta.", "error");
+          primerInvalido.focus();
           return false;
         }
       }
@@ -469,10 +587,42 @@
       });
     });
 
-    // Gestión de subida y vista previa de fotografías
-    function setupPhotoUpload(triggerBtnId, inputId, imgId, placeholderId, keyName) {
+    // Detección de dispositivo móvil / táctil para mostrar botón directo de cámara
+    const esDispositivoMovil =
+      window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+    document.querySelectorAll(".btn-mobile-camera").forEach((btn) => {
+      btn.classList.toggle("hidden", !esDispositivoMovil);
+    });
+
+    // Compresión ligera en <canvas> para fotos de documentos/cámara (~30-45 KB)
+    function comprimirImagenFile(file, maxWidth = 560, quality = 0.72) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Error leyendo la imagen"));
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error("Formato de imagen no soportado"));
+          img.onload = () => {
+            const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Gestión de subida, cámara móvil y vista previa de fotografías
+    function setupPhotoUpload(triggerBtnId, cameraBtnId, fileInputId, cameraInputId, imgId, placeholderId, keyName) {
       const trigger = document.getElementById(triggerBtnId);
-      const fileInput = document.getElementById(inputId);
+      const camBtn = document.getElementById(cameraBtnId);
+      const fileInput = document.getElementById(fileInputId);
+      const camInput = document.getElementById(cameraInputId);
       const imgEl = document.getElementById(imgId);
       const placeholderEl = document.getElementById(placeholderId);
 
@@ -485,46 +635,47 @@
         if (placeholderEl) placeholderEl.classList.add("hidden");
       }
 
-      trigger?.addEventListener("click", () => fileInput?.click());
-      fileInput?.addEventListener("change", (e) => {
+      async function handleFileSelect(e) {
         const file = e.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          if (typeof ev.target?.result === "string") {
-            applyPreview(ev.target.result);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+        try {
+          const compressed = await comprimirImagenFile(file);
+          applyPreview(compressed);
+        } catch (err) {
+          mostrarAlertaInline(err.message, "error");
+        }
+      }
+
+      trigger?.addEventListener("click", () => fileInput?.click());
+      camBtn?.addEventListener("click", () => camInput?.click());
+      fileInput?.addEventListener("change", handleFileSelect);
+      camInput?.addEventListener("change", handleFileSelect);
     }
 
-    setupPhotoUpload("btn-trigger-face", "input-file-face", "img-preview-face", "placeholder-face", "face");
-    setupPhotoUpload("btn-trigger-moto", "input-file-moto", "img-preview-moto", "placeholder-moto", "moto");
+    setupPhotoUpload("btn-trigger-face", "btn-camera-face", "input-file-face", "input-camera-face", "img-preview-face", "placeholder-face", "face");
+    setupPhotoUpload("btn-trigger-cedula", "btn-camera-cedula", "input-file-cedula", "input-camera-cedula", "img-preview-cedula", "placeholder-cedula", "cedula");
+    setupPhotoUpload("btn-trigger-moto", "btn-camera-moto", "input-file-moto", "input-camera-moto", "img-preview-moto", "placeholder-moto", "moto");
 
     if (els.formWizardTucan) {
       els.formWizardTucan.addEventListener("submit", async (e) => {
         e.preventDefault();
         ocultarAlertaInline();
 
-        const numeroSoat = els.regTucanSoat?.value.trim() || "";
-        const numeroLicencia = els.regTucanLicencia?.value.trim() || "";
+        if (els.regTucanSoat) els.regTucanSoat.dataset.dirty = "true";
+        if (els.regTucanLicencia) els.regTucanLicencia.dataset.dirty = "true";
+
+        const soatValido = validarCampoEnTiempoReal(els.regTucanSoat);
+        const licValida = validarCampoEnTiempoReal(els.regTucanLicencia);
         const compromisoAceptado = els.regTucanCompromisoCheck?.checked;
 
-        if (!numeroSoat || numeroSoat.length < 6) {
-          mostrarAlertaInline("Ingresa un número de póliza SOAT válido (mínimo 6 caracteres).", "error");
-          els.regTucanSoat?.focus();
-          return;
-        }
-
-        if (!numeroLicencia || numeroLicencia.length < 5) {
-          mostrarAlertaInline("Ingresa tu número de licencia de conducción categoría A2.", "error");
-          els.regTucanLicencia?.focus();
+        if (!soatValido || !licValida) {
+          mostrarAlertaInline("Verifica el número de póliza SOAT y tu licencia de conducción.", "error");
+          (!soatValido ? els.regTucanSoat : els.regTucanLicencia)?.focus();
           return;
         }
 
         if (!compromisoAceptado) {
-          mostrarAlertaInline("Debes aceptar el Código de Honor y las políticas de revocación para continuar.", "error");
+          mostrarAlertaInline("Debes aceptar las Políticas de Privacidad, Consentimientos y Código de Honor Tucán.", "error");
           els.regTucanCompromisoCheck?.focus();
           return;
         }
@@ -539,11 +690,12 @@
           marca: els.regTucanMarca?.value.trim() || "",
           modelo: els.regTucanModelo?.value.trim() || "",
           cilindraje: parseInt(els.regTucanCc?.value.trim() || "150", 10),
-          numeroSoat,
+          numeroSoat: els.regTucanSoat?.value.trim() || "",
           soatVigente: true,
           fotoRostroUrl: wizardPhotos.face,
+          fotoCedulaUrl: wizardPhotos.cedula,
           fotoMotoUrl: wizardPhotos.moto,
-          fotoLicenciaUrl: numeroLicencia,
+          fotoLicenciaUrl: els.regTucanLicencia?.value.trim() || "",
           compromisoAceptado: true
         };
 
@@ -565,7 +717,7 @@
           if (els.pendingTucanPlaca) els.pendingTucanPlaca.textContent = payload.placa;
 
           irAPasoWizard(5);
-          mostrarToast("¡Solicitud de Licencia Tucán enviada a auditoría!", "success");
+          mostrarToast("¡Solicitud de Licencia Tucán enviada! Pronto te contactaremos.", "success");
         } catch (err) {
           setBotonBusy(els.btnSubmitWizardTucan, false, "Enviar a Auditoría de Administración");
           mostrarAlertaInline(err.message, "error");
@@ -575,6 +727,7 @@
 
     els.btnPendingGoLogin?.addEventListener("click", () => {
       els.formWizardTucan?.reset();
+      wizardPhotos = { face: "", cedula: "", moto: "" };
       irAPasoWizard(1);
       cambiarModoAuth("login");
     });

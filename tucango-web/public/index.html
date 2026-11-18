@@ -917,15 +917,22 @@
 
       <div class="modal-tabs" style="margin-bottom: 14px;">
         <button type="button" class="modal-tab active" data-audit-tab="pendientes">
-          Solicitudes Pendientes (<span id="tab-count-pendientes">0</span>)
+          Pendientes (<span id="tab-count-pendientes">0</span>)
+        </button>
+        <button type="button" class="modal-tab" data-audit-tab="expedientes">
+          Hojas de Vida / Flota (<span id="tab-count-expedientes">0</span>)
         </button>
         <button type="button" class="modal-tab" data-audit-tab="correos">
-          Correos de Bienvenida Enviados (<span id="tab-count-correos">0</span>)
+          Correos Enviados (<span id="tab-count-correos">0</span>)
         </button>
       </div>
 
       <div id="audit-panel-pendientes" class="audit-list-container">
         <div id="lista-tucanes-pendientes" class="audit-cards-grid"></div>
+      </div>
+
+      <div id="audit-panel-expedientes" class="audit-list-container hidden">
+        <div id="lista-tucanes-expedientes" class="audit-cards-grid"></div>
       </div>
 
       <div id="audit-panel-correos" class="audit-list-container hidden">
@@ -938,6 +945,6 @@
 
   <script src="/vendor/leaflet/leaflet.js?v=1.9.4"></script>
   <script src="/vendor/chartjs/chart.umd.min.js?v=4.4.8"></script>
-  <script src="/app.js?v=5.2"></script>
+  <script src="/app.js?v=5.3"></script>
 </body>
 </html>

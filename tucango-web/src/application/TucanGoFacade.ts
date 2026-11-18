@@ -70,6 +70,7 @@ export interface RegistrarMotoristaDTO {
   fotoMotoUrl?: string;
   fotoSoatUrl?: string;
   fotoLicenciaUrl?: string;
+  fotoCedulaUrl?: string;
   compromisoAceptado?: boolean;
 }
 
@@ -336,6 +337,7 @@ export class TucanGoFacade {
         fotoMotoUrl: m.fotoMotoUrl,
         fotoSoatUrl: m.fotoSoatUrl,
         fotoLicenciaUrl: m.fotoLicenciaUrl,
+        fotoCedulaUrl: m.fotoCedulaUrl,
         compromisoAceptado: m.compromisoAceptado,
         motivoRechazo: m.motivoRechazo,
         fechaAprobacion: m.fechaAprobacion?.toISOString(),
@@ -475,7 +477,8 @@ export class TucanGoFacade {
         motSnap.compromisoAceptado ?? true,
         motSnap.motivoRechazo,
         motSnap.fechaAprobacion ? new Date(motSnap.fechaAprobacion) : undefined,
-        Boolean(motSnap.correoBienvenidaEnviado)
+        Boolean(motSnap.correoBienvenidaEnviado),
+        motSnap.fotoCedulaUrl ?? ""
       );
       if (motSnap.contactoEmergencia) mot.contactoEmergencia = motSnap.contactoEmergencia;
       if (motSnap.sedeFavorita) mot.sedeFavorita = motSnap.sedeFavorita;
@@ -676,7 +679,11 @@ export class TucanGoFacade {
       dto.fotoMotoUrl || "",
       dto.fotoSoatUrl || "",
       dto.fotoLicenciaUrl || "",
-      dto.compromisoAceptado ?? true
+      dto.compromisoAceptado ?? true,
+      undefined,
+      undefined,
+      false,
+      dto.fotoCedulaUrl || ""
     );
     if (dto.password) {
       motorista.asignarPasswordHash(hashPasswordSync(dto.password));

@@ -258,8 +258,8 @@ function verificarSesionCookie(
   }
 }
 
-// B14: Validación de tamaño (64 KB) y Content-Type
-function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
+// B14: Validación de tamaño (64 KB por defecto, configurable para carga de documentos) y Content-Type
+function parseJsonBody<T>(req: http.IncomingMessage, maxBytes: number = MAX_BODY_BYTES): Promise<T> {
   return new Promise((resolve, reject) => {
     const contentType = req.headers["content-type"] || "";
     if (req.method !== "GET" && req.method !== "HEAD" && req.headers["content-length"] !== "0") {
@@ -273,9 +273,9 @@ function parseJsonBody<T>(req: http.IncomingMessage): Promise<T> {
 
     req.on("data", (chunk) => {
       byteCount += chunk.length;
-      if (byteCount > MAX_BODY_BYTES) {
+      if (byteCount > maxBytes) {
         req.destroy();
-        return reject(new CuerpoExcesivoError("El cuerpo de la solicitud excede el límite de 64 KB."));
+        return reject(new CuerpoExcesivoError(`El cuerpo de la solicitud excede el límite permitido.`));
       }
       body += chunk;
     });
@@ -641,10 +641,41 @@ function construirEstadoDTO(
             correo: m.correoInstitucional,
             estadoAprobacion: m.estadoAprobacion,
             fotoRostroUrl: m.fotoRostroUrl,
+            fotoCedulaUrl: m.fotoCedulaUrl,
             fotoMotoUrl: m.fotoMotoUrl,
             fotoSoatUrl: m.fotoSoatUrl,
             fotoLicenciaUrl: m.fotoLicenciaUrl,
             compromisoAceptado: m.compromisoAceptado,
+            fechaAprobacion: m.fechaAprobacion?.toISOString() ?? null,
+            moto: m.obtenerMotoActiva()
+              ? {
+                  placa: m.obtenerMotoActiva()!.placa,
+                  marca: m.obtenerMotoActiva()!.marca,
+                  modelo: m.obtenerMotoActiva()!.modelo,
+                  cilindraje: m.obtenerMotoActiva()!.cilindraje,
+                  soatVigente: m.obtenerMotoActiva()!.soatVigente,
+                  numeroSoat: m.obtenerMotoActiva()!.numeroSoat
+                }
+              : null
+          }))
+        : [],
+    tucanesExpedientes:
+      rol === "admin"
+        ? facade.obtenerMotoristas().map((m) => ({
+            identificacion: m.identificacion,
+            nombre: m.nombre,
+            telefono: m.telefono,
+            correo: m.correoInstitucional,
+            disponible: m.disponible,
+            estadoAprobacion: m.estadoAprobacion,
+            fotoRostroUrl: m.fotoRostroUrl,
+            fotoCedulaUrl: m.fotoCedulaUrl,
+            fotoMotoUrl: m.fotoMotoUrl,
+            fotoSoatUrl: m.fotoSoatUrl,
+            fotoLicenciaUrl: m.fotoLicenciaUrl,
+            compromisoAceptado: m.compromisoAceptado,
+            fechaAprobacion: m.fechaAprobacion?.toISOString() ?? null,
+            correoBienvenidaEnviado: m.correoBienvenidaEnviado,
             moto: m.obtenerMotoActiva()
               ? {
                   placa: m.obtenerMotoActiva()!.placa,
@@ -668,7 +699,9 @@ function resolverArchivoPublico(publicDir: string, pathname: string): string | n
       ? "index.html"
       : pathname === "/login" || pathname === "/login/"
         ? "login.html"
-        : pathname === "/favicon.ico" || pathname === "/favicon.svg"
+        : pathname === "/politicas" || pathname === "/politicas/"
+          ? "politicas.html"
+          : pathname === "/favicon.ico" || pathname === "/favicon.svg"
           ? "assets/brand/tucango-moto-logo.svg"
           : pathname.replace(/^\/+/, "");
   const candidato = path.resolve(baseResuelta, limpio);
@@ -1184,6 +1217,7 @@ export function crearServidor(
           return;
         }
 
+        const esRutaTucanes = pathname === "/api/tucanes/registro";
         const body = await parseJsonBody<{
           identificacion: string;
           nombre: string;
@@ -1197,26 +1231,26 @@ export function crearServidor(
           numeroSoat?: string;
           password?: string;
           fotoRostroUrl?: string;
+          fotoCedulaUrl?: string;
           fotoMotoUrl?: string;
           fotoSoatUrl?: string;
           fotoLicenciaUrl?: string;
           compromisoAceptado?: boolean;
           estadoAprobacion?: "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
-        }>(req);
+        }>(req, esRutaTucanes ? 2 * 1024 * 1024 : MAX_BODY_BYTES);
 
         if (!body.password || body.password.trim().length === 0) {
           sendJson(res, 422, { error: "La contraseña es obligatoria (mínimo 10 caracteres)." });
           return;
         }
 
-        if (pathname === "/api/tucanes/registro" && body.compromisoAceptado === false) {
+        if (esRutaTucanes && body.compromisoAceptado === false) {
           sendJson(res, 422, {
             error: "Debes aceptar solemnemente cumplir las políticas y normas de movilidad de la Universidad de la Amazonia para postular tu Licencia Tucán."
           });
           return;
         }
 
-        const esRutaTucanes = pathname === "/api/tucanes/registro";
         const estadoAprobacion = esRutaTucanes
           ? "PENDIENTE_APROBACION"
           : (body.estadoAprobacion ?? "ACTIVO");
@@ -1229,7 +1263,7 @@ export function crearServidor(
         sendJson(res, 201, {
           mensaje:
             estadoAprobacion === "PENDIENTE_APROBACION"
-              ? "Solicitud de Licencia Tucán recibida. Tus documentos y SOAT están en proceso de auditoría y aprobación por la administración de la Universidad de la Amazonia."
+              ? "Solicitud de Licencia Tucán recibida. Tus documentos y SOAT están en proceso de auditoría por la administración. Pronto nos pondremos en contacto contigo vía correo electrónico o WhatsApp."
               : "Motorista y motocicleta verificados con SOAT vigente",
           identificacion: mot.identificacion,
           nombre: mot.nombre,
@@ -1250,6 +1284,7 @@ export function crearServidor(
           correo: m.correoInstitucional,
           estadoAprobacion: m.estadoAprobacion,
           fotoRostroUrl: m.fotoRostroUrl,
+          fotoCedulaUrl: m.fotoCedulaUrl,
           fotoMotoUrl: m.fotoMotoUrl,
           fotoSoatUrl: m.fotoSoatUrl,
           fotoLicenciaUrl: m.fotoLicenciaUrl,

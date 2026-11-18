@@ -206,10 +206,13 @@ const els = {
   modalAuditoriaTucanes: document.getElementById("modal-auditoria-tucanes"),
   btnCerrarAuditoria: document.getElementById("btn-cerrar-auditoria"),
   listaTucanesPendientes: document.getElementById("lista-tucanes-pendientes"),
+  listaTucanesExpedientes: document.getElementById("lista-tucanes-expedientes"),
   listaCorreosAuditoria: document.getElementById("lista-correos-auditoria"),
   tabCountPendientes: document.getElementById("tab-count-pendientes"),
+  tabCountExpedientes: document.getElementById("tab-count-expedientes"),
   tabCountCorreos: document.getElementById("tab-count-correos"),
   auditPanelPendientes: document.getElementById("audit-panel-pendientes"),
+  auditPanelExpedientes: document.getElementById("audit-panel-expedientes"),
   auditPanelCorreos: document.getElementById("audit-panel-correos")
 };
 
@@ -1878,14 +1881,11 @@ function renderFeed(data) {
     .join("");
 }
 
-function construirHtmlTarjetasPendientes(pendientes) {
-  if (pendientes.length === 0) {
-    return renderEmptyState(
-      "Sin solicitudes pendientes",
-      "Todos los aspirantes a Tucán han sido auditados."
-    );
+function construirHtmlTarjetasExpedienteTucan(lista, conAcciones = true, emptyTitulo = "Sin solicitudes pendientes", emptyDesc = "Todos los aspirantes a Tucán han sido auditados.") {
+  if (!lista || lista.length === 0) {
+    return renderEmptyState(emptyTitulo, emptyDesc);
   }
-  return pendientes
+  return lista
     .map((t) => {
       const faceUrl =
         t.fotoRostroUrl ||
@@ -1893,9 +1893,30 @@ function construirHtmlTarjetasPendientes(pendientes) {
           encodeURIComponent(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#EAF1ED"/><text x="40" y="48" font-size="28" text-anchor="middle" fill="#006837">${esc(inicialesNombre(t.nombre))}</text></svg>`
           );
+      const cedulaImg = t.fotoCedulaUrl
+        ? `<img src="${esc(t.fotoCedulaUrl)}" alt="Cédula de ${esc(t.nombre)}" class="audit-moto-preview" />`
+        : `<div class="audit-moto-preview" style="display:grid;place-items:center;color:#555;font-size:11px;">Cédula verificada</div>`;
       const motoImg = t.fotoMotoUrl
-        ? `<img src="${esc(t.fotoMotoUrl)}" alt="Moto" class="audit-moto-preview" />`
+        ? `<img src="${esc(t.fotoMotoUrl)}" alt="Moto de ${esc(t.nombre)}" class="audit-moto-preview" />`
         : `<div class="audit-moto-preview" style="display:grid;place-items:center;color:#555;font-size:11px;">Sin foto de moto</div>`;
+
+      const estadoChip =
+        t.estadoAprobacion === "ACTIVO"
+          ? `<span class="chip-mono chip-verified">ACTIVO · EN FLOTA</span>`
+          : t.estadoAprobacion === "RECHAZADO"
+            ? `<span class="chip-mono chip-danger">RECHAZADO</span>`
+            : `<span class="chip-mono chip-ochre-soft">EN REVISIÓN</span>`;
+
+      const accionesHtml = conAcciones
+        ? `<div class="audit-card-actions">
+            <button type="button" class="btn-rechazar-tucan" data-rechazar-tucan="${esc(t.identificacion)}">
+              ${tgIcon("iconly-close-square")} Rechazar
+            </button>
+            <button type="button" class="btn-aprobar-tucan" data-aprobar-tucan="${esc(t.identificacion)}">
+              ${tgIcon("iconly-tick-square")} Aprobar y Enviar Bienvenida
+            </button>
+          </div>`
+        : "";
 
       return `
         <article class="audit-tucan-card">
@@ -1903,9 +1924,10 @@ function construirHtmlTarjetasPendientes(pendientes) {
             <img src="${esc(faceUrl)}" alt="Foto facial de ${esc(t.nombre)}" class="audit-face-img" />
             <div class="audit-person-info">
               <h4>${esc(t.nombre)}</h4>
-              <p>C.C. ${esc(t.identificacion)} · Tel: ${esc(t.telefono)} · ${esc(t.correo)}</p>
+              <p>C.C. ${esc(t.identificacion)} · WhatsApp: ${esc(t.telefono)} · ${esc(t.correo)}</p>
+              ${t.fechaAprobacion ? `<p style="font-size:11px;color:#006837;">Aprobado: ${new Date(t.fechaAprobacion).toLocaleDateString("es-CO")}</p>` : ""}
             </div>
-            <span class="chip-mono chip-ochre-soft">EN REVISIÓN</span>
+            ${estadoChip}
           </div>
           <div class="audit-docs-grid">
             <div>
@@ -1914,23 +1936,21 @@ function construirHtmlTarjetasPendientes(pendientes) {
               <span>Placa: <strong class="mono-text">${esc(t.moto?.placa || "N/A")}</strong></span>
             </div>
             <div>
-              <strong>${tgIcon("iconly-document")} Marco Legal:</strong><br/>
+              <strong>${tgIcon("iconly-document")} Marco Legal (Hoja de Vida):</strong><br/>
               <span>SOAT: <strong>${esc(t.moto?.numeroSoat || "N/A")}</strong></span><br/>
               <span>Licencia: <strong>${esc(t.fotoLicenciaUrl || "Verificada A2")}</strong></span><br/>
               <span>Compromiso Honor: <strong style="color:#006837;">${t.compromisoAceptado ? `${tgIcon("iconly-tick-square")} Aceptado` : "Pendiente"}</strong></span>
             </div>
             <div>
+              <span style="font-size:10.5px;font-weight:700;color:#4C695A;">Escaneo Cédula:</span>
+              ${cedulaImg}
+            </div>
+            <div>
+              <span style="font-size:10.5px;font-weight:700;color:#4C695A;">Foto Moto:</span>
               ${motoImg}
             </div>
           </div>
-          <div class="audit-card-actions">
-            <button type="button" class="btn-rechazar-tucan" data-rechazar-tucan="${esc(t.identificacion)}">
-              ${tgIcon("iconly-close-square")} Rechazar
-            </button>
-            <button type="button" class="btn-aprobar-tucan" data-aprobar-tucan="${esc(t.identificacion)}">
-              ${tgIcon("iconly-tick-square")} Aprobar y Enviar Bienvenida
-            </button>
-          </div>
+          ${accionesHtml}
         </article>`;
     })
     .join("");
@@ -1964,17 +1984,26 @@ function renderAuditoriaTucanes(data) {
     els.btnAbrirAuditoria.classList.toggle("hidden", !esAdmin);
   }
   const pendientes = data.tucanesPendientes || [];
+  const expedientes = data.tucanesExpedientes || [];
   const correos = data.notificacionesCorreo || [];
 
   if (els.countTucanesPendientes) els.countTucanesPendientes.textContent = String(pendientes.length);
   if (els.adminTabPendBadge) els.adminTabPendBadge.textContent = String(pendientes.length);
   if (els.tabCountPendientes) els.tabCountPendientes.textContent = String(pendientes.length);
+  if (els.tabCountExpedientes) els.tabCountExpedientes.textContent = String(expedientes.length);
   if (els.tabCountCorreos) els.tabCountCorreos.textContent = String(correos.length);
 
-  const htmlPend = construirHtmlTarjetasPendientes(pendientes);
+  const htmlPend = construirHtmlTarjetasExpedienteTucan(pendientes, true);
+  const htmlExp = construirHtmlTarjetasExpedienteTucan(
+    expedientes,
+    false,
+    "Sin Tucanes registrados",
+    "Aquí aparecerá la hoja de vida completa de cada Tucán en plataforma."
+  );
   const htmlMail = construirHtmlCorreosAuditoria(correos);
 
   if (els.listaTucanesPendientes) els.listaTucanesPendientes.innerHTML = htmlPend;
+  if (els.listaTucanesExpedientes) els.listaTucanesExpedientes.innerHTML = htmlExp;
   if (els.listaCorreosAuditoria) els.listaCorreosAuditoria.innerHTML = htmlMail;
   if (els.adminInlinePendientes) els.adminInlinePendientes.innerHTML = htmlPend;
   if (els.adminInlineCorreos) els.adminInlineCorreos.innerHTML = htmlMail;
@@ -2709,6 +2738,7 @@ document.querySelectorAll("[data-audit-tab]").forEach((tab) => {
     document.querySelectorAll("[data-audit-tab]").forEach((t) => t.classList.remove("active"));
     tab.classList.add("active");
     els.auditPanelPendientes?.classList.toggle("hidden", mode !== "pendientes");
+    els.auditPanelExpedientes?.classList.toggle("hidden", mode !== "expedientes");
     els.auditPanelCorreos?.classList.toggle("hidden", mode !== "correos");
   });
 });
