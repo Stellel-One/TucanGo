@@ -95,9 +95,11 @@ body {
   flex-shrink: 0;
 }
 
-.brand-emblem svg {
+.brand-emblem svg,
+.brand-emblem img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .brand-title-row {
@@ -2462,3 +2464,41 @@ button:disabled {
   border-radius: 8px;
   border: 1px solid #E5ECE8;
 }
+
+/* SISTEMA UNIFICADO DE ICONOGRAFÍA ICONLY V3.0 (CURVED / BULK) */
+.tg-icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.tg-icon-sm {
+  width: 15px;
+  height: 15px;
+  vertical-align: -0.15em;
+}
+
+.tg-icon-md {
+  width: 18px;
+  height: 18px;
+  vertical-align: -0.2em;
+}
+
+.tg-icon-lg {
+  width: 22px;
+  height: 22px;
+}
+
+@keyframes tg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tg-icon-spin {
+  animation: tg-spin 0.9s linear infinite;
+}
+

@@ -153,14 +153,12 @@ const els = {
   auditPanelCorreos: document.getElementById("audit-panel-correos")
 };
 
+function tgIcon(symbolId, extraClass = "tg-icon-sm") {
+  return `<svg class="tg-icon ${extraClass}" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#${symbolId}"/></svg>`;
+}
+
 function actualizarIconosLucide() {
-  if (window.lucide && typeof window.lucide.createIcons === "function") {
-    try {
-      window.lucide.createIcons();
-    } catch (e) {
-      console.warn("Lucide icons error:", e);
-    }
-  }
+  // Mantenido por compatibilidad; ahora se usa el sprite unificado Iconly V3.0 (Curved/Bulk)
 }
 
 function esc(value) {
@@ -296,17 +294,17 @@ function setRole(role) {
 }
 
 function crearSvgMotoCenital(ocupada, rumboGrados) {
-  const colorChasis = ocupada ? "#FF6600" : "#0F6B36";
+  const colorChasis = ocupada ? "#E30613" : "#006837";
   return `
     <div class="moto-marker-wrap">
       <div class="moto-svg-rotator" style="transform: rotate(${Number(rumboGrados || 0)}deg);">
         <svg viewBox="0 0 36 36" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="18" cy="18" rx="13" ry="15" fill="rgba(255,255,255,0.86)" />
-          <rect x="16" y="4" width="4" height="7" rx="2" fill="#1E2421" />
-          <path d="M11 11 H25" stroke="#1E2421" stroke-width="2.6" stroke-linecap="round" />
+          <ellipse cx="18" cy="18" rx="13" ry="15" fill="rgba(255,255,255,0.9)" />
+          <rect x="16" y="4" width="4" height="7" rx="2" fill="#112A1E" />
+          <path d="M11 11 H25" stroke="#112A1E" stroke-width="2.6" stroke-linecap="round" />
           <rect x="14" y="10" width="8" height="14" rx="4" fill="${colorChasis}" stroke="#FFFFFF" stroke-width="1.4" />
-          <circle cx="18" cy="16.5" r="3" fill="#1E2421" />
-          <rect x="16.2" y="25" width="3.6" height="6" rx="1.5" fill="#1E2421" />
+          <circle cx="18" cy="16.5" r="3" fill="#112A1E" />
+          <rect x="16.2" y="25" width="3.6" height="6" rx="1.5" fill="#112A1E" />
           <circle cx="18" cy="6.2" r="1.7" fill="#F7C927" />
         </svg>
       </div>
@@ -695,7 +693,7 @@ function iniciarGeolocalizacionTiempoReal(forzarCentrado = false) {
     const enFlorencia = estaDentroDeFlorencia(lat, lng);
 
     if (els.coordsReadout) {
-      els.coordsReadout.textContent = `📡 GPS Real: ${lat.toFixed(4)}, ${lng.toFixed(4)} (±${acc}m)${enFlorencia ? " · Florencia" : " · Fuera de campus"}`;
+      els.coordsReadout.innerHTML = `${tgIcon("tg-radar")} GPS Real: ${lat.toFixed(4)}, ${lng.toFixed(4)} (±${acc}m)${enFlorencia ? " · Florencia" : " · Fuera de campus"}`;
     }
 
     if (state.data) {
@@ -1153,7 +1151,9 @@ function renderSeguimientoEnVivo(data) {
     viajeActivo && (viajeActivo.estado === "ACEPTADO" || viajeActivo.estado === "EN_CURSO");
   els.btnSimularTracking.classList.toggle("hidden", !hayMovimiento);
   els.btnSimularTracking.classList.toggle("running", Boolean(state.autoSimTimer));
-  els.btnSimularTracking.textContent = state.autoSimTimer ? "⏸ Pausar GPS" : "▶ Simular GPS";
+  els.btnSimularTracking.innerHTML = state.autoSimTimer
+    ? `${tgIcon("iconly-time-circle")} <span>Pausar GPS</span>`
+    : `${tgIcon("iconly-play")} <span>Simular GPS</span>`;
   if (els.mobileTrackingDot) {
     els.mobileTrackingDot.classList.toggle("hidden", !viajeActivo);
   }
@@ -1456,15 +1456,15 @@ function renderAuditoriaTucanes(data) {
               </div>
               <div class="audit-docs-grid">
                 <div>
-                  <strong>🏍️ Motocicleta:</strong><br/>
+                  <strong>${tgIcon("tg-moto")} Motocicleta:</strong><br/>
                   <span>${esc(t.moto?.marca || "")} ${esc(t.moto?.modelo || "")} (${esc(t.moto?.cilindraje || "")}cc)</span><br/>
                   <span>Placa: <strong class="mono-text">${esc(t.moto?.placa || "N/A")}</strong></span>
                 </div>
                 <div>
-                  <strong>📄 Marco Legal:</strong><br/>
+                  <strong>${tgIcon("iconly-document")} Marco Legal:</strong><br/>
                   <span>SOAT: <strong>${esc(t.moto?.numeroSoat || "N/A")}</strong></span><br/>
                   <span>Licencia: <strong>${esc(t.fotoLicenciaUrl || "Verificada A2")}</strong></span><br/>
-                  <span>Compromiso Honor: <strong style="color:#006837;">${t.compromisoAceptado ? "Aceptado ✓" : "Pendiente"}</strong></span>
+                  <span>Compromiso Honor: <strong style="color:#006837;">${t.compromisoAceptado ? `${tgIcon("iconly-tick-square")} Aceptado` : "Pendiente"}</strong></span>
                 </div>
                 <div>
                   ${motoImg}
@@ -1472,10 +1472,10 @@ function renderAuditoriaTucanes(data) {
               </div>
               <div class="audit-card-actions">
                 <button type="button" class="btn-rechazar-tucan" data-rechazar-tucan="${esc(t.identificacion)}">
-                  ✕ Rechazar
+                  ${tgIcon("iconly-close-square")} Rechazar
                 </button>
                 <button type="button" class="btn-aprobar-tucan" data-aprobar-tucan="${esc(t.identificacion)}">
-                  ✓ Aprobar y Enviar Bienvenida
+                  ${tgIcon("iconly-tick-square")} Aprobar y Enviar Bienvenida
                 </button>
               </div>
             </article>
@@ -1500,7 +1500,7 @@ function renderAuditoriaTucanes(data) {
               <span>Para: ${esc(c.destinatario)}</span>
               <span>${new Date(c.enviadoEn).toLocaleString("es-CO")}</span>
             </div>
-            <div class="audit-email-subject">✉️ ${esc(c.asunto)}</div>
+            <div class="audit-email-subject">${tgIcon("iconly-message")} ${esc(c.asunto)}</div>
             <div class="audit-email-body">${esc(c.mensajeHtml)}</div>
           </article>
         `
@@ -2241,12 +2241,11 @@ async function ejecutarAutoDemoCompleta() {
   const btn = els.btnSimAutoAll;
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<i data-lucide="loader"></i> Ejecutando simulación...`;
-    actualizarIconosLucide();
+    btn.innerHTML = `${tgIcon("tg-loader", "tg-icon-sm tg-icon-spin")} Ejecutando simulación...`;
   }
 
   try {
-    showToast("🚀 Iniciando Simulación End-to-End DiDi Moto...", "info");
+    showToast("Iniciando Simulación End-to-End DiDi Moto...", "info");
     
     // Paso 1
     await simularRegistroEstudiante();
@@ -2277,8 +2276,7 @@ async function ejecutarAutoDemoCompleta() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="play"></i> Iniciar Demo Completa`;
-      actualizarIconosLucide();
+      btn.innerHTML = `${tgIcon("iconly-play")} Iniciar Demo Completa`;
     }
   }
 }

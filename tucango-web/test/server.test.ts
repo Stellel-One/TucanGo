@@ -351,6 +351,13 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       assert.equal(assetRes.status, 200);
       assert.match(assetRes.headers.get("content-type") || "", /image\/png/);
 
+      const spriteRes = await fetch(`${baseUrl}/assets/icons/iconly-sprite.svg`);
+      assert.equal(spriteRes.status, 200);
+      assert.match(spriteRes.headers.get("content-type") || "", /image\/svg\+xml/);
+      const spriteText = await spriteRes.text();
+      assert.match(spriteText, /id="iconly-shield-done"/);
+      assert.match(spriteText, /id="tg-moto"/);
+
       const anonMeRes = await fetch(`${baseUrl}/api/auth/me`);
       assert.equal(anonMeRes.status, 200);
       const anonMe = (await anonMeRes.json()) as { autenticado: boolean };

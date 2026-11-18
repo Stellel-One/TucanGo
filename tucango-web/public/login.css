@@ -1129,3 +1129,44 @@ body {
 .text-ochre {
   color: #B4690E;
 }
+
+/* SISTEMA UNIFICADO DE ICONOGRAFÍA ICONLY V3.0 (CURVED / BULK) */
+.tg-icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.tg-icon-sm {
+  width: 14px;
+  height: 14px;
+  vertical-align: -0.15em;
+}
+
+.tg-icon-md {
+  width: 18px;
+  height: 18px;
+  vertical-align: -0.2em;
+}
+
+.tg-icon-lg {
+  width: 24px;
+  height: 24px;
+}
+
+.tg-icon-xl {
+  width: 34px;
+  height: 34px;
+}
+
+.honor-shield .tg-icon {
+  color: var(--forest-green);
+}
+
+.pending-icon-circle .tg-icon {
+  color: #B4690E;
+}
+

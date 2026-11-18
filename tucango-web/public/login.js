@@ -285,6 +285,13 @@
           "aria-label",
           esPass ? "Ocultar contraseña" : "Mostrar contraseña"
         );
+        const eyeUse = document.getElementById("icon-login-pass-eye");
+        if (eyeUse) {
+          eyeUse.setAttribute(
+            "href",
+            `/assets/icons/iconly-sprite.svg#${esPass ? "iconly-hide" : "iconly-show"}`
+          );
+        }
       });
     }
 
