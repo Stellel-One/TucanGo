@@ -44,6 +44,15 @@ export class Administrador extends Persona {
     return "admin";
   }
 
+  public get esAuditorInstitucional(): boolean {
+    const c = this._cargo.toLowerCase();
+    return c.includes("auditor") || c.includes("rectoria") || c.includes("bienestar");
+  }
+
+  public puedeGestionarFlota(): boolean {
+    return !this.esAuditorInstitucional;
+  }
+
   public override construirDetalle(): string {
     return `ADMIN · ${this._cargo}`;
   }

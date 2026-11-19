@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import type {
   EstadoSistemaSnapshot,
@@ -32,6 +33,22 @@ export class SqliteSistemaRepository implements SistemaRepository {
         expira_en INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_sesiones_revocadas_exp ON sesiones_revocadas(expira_en);
+      CREATE TABLE IF NOT EXISTS documentos_tucan (
+        identificacion TEXT NOT NULL,
+        tipo TEXT NOT NULL,
+        contenido_cifrado TEXT NOT NULL,
+        iv TEXT NOT NULL,
+        tag TEXT NOT NULL,
+        creado_en TEXT NOT NULL,
+        PRIMARY KEY (identificacion, tipo)
+      );
+      CREATE TABLE IF NOT EXISTS auditoria_acceso_documentos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        identificacion_admin TEXT NOT NULL,
+        identificacion_tucan TEXT NOT NULL,
+        tipo_documento TEXT NOT NULL,
+        accedido_en TEXT NOT NULL
+      );
     `);
   }
 
@@ -72,6 +89,94 @@ export class SqliteSistemaRepository implements SistemaRepository {
     } catch (error) {
       this._db.exec("ROLLBACK");
       throw error;
+    }
+
+    // §6 Auditoría: Cifrado en reposo de expedientes con AES-256-GCM
+    for (const m of snapshot.motoristas || []) {
+      if (m.fotoCedulaUrl) this.guardarDocumentoCifrado(m.identificacion, "cedula", m.fotoCedulaUrl);
+      if (m.fotoSoatUrl) this.guardarDocumentoCifrado(m.identificacion, "soat", m.fotoSoatUrl);
+      if (m.fotoLicenciaUrl) this.guardarDocumentoCifrado(m.identificacion, "licencia", m.fotoLicenciaUrl);
+      if (m.fotoRostroUrl) this.guardarDocumentoCifrado(m.identificacion, "rostro", m.fotoRostroUrl);
+      if (m.fotoMotoUrl) this.guardarDocumentoCifrado(m.identificacion, "moto", m.fotoMotoUrl);
+    }
+  }
+
+  private static obtenerClaveCifrado(): Buffer {
+    const rawKey = process.env.DOCS_ENCRYPTION_KEY || "tucango-docs-crypto-secure-key-2026";
+    return crypto.createHash("sha256").update(rawKey).digest();
+  }
+
+  public guardarDocumentoCifrado(
+    identificacion: string,
+    tipo: string,
+    contenido: string
+  ): void {
+    if (!identificacion || !tipo || !contenido) return;
+    try {
+      const clave = SqliteSistemaRepository.obtenerClaveCifrado();
+      const iv = crypto.randomBytes(12);
+      const cipher = crypto.createCipheriv("aes-256-gcm", clave, iv);
+      let enc = cipher.update(contenido, "utf8", "base64");
+      enc += cipher.final("base64");
+      const tag = cipher.getAuthTag().toString("base64");
+      const ahora = new Date().toISOString();
+
+      const stmt = this._db.prepare(`
+        INSERT INTO documentos_tucan (identificacion, tipo, contenido_cifrado, iv, tag, creado_en)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(identificacion, tipo) DO UPDATE SET
+          contenido_cifrado = excluded.contenido_cifrado,
+          iv = excluded.iv,
+          tag = excluded.tag,
+          creado_en = excluded.creado_en
+      `);
+      stmt.run(identificacion, tipo, enc, iv.toString("base64"), tag, ahora);
+    } catch {
+      // Registrar sin interrumpir flujo de persistencia
+    }
+  }
+
+  public obtenerDocumentoDescifrado(identificacion: string, tipo: string): string | null {
+    if (!identificacion || !tipo) return null;
+    try {
+      const stmt = this._db.prepare(`
+        SELECT contenido_cifrado, iv, tag FROM documentos_tucan
+        WHERE identificacion = ? AND tipo = ?
+      `);
+      const row = stmt.get(identificacion, tipo) as
+        | { contenido_cifrado: string; iv: string; tag: string }
+        | undefined;
+      if (!row) return null;
+
+      const clave = SqliteSistemaRepository.obtenerClaveCifrado();
+      const decipher = crypto.createDecipheriv(
+        "aes-256-gcm",
+        clave,
+        Buffer.from(row.iv, "base64")
+      );
+      decipher.setAuthTag(Buffer.from(row.tag, "base64"));
+      let dec = decipher.update(row.contenido_cifrado, "base64", "utf8");
+      dec += decipher.final("utf8");
+      return dec;
+    } catch {
+      return null;
+    }
+  }
+
+  public registrarAccesoDocumento(
+    adminId: string,
+    tucanId: string,
+    tipo: string
+  ): void {
+    try {
+      const ahora = new Date().toISOString();
+      const stmt = this._db.prepare(`
+        INSERT INTO auditoria_acceso_documentos (identificacion_admin, identificacion_tucan, tipo_documento, accedido_en)
+        VALUES (?, ?, ?, ?)
+      `);
+      stmt.run(adminId, tucanId, tipo, ahora);
+    } catch {
+      // Ignorar fallos de telemetría secundaria
     }
   }
 

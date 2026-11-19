@@ -69,6 +69,8 @@ const els = {
   adminPanelAnalitica: document.getElementById("admin-panel-analitica"),
   adminPanelAuditoria: document.getElementById("admin-panel-auditoria"),
   adminPanelComunidad: document.getElementById("admin-panel-comunidad"),
+  adminPanelTrazabilidad: document.getElementById("admin-panel-trazabilidad"),
+  adminTablaTrazabilidad: document.getElementById("admin-tabla-trazabilidad"),
   adminInlinePendientes: document.getElementById("admin-inline-pendientes"),
   adminInlineCorreos: document.getElementById("admin-inline-correos"),
   adminTablaEstudiantes: document.getElementById("admin-tabla-estudiantes"),
@@ -2258,6 +2260,26 @@ function renderAdminDashboard(data) {
           .join("")
       : `<tr><td colspan="6" class="muted-sub">Aún no hay Tucanes registrados. Cuando un aspirante se registre en /login aparecerá en Auditoría.</td></tr>`;
   }
+
+  // Tabla Trazabilidad y Bitácora Institucional
+  if (els.adminTablaTrazabilidad) {
+    const eventos = data?.bitacoraAuditoria || [];
+    els.adminTablaTrazabilidad.innerHTML = eventos.length
+      ? eventos
+          .map((ev) => {
+            const timeStr = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : "--";
+            const detalle = ev.payload ? JSON.stringify(ev.payload).slice(0, 90) : "";
+            return `
+            <tr>
+              <td class="mono-text">${esc(timeStr)}</td>
+              <td><strong>${esc(ev.tipo)}</strong></td>
+              <td class="text-subtle"><small>${esc(detalle)}</small></td>
+              <td><span class="chip-mono chip-verified">REGISTRADO</span></td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="4" class="text-muted">Sin eventos registrados aún.</td></tr>`;
+  }
 }
 
 function exportarCsvAdmin() {
@@ -2270,7 +2292,13 @@ function exportarCsvAdmin() {
     ["Resumen", "Viajes Totales", a.resumen.totalViajes, `${a.resumen.viajesFinalizados} finalizados`],
     ["Resumen", "Llegadas Seguras", a.resumen.llegadasSeguras, "Confirmadas en porteria"],
     ...(a.barriosEstudiantes || []).map((b) => ["Barrio Residencia (Ley 1581)", b.barrio, b.estudiantes, `${b.porcentaje}%`]),
-    ...(a.corredoresComunes || []).map((c) => ["Corredor Comun", c.ruta, c.viajes, `${c.kmPromedio} km promedio`])
+    ...(a.corredoresComunes || []).map((c) => ["Corredor Comun", c.ruta, c.viajes, `${c.kmPromedio} km promedio`]),
+    ...(state.data?.bitacoraAuditoria || []).map((ev) => [
+      "Bitacora Trazabilidad",
+      ev.tipo,
+      ev.timestamp,
+      JSON.stringify(ev.payload || {})
+    ])
   ];
   const csv = rows
     .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
@@ -2377,6 +2405,7 @@ document.querySelectorAll("[data-admin-tab]").forEach((btn) => {
     els.adminPanelAnalitica?.classList.toggle("hidden", t !== "analitica");
     els.adminPanelAuditoria?.classList.toggle("hidden", t !== "auditoria");
     els.adminPanelComunidad?.classList.toggle("hidden", t !== "comunidad");
+    els.adminPanelTrazabilidad?.classList.toggle("hidden", t !== "trazabilidad");
   });
 });
 

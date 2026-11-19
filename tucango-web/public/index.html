@@ -139,6 +139,7 @@
           Solicitudes Tucán (<span id="admin-tab-pend-badge">0</span>)
         </button>
         <button type="button" class="admin-tab-btn" data-admin-tab="comunidad" role="tab">Comunidad Universitaria</button>
+        <button type="button" class="admin-tab-btn" data-admin-tab="trazabilidad" role="tab">Trazabilidad y Bitácora</button>
       </div>
 
       <!-- PANEL 1: GRÁFICAS CHART.JS -->
@@ -247,6 +248,36 @@
                 <tbody id="admin-tabla-tucanes"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 4: TRAZABILIDAD Y BITÁCORA INSTITUCIONAL (LEY 30 DE 1992) -->
+      <div id="admin-panel-trazabilidad" class="admin-subpanel hidden">
+        <div class="admin-panel-card">
+          <div class="admin-chart-head">
+            <div>
+              <h3>Bitácora Inmutable de Trazabilidad Universitaria</h3>
+              <p class="muted-sub">Registro auditable de seguridad, llegadas a portería, verificación de PIN y control de flota.</p>
+            </div>
+            <span class="chip-mono chip-verified">SEGURIDAD · RECTORÍA</span>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Hora / Timestamp</th>
+                  <th>Evento de Dominio</th>
+                  <th>Detalle y Trazabilidad</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="admin-tabla-trazabilidad">
+                <tr>
+                  <td colspan="4" class="text-muted">Sin eventos registrados aún.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -127,4 +127,7 @@ export interface SistemaRepository {
   revocarSesion?(jti: string, expiraEnMs: number): void;
   estaSesionRevocada?(jti: string): boolean;
   limpiarSesionesExpiradas?(): void;
+  guardarDocumentoCifrado?(identificacion: string, tipo: string, contenido: string): void;
+  obtenerDocumentoDescifrado?(identificacion: string, tipo: string): string | null;
+  registrarAccesoDocumento?(adminId: string, tucanId: string, tipo: string): void;
 }
