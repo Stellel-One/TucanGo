@@ -119,7 +119,7 @@ function obtenerClienteIp(req: http.IncomingMessage): string {
   return req.socket.remoteAddress || "127.0.0.1";
 }
 
-const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co"];
+const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co", "udla.edu.co"];
 
 /**
  * El correo institucional es exclusivo de estudiantes y egresados. El Tucán
@@ -629,6 +629,7 @@ function construirEstadoDTO(
     motoristas,
     viajes,
     analiticaAdmin: rol === "admin" ? facade.obtenerAnaliticaAdmin() : null,
+    bitacoraAuditoria: rol === "admin" ? facade.obtenerBitacoraAuditoria() : [],
     tucanesPendientes:
       rol === "admin"
         ? facade.obtenerTucanesPendientes().map((m) => ({
@@ -1045,6 +1046,16 @@ export function crearServidor(
         return;
       }
 
+      if (pathname === "/api/admin/auditoria/eventos" && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        sendJson(res, 200, {
+          ok: true,
+          eventos: facade.obtenerBitacoraAuditoria()
+        });
+        return;
+      }
+
       // B6, B8, B9, B10, B11: Endpoint Login endurecido
       if (pathname === "/api/auth/login" && req.method === "POST") {
         const ip = obtenerClienteIp(req);
@@ -1321,7 +1332,8 @@ export function crearServidor(
           identificacion: string;
           nombre: string;
           telefono: string;
-          correoInstitucional: string;
+          correoInstitucional?: string;
+          correoPersonal?: string;
           placa: string;
           marca: string;
           modelo: string;
@@ -1339,6 +1351,8 @@ export function crearServidor(
           estadoAprobacion?: "PENDIENTE_APROBACION" | "ACTIVO" | "RECHAZADO";
         }>(req, esRutaTucanes ? 2 * 1024 * 1024 : MAX_BODY_BYTES);
 
+        const correoContacto = (body.correoPersonal || body.correoInstitucional || "").trim();
+
         if (!body.password || body.password.trim().length === 0) {
           sendJson(res, 422, { error: "La contraseña es obligatoria (mínimo 10 caracteres)." });
           return;
@@ -1352,10 +1366,10 @@ export function crearServidor(
         }
 
         // El Tucán no es estudiante: su correo de contacto debe ser personal.
-        if (esRutaTucanes && esCorreoInstitucional(body.correoInstitucional)) {
+        if (esRutaTucanes && esCorreoInstitucional(correoContacto)) {
           sendJson(res, 422, {
             error:
-              "El correo del Tucán debe ser personal. El correo @uniamazonia.edu.co es exclusivo de estudiantes."
+              "El correo del Tucán debe ser personal. El correo institucional (@uniamazonia.edu.co / @udla.edu.co) es exclusivo de estudiantes."
           });
           return;
         }
@@ -1388,6 +1402,7 @@ export function crearServidor(
 
         const mot = facade.registrarMotoristaConMoto({
           ...body,
+          correoInstitucional: correoContacto,
           estadoAprobacion
         });
 
@@ -1487,6 +1502,31 @@ export function crearServidor(
         if (!auth) return;
         sendJson(res, 200, {
           notificaciones: facade.obtenerNotificacionesCorreo()
+        });
+        return;
+      }
+
+      // §6 Auditoría: Endpoint autenticado para consulta de documentos cifrados
+      if (pathname.startsWith("/api/admin/documentos/") && req.method === "GET") {
+        const auth = requerirRol(req, res, facade, "admin");
+        if (!auth) return;
+        const partes = pathname.split("/").filter(Boolean);
+        const tucanId = partes[3];
+        const tipoDoc = partes[4];
+        if (!tucanId || !tipoDoc) {
+          sendJson(res, 400, { error: "Faltan parámetros identificacion o tipo en la ruta." });
+          return;
+        }
+        const dataUrl = facade.obtenerDocumentoTucanDescifrado(auth.identificacion, tucanId, tipoDoc);
+        if (!dataUrl) {
+          sendJson(res, 404, { error: "Documento no encontrado o no disponible." });
+          return;
+        }
+        sendJson(res, 200, {
+          ok: true,
+          identificacion: tucanId,
+          tipo: tipoDoc,
+          documentoUrl: dataUrl
         });
         return;
       }

@@ -148,6 +148,7 @@ export class TucanGoFacade {
   private _ultimaPersistenciaUbicacion: Map<string, number> = new Map();
   private readonly _repository?: SistemaRepository;
   private readonly _eventBus: EventBus;
+  private readonly _bitacoraAuditoria: Array<{ tipo: TipoEventoDominio; timestamp: string; payload: Record<string, unknown> }> = [];
 
   constructor(repository?: SistemaRepository, eventBus?: EventBus) {
     this._repository = repository;
@@ -357,11 +358,20 @@ export class TucanGoFacade {
   }
 
   private emitirEvento(tipo: TipoEventoDominio, payload: Record<string, unknown>): void {
-    this._eventBus.publicar({
+    const evento = {
       tipo,
       timestamp: new Date().toISOString(),
       payload
-    });
+    };
+    this._bitacoraAuditoria.push(evento);
+    if (this._bitacoraAuditoria.length > 500) {
+      this._bitacoraAuditoria.shift();
+    }
+    this._eventBus.publicar(evento);
+  }
+
+  public obtenerBitacoraAuditoria(limite: number = 50): Array<{ tipo: TipoEventoDominio; timestamp: string; payload: Record<string, unknown> }> {
+    return this._bitacoraAuditoria.slice(-limite).reverse();
   }
 
   private persistir(): void {
@@ -906,6 +916,31 @@ export class TucanGoFacade {
     return Array.from(this._motoristas.values()).filter(
       (m) => m.estadoAprobacion === "PENDIENTE_APROBACION"
     );
+  }
+
+  public obtenerDocumentoTucanDescifrado(adminId: string, tucanId: string, tipo: string): string | null {
+    if (this._repository?.obtenerDocumentoDescifrado) {
+      const doc = this._repository.obtenerDocumentoDescifrado(tucanId, tipo);
+      if (doc) {
+        this._repository.registrarAccesoDocumento?.(adminId, tucanId, tipo);
+        this.emitirEvento("USUARIO_AUTENTICADO", {
+          accion: "AUDITORIA_DOCUMENTO_CONSULTADO",
+          adminId,
+          tucanId,
+          tipo
+        });
+        return doc;
+      }
+    }
+    const mot = this._motoristas.get(tucanId);
+    if (!mot) return null;
+    let fallbackDoc = "";
+    if (tipo === "cedula") fallbackDoc = mot.fotoCedulaUrl;
+    else if (tipo === "soat") fallbackDoc = mot.fotoSoatUrl;
+    else if (tipo === "licencia") fallbackDoc = mot.fotoLicenciaUrl;
+    else if (tipo === "rostro") fallbackDoc = mot.fotoRostroUrl;
+    else if (tipo === "moto") fallbackDoc = mot.fotoMotoUrl;
+    return fallbackDoc || null;
   }
 
   public aprobarTucan(identificacion: string): { tucan: Motorista; correo: NotificacionCorreoSnapshot } {

@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { Estudiante } from "../src/domain/model/Estudiante.ts";
 import { Motorista } from "../src/domain/model/Motorista.ts";
 import { Moto } from "../src/domain/model/Moto.ts";
+import { Administrador } from "../src/domain/model/Administrador.ts";
 import { Calificacion } from "../src/domain/model/Calificacion.ts";
 import { MetodoPago, EstadoPago } from "../src/domain/model/Pago.ts";
 import { Viaje } from "../src/domain/patterns/Viaje.ts";
@@ -14,6 +15,9 @@ import {
   TarifaNocturna
 } from "../src/domain/patterns/EstrategiaTarifa.ts";
 import { TucanGoFacade } from "../src/application/TucanGoFacade.ts";
+import { SqliteSistemaRepository } from "../src/infrastructure/SqliteSistemaRepository.ts";
+import fs from "node:fs";
+import path from "node:path";
 
 describe("TucanGo Web - Dominio POO e Invariantes", () => {
   test("Estudiante: Debe validar fail-fast en campos obligatorios", () => {
@@ -194,5 +198,36 @@ describe("TucanGo Web - Dominio POO e Invariantes", () => {
     assert.equal(metricas.totalViajes, 1);
     assert.equal(metricas.finalizados, 1);
     assert.equal(metricas.ingresosGenerados > 0, true);
+  });
+
+  test("Administrador y Trazabilidad: Distingue rol auditor institucional y bitácora de eventos", () => {
+    const adminGeneral = new Administrador("999", "Director", "311", "admin@uniamazonia.edu.co", "Supervisión General TucanGo");
+    assert.equal(adminGeneral.esAuditorInstitucional, false);
+    assert.equal(adminGeneral.puedeGestionarFlota(), true);
+
+    const auditorRectoria = new Administrador("888", "Auditor", "312", "auditor@uniamazonia.edu.co", "Auditoría de Bienestar y Rectoría");
+    assert.equal(auditorRectoria.esAuditorInstitucional, true);
+    assert.equal(auditorRectoria.puedeGestionarFlota(), false);
+
+    const facade = new TucanGoFacade();
+    const bitacora = facade.obtenerBitacoraAuditoria();
+    assert.equal(Array.isArray(bitacora), true);
+  });
+
+  test("SqliteSistemaRepository: Cifra y descifra documentos de Tucanes con AES-256-GCM", () => {
+    const tmpDb = path.join("/tmp", `test-crypto-${Date.now()}.db`);
+    try {
+      const repo = new SqliteSistemaRepository(tmpDb);
+      const fakeCedula = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+      
+      repo.guardarDocumentoCifrado("1117555000", "cedula", fakeCedula);
+      const recuperado = repo.obtenerDocumentoDescifrado("1117555000", "cedula");
+      assert.equal(recuperado, fakeCedula);
+
+      repo.registrarAccesoDocumento("ADMIN-01", "1117555000", "cedula");
+      repo.cerrar();
+    } finally {
+      if (fs.existsSync(tmpDb)) fs.unlinkSync(tmpDb);
+    }
   });
 });

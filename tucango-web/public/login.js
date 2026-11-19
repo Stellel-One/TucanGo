@@ -632,7 +632,7 @@
     };
 
     // El Tucán no es estudiante: su correo de contacto debe ser personal.
-    const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co"];
+    const DOMINIOS_INSTITUCIONALES = ["uniamazonia.edu.co", "udla.edu.co"];
 
     function esCorreoInstitucional(valor) {
       const correo = (valor || "").trim().toLowerCase();
@@ -652,7 +652,7 @@
           return customMessages["reg-tucan-correo"];
         }
         if (esCorreoInstitucional(val)) {
-          return "Usa tu correo personal: el correo @uniamazonia.edu.co es exclusivo de estudiantes.";
+          return "Usa tu correo personal: el correo institucional (@uniamazonia.edu.co / @udla.edu.co) es exclusivo de estudiantes.";
         }
       }
       if (inputEl.id === "reg-tucan-password-confirm") {
@@ -956,6 +956,7 @@
           identificacion: els.regTucanId?.value.trim() || "",
           nombre: els.regTucanNombre?.value.trim() || "",
           telefono: els.regTucanTel?.value.trim() || "",
+          correoPersonal: els.regTucanCorreo?.value.trim().toLowerCase() || "",
           correoInstitucional: els.regTucanCorreo?.value.trim().toLowerCase() || "",
           password: els.regTucanPassword?.value || "",
           placa: (els.regTucanPlaca?.value.trim() || "").toUpperCase(),
@@ -1011,7 +1012,7 @@
         const imgEl = document.getElementById(imgId);
         const placeholderEl = document.getElementById(placeholderId);
         if (imgEl) {
-          imgEl.src = "";
+          imgEl.removeAttribute("src");
           imgEl.classList.add("hidden");
         }
         if (placeholderEl) placeholderEl.classList.remove("hidden");

@@ -170,7 +170,7 @@
         <div id="view-login" class="auth-view-tab" role="tabpanel" aria-labelledby="tab-btn-login">
           <h2 class="view-heading">Acceso al Campus</h2>
 
-          <form id="form-login-manual" class="ios-form" novalidate>
+          <form id="form-login-manual" class="ios-form" method="POST" action="#" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="input-login-id" class="ios-input-label">
@@ -178,6 +178,7 @@
                 </label>
                 <input
                   id="input-login-id"
+                  name="username"
                   type="text"
                   class="ios-input-field"
                   autocomplete="username"
@@ -196,6 +197,7 @@
                 <div class="password-input-wrap">
                   <input
                     id="input-login-password"
+                    name="password"
                     type="password"
                     class="ios-input-field"
                     autocomplete="current-password"
@@ -246,12 +248,13 @@
           </div>
 
           <!-- ================= FLUJO 1: REGISTRO ESTUDIANTE ================= -->
-          <form id="form-reg-estudiante" class="ios-form" novalidate>
+          <form id="form-reg-estudiante" class="ios-form" method="POST" action="#" novalidate>
             <div class="ios-grouped-inputs">
               <div class="ios-input-row">
                 <label for="reg-est-id" class="ios-input-label">Cédula de ciudadanía</label>
                 <input
                   id="reg-est-id"
+                  name="identificacion"
                   type="text"
                   inputmode="numeric"
                   autocomplete="off"
@@ -269,6 +272,7 @@
                 <label for="reg-est-cod" class="ios-input-label">Código estudiantil</label>
                 <input
                   id="reg-est-cod"
+                  name="codigoEstudiantil"
                   type="text"
                   inputmode="numeric"
                   autocomplete="off"
@@ -286,6 +290,7 @@
                 <label for="reg-est-nombre" class="ios-input-label">Nombre completo</label>
                 <input
                   id="reg-est-nombre"
+                  name="nombre"
                   type="text"
                   autocapitalize="words"
                   autocomplete="name"
@@ -302,6 +307,7 @@
                 <label for="reg-est-tel" class="ios-input-label">Teléfono celular</label>
                 <input
                   id="reg-est-tel"
+                  name="telefono"
                   type="tel"
                   inputmode="tel"
                   autocomplete="tel"
@@ -319,6 +325,7 @@
                 <label for="reg-est-correo" class="ios-input-label">Correo institucional</label>
                 <input
                   id="reg-est-correo"
+                  name="correo"
                   type="email"
                   inputmode="email"
                   autocapitalize="none"
@@ -419,6 +426,7 @@
                 <label for="reg-est-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
                 <input
                   id="reg-est-password"
+                  name="password"
                   type="password"
                   minlength="10"
                   class="ios-input-field"
@@ -435,6 +443,7 @@
                 <label for="reg-est-password-confirm" class="ios-input-label">Confirmar contraseña</label>
                 <input
                   id="reg-est-password-confirm"
+                  name="confirmPassword"
                   type="password"
                   minlength="10"
                   class="ios-input-field"
@@ -479,7 +488,7 @@
               </div>
             </div>
 
-            <form id="form-wizard-tucan" class="ios-form" novalidate>
+            <form id="form-wizard-tucan" class="ios-form" method="POST" action="#" novalidate>
 
               <!-- ETAPA 1: DATOS PERSONALES -->
               <div class="wizard-step-content" data-step-panel="1">
@@ -493,6 +502,7 @@
                     <label for="reg-tucan-id" class="ios-input-label">Cédula de ciudadanía</label>
                     <input
                       id="reg-tucan-id"
+                      name="identificacion"
                       type="text"
                       inputmode="numeric"
                       pattern="[0-9]{6,10}"
@@ -509,6 +519,7 @@
                     <label for="reg-tucan-nombre" class="ios-input-label">Nombre completo (Nombres y Apellidos)</label>
                     <input
                       id="reg-tucan-nombre"
+                      name="nombre"
                       type="text"
                       autocapitalize="words"
                       minlength="3"
@@ -524,6 +535,7 @@
                     <label for="reg-tucan-tel" class="ios-input-label">Teléfono celular / WhatsApp</label>
                     <input
                       id="reg-tucan-tel"
+                      name="telefono"
                       type="tel"
                       inputmode="tel"
                       pattern="3[0-9]{9}"
@@ -540,6 +552,7 @@
                     <label for="reg-tucan-correo" class="ios-input-label">Correo electrónico personal</label>
                     <input
                       id="reg-tucan-correo"
+                      name="correoPersonal"
                       type="email"
                       inputmode="email"
                       autocapitalize="none"
@@ -555,6 +568,7 @@
                     <label for="reg-tucan-password" class="ios-input-label">Contraseña (mínimo 10 caracteres)</label>
                     <input
                       id="reg-tucan-password"
+                      name="password"
                       type="password"
                       minlength="10"
                       maxlength="128"
@@ -573,6 +587,7 @@
                     <label for="reg-tucan-password-confirm" class="ios-input-label">Confirmar contraseña</label>
                     <input
                       id="reg-tucan-password-confirm"
+                      name="confirmPassword"
                       type="password"
                       minlength="10"
                       maxlength="128"
@@ -604,7 +619,7 @@
                 <div class="photo-upload-container">
                   <span class="upload-label">1. Selfie / Reconocimiento Facial:</span>
                   <div class="photo-preview-circle" id="preview-box-face">
-                    <img id="img-preview-face" src="" alt="Vista previa selfie" class="hidden" />
+                    <img id="img-preview-face" alt="Vista previa selfie" class="hidden" />
                     <div class="photo-placeholder" id="placeholder-face">
                       <svg class="tg-icon tg-icon-xl" aria-hidden="true">
                         <use href="/assets/icons/iconly-sprite.svg#iconly-profile" />
@@ -630,7 +645,7 @@
                 <div class="photo-upload-box">
                   <span class="upload-label">2. Escaneo / Fotografía de Cédula de Ciudadanía:</span>
                   <div class="photo-preview-rect" id="preview-box-cedula">
-                    <img id="img-preview-cedula" src="" alt="Vista previa cédula" class="hidden" />
+                    <img id="img-preview-cedula" alt="Vista previa cédula" class="hidden" />
                     <div class="photo-placeholder" id="placeholder-cedula">
                       <span>🪪 Foto legible de tu documento de identidad</span>
                     </div>
@@ -676,6 +691,7 @@
                     <label for="reg-tucan-placa" class="ios-input-label">Placa de la motocicleta</label>
                     <input
                       id="reg-tucan-placa"
+                      name="placa"
                       type="text"
                       autocapitalize="characters"
                       pattern="[A-Za-z]{3}-?[0-9]{2}[A-Za-z0-9]"
@@ -692,6 +708,7 @@
                     <label for="reg-tucan-marca" class="ios-input-label">Marca</label>
                     <input
                       id="reg-tucan-marca"
+                      name="marca"
                       type="text"
                       autocapitalize="words"
                       minlength="2"
@@ -707,6 +724,7 @@
                     <label for="reg-tucan-modelo" class="ios-input-label">Línea / Modelo</label>
                     <input
                       id="reg-tucan-modelo"
+                      name="modelo"
                       type="text"
                       minlength="2"
                       maxlength="50"
@@ -721,6 +739,7 @@
                     <label for="reg-tucan-cc" class="ios-input-label">Cilindraje (CC)</label>
                     <input
                       id="reg-tucan-cc"
+                      name="cilindraje"
                       type="number"
                       min="50"
                       max="1500"
@@ -736,7 +755,7 @@
                 <div class="photo-upload-box">
                   <span class="upload-label">Fotografía lateral de la motocicleta:</span>
                   <div class="photo-preview-rect" id="preview-box-moto">
-                    <img id="img-preview-moto" src="" alt="Vista previa moto" class="hidden" />
+                    <img id="img-preview-moto" alt="Vista previa moto" class="hidden" />
                     <div class="photo-placeholder" id="placeholder-moto">
                       <span><svg class="tg-icon tg-icon-md" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#tg-moto"/></svg> Foto de la moto visible</span>
                     </div>
@@ -778,6 +797,7 @@
                     <label for="reg-tucan-soat" class="ios-input-label">Número de póliza SOAT vigente</label>
                     <input
                       id="reg-tucan-soat"
+                      name="numeroSoat"
                       type="text"
                       minlength="6"
                       maxlength="30"
@@ -792,6 +812,7 @@
                     <label for="reg-tucan-licencia" class="ios-input-label">Número de Licencia de Conducción (Cat. A2)</label>
                     <input
                       id="reg-tucan-licencia"
+                      name="numeroLicencia"
                       type="text"
                       minlength="5"
                       maxlength="30"
@@ -808,7 +829,7 @@
                 <div class="photo-upload-box">
                   <span class="upload-label">Fotografía de la póliza SOAT vigente:</span>
                   <div class="photo-preview-rect" id="preview-box-soat">
-                    <img id="img-preview-soat" src="" alt="Vista previa póliza SOAT" class="hidden" />
+                    <img id="img-preview-soat" alt="Vista previa póliza SOAT" class="hidden" />
                     <div class="photo-placeholder" id="placeholder-soat">
                       <span>📄 Foto legible del SOAT (frente del documento)</span>
                     </div>
@@ -830,7 +851,7 @@
                 <div class="photo-upload-box">
                   <span class="upload-label">Fotografía de la Licencia de Conducción (Categoría A2):</span>
                   <div class="photo-preview-rect" id="preview-box-licencia">
-                    <img id="img-preview-licencia" src="" alt="Vista previa licencia de conducción" class="hidden" />
+                    <img id="img-preview-licencia" alt="Vista previa licencia de conducción" class="hidden" />
                     <div class="photo-placeholder" id="placeholder-licencia">
                       <span>🪪 Foto legible de tu licencia (frente y categoría)</span>
                     </div>
