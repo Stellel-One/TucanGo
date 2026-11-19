@@ -1454,6 +1454,13 @@ export function crearServidor(
       if (pathname === "/api/admin/tucanes/aprobar" && req.method === "POST") {
         const auth = requerirRol(req, res, facade, "admin");
         if (!auth) return;
+        const adminActor = facade.obtenerAdministradorPorIdentificacion(auth.identificacion);
+        if (adminActor && !adminActor.puedeGestionarFlota()) {
+          sendJson(res, 403, {
+            error: "El rol de Auditor Institucional no tiene privilegios para modificar el estado de la flota (Principio de Menor Privilegio)."
+          });
+          return;
+        }
         const body = await parseJsonBody<{ identificacion?: string; identificador?: string }>(req);
         const identificacion = (body.identificacion || body.identificador || "").trim();
         if (!identificacion) {
@@ -1477,6 +1484,13 @@ export function crearServidor(
       if (pathname === "/api/admin/tucanes/rechazar" && req.method === "POST") {
         const auth = requerirRol(req, res, facade, "admin");
         if (!auth) return;
+        const adminActor = facade.obtenerAdministradorPorIdentificacion(auth.identificacion);
+        if (adminActor && !adminActor.puedeGestionarFlota()) {
+          sendJson(res, 403, {
+            error: "El rol de Auditor Institucional no tiene privilegios para modificar el estado de la flota (Principio de Menor Privilegio)."
+          });
+          return;
+        }
         const body = await parseJsonBody<{ identificacion?: string; identificador?: string; motivo?: string }>(req);
         const identificacion = (body.identificacion || body.identificador || "").trim();
         if (!identificacion) {

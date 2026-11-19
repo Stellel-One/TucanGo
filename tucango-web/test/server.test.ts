@@ -1144,4 +1144,51 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("Seguridad y PoLP: Auditor institucional no puede aprobar ni rechazar flota (HTTP 403)", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tucango-polp-"));
+    const dbPath = path.join(tmpDir, "polp.db");
+    const repo = new SqliteSistemaRepository(dbPath);
+    const facade = new TucanGoFacade(repo);
+
+    facade.registrarAdministrador(
+      "AUDITOR-01",
+      "Auditor Rectoría",
+      "3110000000",
+      "auditor@uniamazonia.edu.co",
+      "Auditoría y Control Interno",
+      "Auditor*2026"
+    );
+
+    const server = crearServidor(facade);
+    await new Promise<void>((resolve) => server.listen(0, () => resolve()));
+    const port = (server.address() as AddressInfo).port;
+    const baseUrl = `http://127.0.0.1:${port}`;
+
+    try {
+      const loginAuditor = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identificador: "AUDITOR-01", password: "Auditor*2026" })
+      });
+      assert.equal(loginAuditor.status, 200);
+      const cookieAuditor = loginAuditor.headers.get("set-cookie") || "";
+
+      const intentoAprobar = await fetch(`${baseUrl}/api/admin/tucanes/aprobar`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieAuditor
+        },
+        body: JSON.stringify({ identificacion: "1117555888" })
+      });
+      assert.equal(intentoAprobar.status, 403);
+      const jsonError = (await intentoAprobar.json()) as any;
+      assert.match(jsonError.error, /Auditor Institucional/);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      repo.cerrar();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });

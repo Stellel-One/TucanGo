@@ -383,6 +383,37 @@ export class TucanGoFacade {
     return Array.from(this._administradores.values());
   }
 
+  public obtenerAdministradorPorIdentificacion(identificacion: string): Administrador | undefined {
+    const id = (identificacion || "").trim().toLowerCase();
+    return (
+      this._administradores.get(id) ||
+      Array.from(this._administradores.values()).find((a) => a.identificacion.toLowerCase() === id)
+    );
+  }
+
+  public registrarAdministrador(
+    identificacion: string,
+    nombre: string,
+    telefono: string,
+    correoInstitucional: string,
+    cargo: string,
+    passwordPlano?: string
+  ): Administrador {
+    const password = passwordPlano || "admin123";
+    const admin = new Administrador(
+      identificacion,
+      nombre,
+      telefono,
+      correoInstitucional,
+      cargo,
+      hashPasswordSync(password),
+      false
+    );
+    this._administradores.set(admin.identificacion, admin);
+    this.persistir();
+    return admin;
+  }
+
   private exportarSnapshot(): EstadoSistemaSnapshot {
     return {
       seedVersion: CURRENT_SEED_VERSION,
