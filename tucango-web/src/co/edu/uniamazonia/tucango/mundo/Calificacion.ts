@@ -1,4 +1,4 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
 export class Calificacion {
   private _puntuacion: number;
   private _comentario: string;

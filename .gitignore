@@ -10,9 +10,14 @@ dist/
 # Archivos comprimidos de apoyo
 *.zip
 *.ZIP
+*.rar
+*.RAR
+
+# Carpetas temporales locales
+scratch/
 
 # Archivos generados por NetBeans (se regeneran al abrir el proyecto)
-nbproject/private/
+**/nbproject/private/
 nbproject/build-impl.xml
 
 # Clases compiladas y empaquetados

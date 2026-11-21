@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import type {
   EstadoSistemaSnapshot,
   SistemaRepository
-} from "../application/ports/SistemaRepository.ts";
+} from "./SistemaRepository.ts";
 
 export class SqliteSistemaRepository implements SistemaRepository {
   private readonly _db: DatabaseSync;

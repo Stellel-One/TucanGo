@@ -3,52 +3,52 @@ import {
   PROGRAMAS_ACADEMICOS,
   type ProgramaAcademico,
   esProgramaAcademicoValido
-} from "../domain/catalog/ProgramasAcademicos.ts";
+} from "./ProgramasAcademicos.ts";
 import {
   BARRIOS_FLORENCIA,
   type ComunaFlorencia,
   esBarrioFlorenciaValido
-} from "../domain/catalog/BarriosFlorencia.ts";
-import { Persona } from "../domain/model/Persona.ts";
-import { Administrador } from "../domain/model/Administrador.ts";
-import { Estudiante, type UbicacionFrecuente } from "../domain/model/Estudiante.ts";
-import { Motorista, type EstadoAprobacionTucan } from "../domain/model/Motorista.ts";
-import { Moto } from "../domain/model/Moto.ts";
-import { Coordenada } from "../domain/model/Coordenada.ts";
-import { Calificacion } from "../domain/model/Calificacion.ts";
-import { MetodoPago, Pago, EstadoPago } from "../domain/model/Pago.ts";
+} from "./BarriosFlorencia.ts";
+import { Persona } from "./Persona.ts";
+import { Administrador } from "./Administrador.ts";
+import { Estudiante, type UbicacionFrecuente } from "./Estudiante.ts";
+import { Motorista, type EstadoAprobacionTucan } from "./Motorista.ts";
+import { Moto } from "./Moto.ts";
+import { Coordenada } from "./Coordenada.ts";
+import { Calificacion } from "./Calificacion.ts";
+import { MetodoPago, Pago, EstadoPago } from "./Pago.ts";
 import {
   SECTORES_FLORENCIA,
   SectorCampus,
   buscarSectorPorId
-} from "../domain/model/SectorCampus.ts";
-import { EventBus, type TipoEventoDominio } from "../domain/patterns/EventBus.ts";
-import { Viaje } from "../domain/patterns/Viaje.ts";
+} from "./SectorCampus.ts";
+import { EventBus, type TipoEventoDominio } from "./EventBus.ts";
+import { Viaje } from "./Viaje.ts";
 import {
   type EstrategiaTarifa,
   TarifaEstudiantilFija,
   TarifaPorKilometro,
   TarifaDinamicaLluvia,
   TarifaNocturna
-} from "../domain/patterns/EstrategiaTarifa.ts";
+} from "./EstrategiaTarifa.ts";
 import type {
   EstadoSistemaSnapshot,
   SistemaRepository,
   NotificacionCorreoSnapshot
-} from "./ports/SistemaRepository.ts";
+} from "./SistemaRepository.ts";
 import {
   hashPasswordSync,
   hashPassword,
   dummyPasswordCheck,
   validarPoliticaPassword
-} from "../domain/security/PasswordHasher.ts";
+} from "./PasswordHasher.ts";
 import {
   AuthError,
   CredencialesInvalidasError,
   NoAutenticadoError,
   ValidacionError,
   CuentaEnRevisionError
-} from "../domain/security/ErroresAuth.ts";
+} from "./ErroresAuth.ts";
 
 export const DEFAULT_ADMIN_USER = "tucangoadmin";
 export const DEFAULT_ADMIN_EMAIL = "admin@uniamazonia.edu.co";

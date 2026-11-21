@@ -1839,19 +1839,6 @@ button:disabled {
   white-space: nowrap;
 }
 
-.leaflet-marker-icon {
-  transition: transform 0.55s linear;
-}
-
-.leaflet-tile-pane {
-  filter: saturate(0.8) contrast(0.96) brightness(1.02);
-}
-
-.leaflet-top.leaflet-left {
-  top: 62px;
-  left: 4px;
-}
-
 /* TOASTS */
 .toast-container {
   position: fixed;

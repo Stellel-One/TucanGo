@@ -1,4 +1,4 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
 import { Coordenada } from "./Coordenada.ts";
 
 export class SectorCampus {

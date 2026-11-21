@@ -1,4 +1,4 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
 
 export class Moto {
   private _placa: string;

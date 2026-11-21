@@ -5,9 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import type { AddressInfo } from "node:net";
 
-import { SqliteSistemaRepository } from "../src/infrastructure/SqliteSistemaRepository.ts";
-import { TucanGoFacade } from "../src/application/TucanGoFacade.ts";
-import { crearServidor } from "../src/server.ts";
+import { SqliteSistemaRepository } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/SqliteSistemaRepository.ts";
+import { TucanGoFacade } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/TucanGoFacade.ts";
+import { crearServidor } from "../../../../../../src/co/edu/uniamazonia/tucango/interfaz/server.ts";
 
 // Documento mínimo válido para los expedientes de prueba (PNG 1x1)
 const DOC_FOTO =
@@ -248,10 +248,10 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const resConfig = await fetch(`${baseUrl}/api/mapa/config`);
       assert.equal(resConfig.status, 200);
       const cfg = (await resConfig.json()) as any;
-      assert.equal(typeof cfg.tileUrlDidi, "string");
+      assert.equal(cfg.proveedorActivo, "google_maps");
+      assert.equal(cfg.tileUrlDidi, "");
       assert.equal(Array.isArray(cfg.googleApisRequeridas), true);
       if (process.env.GOOGLE_MAPS_API_KEY) {
-        assert.equal(cfg.proveedorActivo, "google_maps");
         assert.equal(typeof cfg.googleMapsMapId, "string");
       }
 

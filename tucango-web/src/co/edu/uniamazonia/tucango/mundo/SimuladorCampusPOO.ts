@@ -1,18 +1,18 @@
-import { Administrador } from "../domain/model/Administrador.ts";
-import { Coordenada } from "../domain/model/Coordenada.ts";
-import { Estudiante } from "../domain/model/Estudiante.ts";
-import { Moto } from "../domain/model/Moto.ts";
-import { Motorista } from "../domain/model/Motorista.ts";
-import { Persona } from "../domain/model/Persona.ts";
-import { MetodoPago } from "../domain/model/Pago.ts";
-import { Calificacion } from "../domain/model/Calificacion.ts";
-import { buscarSectorPorId } from "../domain/model/SectorCampus.ts";
-import { EventBus } from "../domain/patterns/EventBus.ts";
+import { Administrador } from "./Administrador.ts";
+import { Coordenada } from "./Coordenada.ts";
+import { Estudiante } from "./Estudiante.ts";
+import { Moto } from "./Moto.ts";
+import { Motorista } from "./Motorista.ts";
+import { Persona } from "./Persona.ts";
+import { MetodoPago } from "./Pago.ts";
+import { Calificacion } from "./Calificacion.ts";
+import { buscarSectorPorId } from "./SectorCampus.ts";
+import { EventBus } from "./EventBus.ts";
 import {
   TarifaDinamicaLluvia,
   TarifaEstudiantilFija
-} from "../domain/patterns/EstrategiaTarifa.ts";
-import { Viaje } from "../domain/patterns/Viaje.ts";
+} from "./EstrategiaTarifa.ts";
+import { Viaje } from "./Viaje.ts";
 
 export interface ResultadoSimulacionPOO {
   actoresPolimorficos: Array<{ rol: string; detalle: string }>;

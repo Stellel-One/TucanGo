@@ -1,9 +1,9 @@
 import { randomInt } from "node:crypto";
-import { ValidacionError } from "../security/ErroresAuth.ts";
-import { Estudiante } from "../model/Estudiante.ts";
-import { Motorista } from "../model/Motorista.ts";
-import { Pago, MetodoPago, type EstadoPago } from "../model/Pago.ts";
-import { Calificacion } from "../model/Calificacion.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
+import { Estudiante } from "./Estudiante.ts";
+import { Motorista } from "./Motorista.ts";
+import { Pago, MetodoPago, type EstadoPago } from "./Pago.ts";
+import { Calificacion } from "./Calificacion.ts";
 import {
   type EstadoViaje,
   EstadoSolicitado,

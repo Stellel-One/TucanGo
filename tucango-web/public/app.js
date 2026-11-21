@@ -13,7 +13,7 @@ const state = {
     nocturna: 3750
   },
   map: null,
-  mapEngine: "leaflet",
+  mapEngine: "google",
   gmapsLoaded: false,
   mapConfig: null,
   mapConfigPromise: null,
@@ -409,19 +409,20 @@ async function cargarConfigMapa() {
     try {
       const res = await fetch("/api/mapa/config");
       if (!res.ok) return;
-      state.mapConfig = await res.json();
-      const esGoogle =
-        state.mapConfig.proveedorActivo === "google_maps" &&
-        Boolean(state.mapConfig.googleMapsApiKey);
+      const cfg = await res.json();
+      state.mapEngine = "google";
 
-      if (esGoogle) {
-        const ok = await cargarScriptGoogleMaps(state.mapConfig.googleMapsApiKey);
-        state.mapEngine = ok ? "google" : "leaflet";
+      if (cfg.googleMapsApiKey) {
+        const ok = await cargarScriptGoogleMaps(cfg.googleMapsApiKey);
+        state.gmapsLoaded = ok;
       } else {
-        state.mapEngine = "leaflet";
+        state.gmapsLoaded = false;
+        console.warn("GOOGLE_MAPS_API_KEY no configurada en el servidor.");
       }
+      // Asignar mapConfig después de cargar Google Maps para evitar condiciones de carrera con SSE/renderAll
+      state.mapConfig = cfg;
     } catch {
-      state.mapEngine = "leaflet";
+      state.gmapsLoaded = false;
     }
   })();
   return state.mapConfigPromise;
@@ -442,7 +443,7 @@ function cargarScriptGoogleMaps(apiKey) {
     };
 
     window.gm_authFailure = () => {
-      console.warn("Google Maps API fallback activado");
+      console.error("Google Maps API rechazó la llave o el dominio actual.");
       finish(false);
     };
 
@@ -458,7 +459,7 @@ function cargarScriptGoogleMaps(apiKey) {
     script.onerror = () => finish(false);
     document.head.appendChild(script);
 
-    setTimeout(() => finish(Boolean(window.google && window.google.maps)), 6500);
+    setTimeout(() => finish(Boolean(window.google && window.google.maps && window.google.maps.Map)), 15000);
   });
 }
 
@@ -681,51 +682,12 @@ function initMap(sectores) {
     return;
   }
 
-  // Fallback pasivo Leaflet si el entorno no cuenta con Google Maps API Key
-  if (typeof window.L === "undefined") return;
-  const bounds = window.L.latLngBounds(FLORENCIA_BOUNDS_COORDS[0], FLORENCIA_BOUNDS_COORDS[1]);
-  state.florenciaBounds = bounds;
-  const map = window.L.map("campus-map", {
-    zoomControl: true,
-    minZoom: 12,
-    maxZoom: 19,
-    maxBounds: bounds,
-    maxBoundsViscosity: 1.0
-  }).setView(FLORENCIA_CENTRO, 15);
-  map.setMaxBounds(bounds);
-
-  const tileUrl = state.mapConfig?.tileUrlDidi || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-  window.L.tileLayer(tileUrl, {
-    minZoom: 12,
-    maxZoom: 19,
-    bounds,
-    attribution: "&copy; OpenStreetMap · Florencia"
-  }).addTo(map);
-
-  map.on("click", (ev) => {
-    if (!state.pickingMapPlace || !ev?.latlng) return;
-    completarPuntoSeleccionadoEnMapa(
-      Number(ev.latlng.lat.toFixed(6)),
-      Number(ev.latlng.lng.toFixed(6))
-    );
-  });
-
-  for (const sec of sedesMapa) {
-    const marker = window.L.marker([sec.latitud, sec.longitud]).addTo(map);
-    marker.bindPopup(`<strong>${esc(sec.nombre)}</strong><br/><small>${esc(sec.referencia || "")}</small>`);
-    marker.on("click", () => seleccionarSectorEnMapa(sec.id));
-    state.markers.set(sec.id, marker);
+  // Google Maps es el motor único y obligatorio (sin fallback a OpenStreetMap)
+  const container = document.getElementById("campus-map");
+  if (container && !container.dataset.gmapsNoticeShown) {
+    container.dataset.gmapsNoticeShown = "true";
+    container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;color:#374151;font-family:sans-serif;background:#F3F4F6;"><div><strong>Google Maps no pudo inicializarse</strong><br/><span style="font-size:13px;color:#6B7280;">Verifica GOOGLE_MAPS_API_KEY y los dominios autorizados en Google Cloud.</span></div></div>`;
   }
-
-  state.map = map;
-  if (sedesMapa.length > 0) {
-    map.fitBounds(window.L.latLngBounds(sedesMapa.map((s) => [s.latitud, s.longitud])), {
-      padding: [48, 48],
-      maxZoom: 15
-    });
-  }
-  setTimeout(() => state.map && state.map.invalidateSize(), 250);
-  iniciarGeolocalizacionTiempoReal();
 }
 
 async function reverseGeocodeSiAplica(lat, lng) {
@@ -883,9 +845,7 @@ function iniciarGeolocalizacionTiempoReal(forzarCentrado = false) {
 }
 
 function renderMarcadoresEnVivo(data) {
-  if (!state.map) return;
-  const esGoogle = state.mapEngine === "google" && window.google?.maps;
-  if (!esGoogle && typeof window.L === "undefined") return;
+  if (!state.map || !window.google?.maps) return;
 
   // Marcadores de lugares guardados (Estudiante) o puntos recurrentes estudiantiles (Admin)
   for (const mk of state.savedPlaceMarkers.values()) {
@@ -917,60 +877,46 @@ function renderMarcadoresEnVivo(data) {
         <span style="font-size:10px;color:#6B7280;">Dato agregado (Ley 1581 de 2012)</span>
       </div>`;
 
-      if (esGoogle) {
-        const pos = { lat: p.latitud, lng: p.longitud };
-        let marker;
-        if (AdvancedMarker && PinElement && state.mapConfig?.googleMapsMapId) {
-          const pin = new PinElement({
-            background: colorPin,
-            borderColor: "#FFFFFF",
-            glyphColor: "#FFFFFF",
-            scale: esHotspot ? 1.05 : 0.92
-          });
-          marker = new AdvancedMarker({
-            map: state.map,
-            position: pos,
-            title: titulo,
-            content: pin.element
-          });
-        } else {
-          marker = new window.google.maps.Marker({
-            map: state.map,
-            position: pos,
-            title: titulo
-          });
-        }
-        marker.addListener("click", () => {
-          state.infoWindow?.setContent(infoHtml);
-          state.infoWindow?.open({ anchor: marker, map: state.map });
+      const pos = { lat: p.latitud, lng: p.longitud };
+      let marker;
+      if (AdvancedMarker && PinElement && state.mapConfig?.googleMapsMapId) {
+        const pin = new PinElement({
+          background: colorPin,
+          borderColor: "#FFFFFF",
+          glyphColor: "#FFFFFF",
+          scale: esHotspot ? 1.05 : 0.92
         });
-        state.savedPlaceMarkers.set(p.id, marker);
-
-        const circle = new window.google.maps.Circle({
+        marker = new AdvancedMarker({
           map: state.map,
-          center: pos,
-          radius: Math.min(260, 80 + intensidad * 30),
-          strokeColor: colorPin,
-          strokeOpacity: 0.55,
-          strokeWeight: 1.5,
-          fillColor: colorPin,
-          fillOpacity: 0.16,
-          clickable: false
+          position: pos,
+          title: titulo,
+          content: pin.element
         });
-        state.adminHeatmapCircles.push(circle);
       } else {
-        const lm = window.L.marker([p.latitud, p.longitud]).addTo(state.map);
-        lm.bindPopup(infoHtml);
-        state.savedPlaceMarkers.set(p.id, lm);
-        const lc = window.L.circle([p.latitud, p.longitud], {
-          radius: Math.min(260, 80 + intensidad * 30),
-          color: colorPin,
-          fillColor: colorPin,
-          fillOpacity: 0.16,
-          weight: 1.5
-        }).addTo(state.map);
-        state.adminHeatmapCircles.push(lc);
+        marker = new window.google.maps.Marker({
+          map: state.map,
+          position: pos,
+          title: titulo
+        });
       }
+      marker.addListener("click", () => {
+        state.infoWindow?.setContent(infoHtml);
+        state.infoWindow?.open({ anchor: marker, map: state.map });
+      });
+      state.savedPlaceMarkers.set(p.id, marker);
+
+      const circle = new window.google.maps.Circle({
+        map: state.map,
+        center: pos,
+        radius: Math.min(260, 80 + intensidad * 30),
+        strokeColor: colorPin,
+        strokeOpacity: 0.55,
+        strokeWeight: 1.5,
+        fillColor: colorPin,
+        fillOpacity: 0.16,
+        clickable: false
+      });
+      state.adminHeatmapCircles.push(circle);
     }
 
     const totalRegistros = puntos.reduce((acc, item) => acc + Number(item.registros || 0), 0);
@@ -998,43 +944,36 @@ function renderMarcadoresEnVivo(data) {
     const AdvancedMarker = window.google?.maps?.marker?.AdvancedMarkerElement;
     const PinElement = window.google?.maps?.marker?.PinElement;
     for (const u of state.ubicacionesGuardadas || []) {
-      if (esGoogle) {
-        const pos = { lat: u.latitud, lng: u.longitud };
-        let marker;
-        if (AdvancedMarker && PinElement && state.mapConfig?.googleMapsMapId) {
-          const pin = new PinElement({
-            background: "#D97706",
-            borderColor: "#FFFFFF",
-            glyphColor: "#FFFFFF",
-            scale: 0.95
-          });
-          marker = new AdvancedMarker({
-            map: state.map,
-            position: pos,
-            title: `${u.etiqueta}: ${u.nombre}`,
-            content: pin.element
-          });
-        } else {
-          marker = new window.google.maps.Marker({
-            map: state.map,
-            position: pos,
-            title: `${u.etiqueta}: ${u.nombre}`
-          });
-        }
-        marker.addListener("click", () => {
-          state.infoWindow?.setContent(
-            `<div style="font-family:sans-serif;padding:2px 4px;"><strong>${esc(u.etiqueta)}: ${esc(u.nombre)}</strong><br/><span style="font-size:11px;color:#4B5563;">${esc(u.barrio)}</span></div>`
-          );
-          state.infoWindow?.open({ anchor: marker, map: state.map });
-          seleccionarSectorEnMapa(u.id);
+      const pos = { lat: u.latitud, lng: u.longitud };
+      let marker;
+      if (AdvancedMarker && PinElement && state.mapConfig?.googleMapsMapId) {
+        const pin = new PinElement({
+          background: "#D97706",
+          borderColor: "#FFFFFF",
+          glyphColor: "#FFFFFF",
+          scale: 0.95
         });
-        state.savedPlaceMarkers.set(u.id, marker);
+        marker = new AdvancedMarker({
+          map: state.map,
+          position: pos,
+          title: `${u.etiqueta}: ${u.nombre}`,
+          content: pin.element
+        });
       } else {
-        const lm = window.L.marker([u.latitud, u.longitud]).addTo(state.map);
-        lm.bindPopup(`<strong>${esc(u.etiqueta)}: ${esc(u.nombre)}</strong>`);
-        lm.on("click", () => seleccionarSectorEnMapa(u.id));
-        state.savedPlaceMarkers.set(u.id, lm);
+        marker = new window.google.maps.Marker({
+          map: state.map,
+          position: pos,
+          title: `${u.etiqueta}: ${u.nombre}`
+        });
       }
+      marker.addListener("click", () => {
+        state.infoWindow?.setContent(
+          `<div style="font-family:sans-serif;padding:2px 4px;"><strong>${esc(u.etiqueta)}: ${esc(u.nombre)}</strong><br/><span style="font-size:11px;color:#4B5563;">${esc(u.barrio)}</span></div>`
+        );
+        state.infoWindow?.open({ anchor: marker, map: state.map });
+        seleccionarSectorEnMapa(u.id);
+      });
+      state.savedPlaceMarkers.set(u.id, marker);
     }
   }
 
@@ -1042,39 +981,24 @@ function renderMarcadoresEnVivo(data) {
   if (state.realGps && typeof state.realGps.latitud === "number" && typeof state.realGps.longitud === "number") {
     const gpsLat = state.realGps.latitud;
     const gpsLng = state.realGps.longitud;
-
-    if (esGoogle) {
-      const pos = { lat: gpsLat, lng: gpsLng };
-      if (!state.userGpsMarker) {
-        state.userGpsMarker = new window.google.maps.Marker({
-          map: state.map,
-          position: pos,
-          title: "Tu ubicación GPS en tiempo real",
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 7,
-            fillColor: "#2563EB",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 2.5
-          },
-          zIndex: 700
-        });
-      } else if (typeof state.userGpsMarker.setPosition === "function") {
-        state.userGpsMarker.setPosition(pos);
-      }
-    } else {
-      if (!state.userGpsMarker) {
-        state.userGpsMarker = window.L.circleMarker([gpsLat, gpsLng], {
-          radius: 7,
-          color: "#FFFFFF",
-          weight: 2.5,
+    const pos = { lat: gpsLat, lng: gpsLng };
+    if (!state.userGpsMarker) {
+      state.userGpsMarker = new window.google.maps.Marker({
+        map: state.map,
+        position: pos,
+        title: "Tu ubicación GPS en tiempo real",
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 7,
           fillColor: "#2563EB",
-          fillOpacity: 1
-        }).addTo(state.map);
-      } else if (typeof state.userGpsMarker.setLatLng === "function") {
-        state.userGpsMarker.setLatLng([gpsLat, gpsLng]);
-      }
+          fillOpacity: 1,
+          strokeColor: "#FFFFFF",
+          strokeWeight: 2.5
+        },
+        zIndex: 700
+      });
+    } else if (typeof state.userGpsMarker.setPosition === "function") {
+      state.userGpsMarker.setPosition(pos);
     }
   }
 }
@@ -1091,13 +1015,10 @@ function seleccionarSectorEnMapa(sectorId) {
 }
 
 function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
-  if (!state.map) return;
-  const esGoogle = state.mapEngine === "google" && window.google?.maps;
-  if (!esGoogle && typeof window.L === "undefined") return;
+  if (!state.map || !window.google?.maps) return;
 
   if (state.routeLine) {
     if (typeof state.routeLine.setMap === "function") state.routeLine.setMap(null);
-    else if (typeof state.routeLine.remove === "function") state.routeLine.remove();
     state.routeLine = null;
   }
   if (state.routeLineCasing) {
@@ -1107,42 +1028,27 @@ function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
   if (!puntos || puntos.length === 0) return;
 
   const latLngs = puntos.map((p) => (Array.isArray(p) ? p : [p.latitud, p.longitud]));
-
-  if (esGoogle) {
-    const path = latLngs.map(([lat, lng]) => ({ lat: Number(lat), lng: Number(lng) }));
-    state.routeLineCasing = new window.google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: "#06371B",
-      strokeOpacity: 0.35,
-      strokeWeight: 9,
-      map: state.map,
-      zIndex: 40
-    });
-    state.routeLine = new window.google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: "#0F6B36",
-      strokeOpacity: 0.96,
-      strokeWeight: 5,
-      map: state.map,
-      zIndex: 45
-    });
-    if (ajustarEncuadre && latLngs.length >= 2 && typeof state.map.fitBoundsCompat === "function") {
-      state.map.fitBoundsCompat(latLngs, 15);
-    }
-    return;
-  }
-
-  state.routeLine = window.L.polyline(latLngs, {
-    color: "#0F6B36",
-    weight: 5,
-    dashArray: latLngs.length <= 12 ? "8 6" : null,
-    opacity: 0.92
-  }).addTo(state.map);
-
-  if (ajustarEncuadre && latLngs.length >= 2) {
-    state.map.fitBounds(state.routeLine.getBounds(), { padding: [54, 54], maxZoom: 15 });
+  const path = latLngs.map(([lat, lng]) => ({ lat: Number(lat), lng: Number(lng) }));
+  state.routeLineCasing = new window.google.maps.Polyline({
+    path,
+    geodesic: true,
+    strokeColor: "#06371B",
+    strokeOpacity: 0.35,
+    strokeWeight: 9,
+    map: state.map,
+    zIndex: 40
+  });
+  state.routeLine = new window.google.maps.Polyline({
+    path,
+    geodesic: true,
+    strokeColor: "#0F6B36",
+    strokeOpacity: 0.96,
+    strokeWeight: 5,
+    map: state.map,
+    zIndex: 45
+  });
+  if (ajustarEncuadre && latLngs.length >= 2 && typeof state.map.fitBoundsCompat === "function") {
+    state.map.fitBoundsCompat(latLngs, 15);
   }
 }
 
@@ -1164,12 +1070,10 @@ function pintarRutaEnMapa(ajustarEncuadre = true) {
       const sedes = obtenerSedesActivas(state.data.sectores || []);
       const puntos = state.data?.analiticaAdmin?.puntosRecurrentesMapa || [];
       const objetivos = [...sedes, ...puntos];
-      if (objetivos.length > 0 && state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
+      if (objetivos.length > 0 && typeof state.map.fitBoundsCompat === "function") {
         state.map.fitBoundsCompat(objetivos, 15);
-      } else if (state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
+      } else if (typeof state.map.fitBoundsCompat === "function") {
         state.map.fitBoundsCompat(FLORENCIA_BOUNDS_COORDS, 15);
-      } else if (state.florenciaBounds && typeof state.map.fitBounds === "function") {
-        state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
       }
     }
     return;
@@ -1187,12 +1091,8 @@ function pintarRutaEnMapa(ajustarEncuadre = true) {
             [destino.latitud, destino.longitud]
           ];
     dibujarPolilineaEnMapa(puntos, ajustarEncuadre);
-  } else if (ajustarEncuadre) {
-    if (state.mapEngine === "google" && typeof state.map.fitBoundsCompat === "function") {
-      state.map.fitBoundsCompat(FLORENCIA_BOUNDS_COORDS, 15);
-    } else if (state.florenciaBounds && typeof state.map.fitBounds === "function") {
-      state.map.fitBounds(state.florenciaBounds, { padding: [36, 36], maxZoom: 15 });
-    }
+  } else if (ajustarEncuadre && typeof state.map.fitBoundsCompat === "function") {
+    state.map.fitBoundsCompat(FLORENCIA_BOUNDS_COORDS, 15);
   }
   renderMarcadoresEnVivo(state.data);
 }
@@ -1307,40 +1207,7 @@ async function intentarGoogleRoutesApi(origen, destino, key) {
 
 async function intentarRutaVial(origen, destino, key) {
   if (origen.id === destino.id) return;
-
-  if (state.mapEngine === "google") {
-    const okGoogle = await intentarGoogleRoutesApi(origen, destino, key);
-    if (okGoogle) return;
-  }
-
-  if (typeof AbortController === "undefined") return;
-  const baseOsrm = state.mapConfig?.osrmRouteUrl || "https://router.project-osrm.org/route/v1/driving";
-  const url = `${baseOsrm}/${origen.longitud},${origen.latitud};${destino.longitud},${destino.latitud}?overview=full&geometries=geojson`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 2400);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) return;
-    const json = await res.json();
-    const route = json?.routes?.[0];
-    const coords = route?.geometry?.coordinates;
-    if (Array.isArray(coords) && coords.length >= 2 && state.lastRouteKey === key) {
-      const polilinea = coords.map(([lng, lat]) => ({ latitud: lat, longitud: lng }));
-      const distKm = route.distance ? Number(Math.max(0.5, route.distance / 1000).toFixed(2)) : state.routeKm;
-      const durMin = route.duration ? Math.max(1, Math.round(route.duration / 60)) : state.routeMin;
-      aplicarMetricasRutaOficial({
-        distanciaKm: distKm,
-        duracionMin: durMin,
-        traficoTexto: "Ruta vial",
-        pesado: false,
-        polilinea
-      });
-    }
-  } catch {
-    // Mantiene polilínea de respaldo
-  } finally {
-    clearTimeout(timer);
-  }
+  await intentarGoogleRoutesApi(origen, destino, key);
 }
 
 async function actualizarRutaDesdeSectores() {
@@ -2316,7 +2183,7 @@ function renderAll(data) {
   state.data = data;
   renderMetricasPorRol(data);
   const debeMostrarMapa = state.authUser?.rol !== "admin" || state.adminShowMap;
-  if (debeMostrarMapa && (state.map || state.mapConfig)) {
+  if (debeMostrarMapa && (state.map || (state.mapConfig && state.gmapsLoaded))) {
     initMap(data.sectores || []);
   }
   renderSelectores(data);

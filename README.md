@@ -13,10 +13,11 @@
 </p>
 
 <p align="center">
+  <a href="https://tucango.stellel.com"><img alt="App en Producción" src="https://img.shields.io/badge/App%20Web-tucango.stellel.com-16a34a?logo=googlechrome&logoColor=white"></a>
   <a href="https://github.com/Stellel-One/TucanGo"><img alt="Repo" src="https://img.shields.io/badge/GitHub-TucanGo-181717?logo=github"></a>
-  <img alt="Licencia" src="https://img.shields.io/badge/Licencia-Académica-blue">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Node.js%2022-3178C6?logo=typescript&logoColor=white">
   <img alt="Java" src="https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white">
-  <img alt="Build" src="https://img.shields.io/badge/Build-Ant-green">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-WAL%20%2B%20AES--256-003B57?logo=sqlite&logoColor=white">
   <img alt="Curso" src="https://img.shields.io/badge/Curso-Lógica%20%26%20Algoritmos%20II-purple">
 </p>
 
@@ -49,10 +50,40 @@ El transporte informal en motocicleta (mototaxis) es una práctica común entre 
 
 ---
 
+## 🌐 Aplicación Web en Producción (`tucango-web`) — Arquitectura en 3 Paquetes
+
+**URL en producción:** [https://tucango.stellel.com](https://tucango.stellel.com)
+
+La versión ejecutable de **TucanGo** está implementada en **TypeScript / Node.js 22** con persistencia en **SQLite (modo WAL)**, cifrado **AES-256-GCM** para documentos, hashing **PBKDF2/SHA-256** para contraseñas y eventos en tiempo real (**SSE**), organizada estrictamente bajo el convenio institucional de 3 paquetes de Jorge Villalobos:
+
+```text
+tucango-web/
+├── src/co/edu/uniamazonia/tucango/
+│   ├── interfaz/           # Servidor HTTP, rutas API y SSE (server.ts)
+│   └── mundo/              # 21 módulos POO (Persona, Estudiante, Motorista, Moto, Viaje,
+│                           # Pago, Calificacion, EstrategiaTarifa, EstadoViaje, EventBus,
+│                           # TucanGoFacade, SqliteSistemaRepository, SimuladorCampusPOO, ...)
+├── test/co/edu/uniamazonia/tucango/
+│   └── test/               # Suites automatizadas (19/19 pruebas en verde con node:test)
+├── public/                 # Interfaz web (HTML, CSS, JS, mapas Leaflet y gráficos)
+└── data/                   # Base de datos SQLite persistente (tucango.db)
+```
+
+```bash
+cd tucango-web
+npm test      # Ejecuta las 19 pruebas unitarias y de integración (node:test)
+npm start     # Inicia el servidor web en http://localhost:3000
+npm run sim   # Ejecuta la simulación POO del campus en consola
+```
+
+Ver documentación técnica completa en [`tucango-web/README.md`](tucango-web/README.md).
+
+---
+
 ## 📂 Documentación y Entregables
 
 - **Modelo Conceptual:** [`Docs/PROY_DOC_ModeloConceptual_v1.0.md`](Docs/PROY_DOC_ModeloConceptual_v1.0.md)
-- **Presentación del Proyecto:** [`Docs/PROY_SLIDES_Sustentacion_Entregable1.pptx`](Docs/Presentacion%20Proyecto.pptx) y [`Docs/PROY_SLIDES_Sustentacion_Entregable1.md`](Docs/PROY_SLIDES_Sustentacion_Entregable1.md)
+- **Presentación del Proyecto:** [`Docs/PROY_SLIDES_Sustentacion_Entregable1.pptx`](Docs/PROY_SLIDES_Sustentacion_Entregable1.pptx) y [`Docs/PROY_SLIDES_Sustentacion_Entregable1.md`](Docs/PROY_SLIDES_Sustentacion_Entregable1.md)
 - **Diagrama UML v5.0 (Definitivo):** [`Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.md`](Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.md) | [Ver PNG](Docs/PROY_UML_v5.0_ArquitecturaConsolidada_Definitiva.png)
 - **Historial de Versiones UML:**
   - [UML v1.0](Docs/PROY_UML_v1.0_Abstraccion_4Clases.md)

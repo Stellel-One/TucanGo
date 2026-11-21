@@ -1,5 +1,5 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
-import { hashPassword, verifyPassword } from "../security/PasswordHasher.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
+import { hashPassword, verifyPassword } from "./PasswordHasher.ts";
 
 export abstract class Persona {
   private _identificacion: string;

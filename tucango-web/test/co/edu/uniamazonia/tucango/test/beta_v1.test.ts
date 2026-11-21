@@ -3,19 +3,19 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ejecutarSimulacionCampusPOO } from "../src/simulation/SimuladorCampusPOO.ts";
+import { ejecutarSimulacionCampusPOO } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/SimuladorCampusPOO.ts";
 
-import { Coordenada } from "../src/domain/model/Coordenada.ts";
+import { Coordenada } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Coordenada.ts";
 import {
   SectorCampus,
   SECTORES_FLORENCIA,
   buscarSectorPorId
-} from "../src/domain/model/SectorCampus.ts";
-import { Moto } from "../src/domain/model/Moto.ts";
-import { MetodoPago } from "../src/domain/model/Pago.ts";
-import { EventBus, type EventoDominio } from "../src/domain/patterns/EventBus.ts";
-import { TucanGoFacade } from "../src/application/TucanGoFacade.ts";
-import { SqliteSistemaRepository } from "../src/infrastructure/SqliteSistemaRepository.ts";
+} from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/SectorCampus.ts";
+import { Moto } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Moto.ts";
+import { MetodoPago } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Pago.ts";
+import { EventBus, type EventoDominio } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/EventBus.ts";
+import { TucanGoFacade } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/TucanGoFacade.ts";
+import { SqliteSistemaRepository } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/SqliteSistemaRepository.ts";
 
 describe("TucanGo Beta v1 - Dominio Geográfico, Seguridad y Persistencia", () => {
   it("Valida invariantes de Coordenada y calcula distancia Haversine entre sectores de Florencia", () => {

@@ -4,10 +4,10 @@
   "description": "TucanGo Web Platform - Clean Architecture and Object-Oriented Programming (OOP) in TypeScript",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.ts",
-    "start": "node src/server.ts",
-    "dev": "node --watch src/server.ts",
-    "sim": "node src/simulation/SimuladorCampusPOO.ts"
+    "test": "node --test test/co/edu/uniamazonia/tucango/test/*.test.ts",
+    "start": "node src/co/edu/uniamazonia/tucango/interfaz/server.ts",
+    "dev": "node --watch src/co/edu/uniamazonia/tucango/interfaz/server.ts",
+    "sim": "node src/co/edu/uniamazonia/tucango/mundo/SimuladorCampusPOO.ts"
   },
   "keywords": [
     "tucango",

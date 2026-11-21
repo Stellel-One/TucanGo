@@ -1,6 +1,6 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
 import type { Viaje } from "./Viaje.ts";
-import type { Motorista } from "../model/Motorista.ts";
+import type { Motorista } from "./Motorista.ts";
 
 export interface EstadoViaje {
   readonly nombre: string;

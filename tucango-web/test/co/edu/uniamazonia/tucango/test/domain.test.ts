@@ -1,21 +1,21 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { Estudiante } from "../src/domain/model/Estudiante.ts";
-import { Motorista } from "../src/domain/model/Motorista.ts";
-import { Moto } from "../src/domain/model/Moto.ts";
-import { Administrador } from "../src/domain/model/Administrador.ts";
-import { Calificacion } from "../src/domain/model/Calificacion.ts";
-import { MetodoPago, EstadoPago } from "../src/domain/model/Pago.ts";
-import { Viaje } from "../src/domain/patterns/Viaje.ts";
+import { Estudiante } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Estudiante.ts";
+import { Motorista } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Motorista.ts";
+import { Moto } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Moto.ts";
+import { Administrador } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Administrador.ts";
+import { Calificacion } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Calificacion.ts";
+import { MetodoPago, EstadoPago } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Pago.ts";
+import { Viaje } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/Viaje.ts";
 import {
   TarifaEstudiantilFija,
   TarifaPorKilometro,
   TarifaDinamicaLluvia,
   TarifaNocturna
-} from "../src/domain/patterns/EstrategiaTarifa.ts";
-import { TucanGoFacade } from "../src/application/TucanGoFacade.ts";
-import { SqliteSistemaRepository } from "../src/infrastructure/SqliteSistemaRepository.ts";
+} from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/EstrategiaTarifa.ts";
+import { TucanGoFacade } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/TucanGoFacade.ts";
+import { SqliteSistemaRepository } from "../../../../../../src/co/edu/uniamazonia/tucango/mundo/SqliteSistemaRepository.ts";
 import fs from "node:fs";
 import path from "node:path";
 

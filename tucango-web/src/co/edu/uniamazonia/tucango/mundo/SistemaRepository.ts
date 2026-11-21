@@ -1,5 +1,5 @@
-import type { MetodoPago, EstadoPago } from "../../domain/model/Pago.ts";
-import type { UbicacionFrecuente } from "../../domain/model/Estudiante.ts";
+import type { MetodoPago, EstadoPago } from "./Pago.ts";
+import type { UbicacionFrecuente } from "./Estudiante.ts";
 
 export interface AdministradorSnapshot {
   identificacion: string;

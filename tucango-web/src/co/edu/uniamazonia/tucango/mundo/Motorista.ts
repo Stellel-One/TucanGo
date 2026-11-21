@@ -1,4 +1,4 @@
-import { ValidacionError } from "../security/ErroresAuth.ts";
+import { ValidacionError } from "./ErroresAuth.ts";
 import { Persona } from "./Persona.ts";
 import { Moto } from "./Moto.ts";
 import { Coordenada } from "./Coordenada.ts";
