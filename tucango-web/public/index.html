@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/styles.css?v=5.4" />
+  <link rel="stylesheet" href="/styles.css?v=5.5" />
 </head>
 <body>
   <header class="topbar">
@@ -289,6 +289,36 @@
         <div class="map-stage-card">
           <div id="campus-map" aria-label="Mapa interactivo de Florencia, Caquetá"></div>
 
+          <!-- Banner flotante estilo Rappi/Mapbox para seguimiento en vivo con modelo 3D Tucán -->
+          <div id="map-rappi-banner" class="map-rappi-banner hidden" role="status" aria-live="polite">
+            <div class="rappi-banner-top">
+              <div class="rappi-banner-model-wrap">
+                <img
+                  id="map-rappi-model-img"
+                  src="/assets/models/tucan-moto-llegando.png"
+                  alt="Tucán TucanGo en motocicleta 3D"
+                  class="rappi-banner-model-img"
+                  width="56"
+                  height="56"
+                />
+              </div>
+              <div class="rappi-banner-copy">
+                <strong id="map-rappi-title" class="rappi-banner-title">Tu Tucán está llegando</strong>
+                <p class="rappi-banner-sub">
+                  <span id="map-rappi-sub-prefix">Tu Tucán llega en:</span>
+                  <strong id="map-rappi-eta" class="rappi-eta-highlight">4 min</strong>
+                </p>
+              </div>
+              <span id="map-engine-pill" class="map-engine-pill mono-text" title="Motor cartográfico activo">3D</span>
+            </div>
+            <div class="rappi-progress-rail" aria-hidden="true">
+              <div id="map-rappi-progress-fill" class="rappi-progress-fill" style="width: 12%"></div>
+              <div id="map-rappi-progress-thumb" class="rappi-progress-thumb" style="left: 12%">
+                <img src="/assets/models/tucan-moto-llegando.png" alt="" width="24" height="24" />
+              </div>
+            </div>
+          </div>
+
           <!-- Resumen limpio de ruta en moto + estado GPS en vivo (sin superposiciones) -->
           <div class="map-floating-bottom">
             <div class="map-route-pill-box" id="map-route-summary">
@@ -376,9 +406,32 @@
                   </div>
                 </div>
 
+                <div id="tracking-model-stage" class="tracking-model-stage">
+                  <div class="tracking-model-visual">
+                    <div class="tracking-model-glow" aria-hidden="true"></div>
+                    <img
+                      id="tracking-model-img"
+                      src="/assets/models/tucan-moto-llegando.png"
+                      alt="Modelo 3D Tucán en motocicleta"
+                      class="tracking-model-3d-img"
+                      width="92"
+                      height="92"
+                    />
+                  </div>
+                  <div class="tracking-model-caption">
+                    <span id="tracking-model-tag" class="tracking-model-tag">TUCÁN EN RUTA</span>
+                    <p id="tracking-model-desc" class="tracking-model-desc">
+                      Tu Tucán se dirige en motocicleta hacia tu punto de recogida.
+                    </p>
+                  </div>
+                </div>
+
                 <div class="tracking-progress-wrap">
-                  <div class="tracking-progress-track">
+                  <div class="tracking-progress-track rappi-track">
                     <div class="tracking-progress-fill" id="tracking-progress-bar" style="width: 0%"></div>
+                    <div class="tracking-progress-moto-badge" id="tracking-progress-thumb" style="left: 0%">
+                      <img id="tracking-thumb-img" src="/assets/models/tucan-moto-llegando.png" alt="" width="22" height="22" />
+                    </div>
                   </div>
                   <div class="tracking-progress-meta mono-text">
                     <span id="tracking-progress-pct">0% del tramo</span>
@@ -984,6 +1037,6 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/chartjs/chart.umd.min.js?v=4.4.8"></script>
-  <script src="/app.js?v=5.8"></script>
+  <script src="/app.js?v=5.9"></script>
 </body>
 </html>

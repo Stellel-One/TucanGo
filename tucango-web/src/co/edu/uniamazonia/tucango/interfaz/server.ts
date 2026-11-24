@@ -75,7 +75,9 @@ const MIME_TYPES: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".svg": "image/svg+xml",
-  ".ico": "image/x-icon"
+  ".ico": "image/x-icon",
+  ".glb": "model/gltf-binary",
+  ".gltf": "model/gltf+json"
 };
 
 // B16: Cabeceras de seguridad universales
@@ -85,7 +87,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "geolocation=(self), camera=(), microphone=()",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://*.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://maps.googleapis.com https://routes.googleapis.com https://*.googleapis.com https://*.gstatic.com https://cloudflareinsights.com;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://api.mapbox.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com https://*.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://*.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://maps.googleapis.com https://routes.googleapis.com https://*.googleapis.com https://*.gstatic.com https://cloudflareinsights.com;"
 };
 
 // B6: Rate Limiting en memoria con backoff exponencial
@@ -857,16 +859,32 @@ export function crearServidor(
       }
 
       if (pathname === "/api/mapa/config" && req.method === "GET") {
+        const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN || null;
+        const mapboxStyle =
+          process.env.MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12";
         const googleKey = process.env.GOOGLE_MAPS_API_KEY || null;
         const googleMapId =
           process.env.GOOGLE_MAPS_MAP_ID ||
           process.env.GOOGLE_MAPS_MAP_ID_OR_STYLE_ID ||
           "828229759a91b5f6f45066f4";
+        const proveedorPreferido = (process.env.MAP_PROVIDER || "").toLowerCase();
+        const usarMapbox =
+          Boolean(mapboxToken) &&
+          (proveedorPreferido === "mapbox" || proveedorPreferido !== "google_maps");
+
         sendJson(res, 200, {
-          proveedorActivo: "google_maps",
+          proveedorActivo: usarMapbox ? "mapbox" : "google_maps",
+          mapboxConfigurado: Boolean(mapboxToken),
+          mapboxAccessToken: mapboxToken,
+          mapboxStyleUrl: mapboxStyle,
           googleMapsConfigurado: Boolean(googleKey),
           googleMapsApiKey: googleKey,
           googleMapsMapId: googleKey ? googleMapId : null,
+          modelosVehiculo: {
+            llegando: "/assets/models/tucan-moto-llegando.png",
+            enCurso: "/assets/models/tucan-moto-estudiante.png",
+            llegada: "/assets/models/tucan-moto-llegada.png"
+          },
           tileUrlDidi: "",
           osrmRouteUrl: "",
           googleApisRequeridas: [

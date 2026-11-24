@@ -15,6 +15,7 @@ const state = {
   map: null,
   mapEngine: "google",
   gmapsLoaded: false,
+  mapboxLoaded: false,
   mapConfig: null,
   mapConfigPromise: null,
   trafficLayer: null,
@@ -25,6 +26,11 @@ const state = {
   savedPlaceMarkers: new Map(),
   adminHeatmapCircles: [],
   userGpsMarker: null,
+  vehicleMarker: null,
+  vehicleMarkerEl: null,
+  vehiclePos: null,
+  vehicleAnimFrame: null,
+  vehicleFacingWest: false,
   realGps: null,
   prevGps: null,
   realAddressLabel: "",
@@ -131,9 +137,23 @@ const els = {
   trackingSubtitle: document.getElementById("tracking-subtitle"),
   trackingPin: document.getElementById("tracking-pin"),
   trackingProgressBar: document.getElementById("tracking-progress-bar"),
+  trackingProgressThumb: document.getElementById("tracking-progress-thumb"),
+  trackingThumbImg: document.getElementById("tracking-thumb-img"),
   trackingProgressPct: document.getElementById("tracking-progress-pct"),
   trackingEtaLive: document.getElementById("tracking-eta-live"),
   trackingRadarStage: document.getElementById("tracking-radar-stage"),
+  trackingModelStage: document.getElementById("tracking-model-stage"),
+  trackingModelImg: document.getElementById("tracking-model-img"),
+  trackingModelTag: document.getElementById("tracking-model-tag"),
+  trackingModelDesc: document.getElementById("tracking-model-desc"),
+  mapRappiBanner: document.getElementById("map-rappi-banner"),
+  mapRappiModelImg: document.getElementById("map-rappi-model-img"),
+  mapRappiTitle: document.getElementById("map-rappi-title"),
+  mapRappiSubPrefix: document.getElementById("map-rappi-sub-prefix"),
+  mapRappiEta: document.getElementById("map-rappi-eta"),
+  mapRappiProgressFill: document.getElementById("map-rappi-progress-fill"),
+  mapRappiProgressThumb: document.getElementById("map-rappi-progress-thumb"),
+  mapEnginePill: document.getElementById("map-engine-pill"),
   trackingDriverBox: document.getElementById("tracking-driver-box"),
   trackingDriverInitials: document.getElementById("tracking-driver-initials"),
   trackingDriverName: document.getElementById("tracking-driver-name"),
@@ -410,8 +430,18 @@ async function cargarConfigMapa() {
       const res = await fetch("/api/mapa/config");
       if (!res.ok) return;
       const cfg = await res.json();
-      state.mapEngine = "google";
 
+      if (cfg.proveedorActivo === "mapbox" && cfg.mapboxAccessToken) {
+        const mbOk = await cargarScriptMapbox();
+        if (mbOk) {
+          state.mapEngine = "mapbox";
+          state.mapboxLoaded = true;
+          state.mapConfig = cfg;
+          return;
+        }
+      }
+
+      state.mapEngine = "google";
       if (cfg.googleMapsApiKey) {
         const ok = await cargarScriptGoogleMaps(cfg.googleMapsApiKey);
         state.gmapsLoaded = ok;
@@ -423,9 +453,37 @@ async function cargarConfigMapa() {
       state.mapConfig = cfg;
     } catch {
       state.gmapsLoaded = false;
+      state.mapboxLoaded = false;
     }
   })();
   return state.mapConfigPromise;
+}
+
+function cargarScriptMapbox() {
+  if (window.mapboxgl && window.mapboxgl.Map) {
+    state.mapboxLoaded = true;
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    if (!document.getElementById("mapbox-gl-css")) {
+      const link = document.createElement("link");
+      link.id = "mapbox-gl-css";
+      link.rel = "stylesheet";
+      link.href = "https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css";
+      document.head.appendChild(link);
+    }
+    const script = document.createElement("script");
+    script.src = "https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js";
+    script.async = true;
+    script.onload = () => {
+      const ok = Boolean(window.mapboxgl && window.mapboxgl.Map);
+      state.mapboxLoaded = ok;
+      resolve(ok);
+    };
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+    setTimeout(() => resolve(Boolean(window.mapboxgl && window.mapboxgl.Map)), 12000);
+  });
 }
 
 function cargarScriptGoogleMaps(apiKey) {
@@ -553,6 +611,97 @@ function crearControlesNativosGoogle(gmap) {
 function initMap(sectores) {
   if (state.map) return;
   const sedesMapa = obtenerSedesActivas(sectores);
+
+  if (
+    state.mapEngine === "mapbox" &&
+    window.mapboxgl &&
+    state.mapConfig?.mapboxAccessToken
+  ) {
+    const container = document.getElementById("campus-map");
+    if (!container) return;
+
+    window.mapboxgl.accessToken = state.mapConfig.mapboxAccessToken;
+    const mbMap = new window.mapboxgl.Map({
+      container,
+      style: state.mapConfig.mapboxStyleUrl || "mapbox://styles/mapbox/streets-v12",
+      center: [FLORENCIA_CENTRO[1], FLORENCIA_CENTRO[0]],
+      zoom: 15.2,
+      pitch: 46,
+      bearing: -10,
+      minZoom: 12,
+      maxZoom: 19.5,
+      antialias: true,
+      maxBounds: [
+        [-75.7000, 1.5000],
+        [-75.5200, 1.6800]
+      ]
+    });
+
+    mbMap.addControl(new window.mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+    mbMap.addControl(
+      new window.mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true
+      }),
+      "bottom-right"
+    );
+
+    mbMap.invalidateSize = () => mbMap.resize();
+    mbMap.setView = ([lat, lng], zoom) => {
+      mbMap.easeTo({
+        center: [Number(lng), Number(lat)],
+        zoom: zoom || mbMap.getZoom(),
+        pitch: 46,
+        duration: 700
+      });
+    };
+    mbMap.fitBoundsCompat = (coordsList, maxZoom = 16.5) => {
+      if (!coordsList || coordsList.length === 0) return;
+      const bounds = new window.mapboxgl.LngLatBounds();
+      for (const c of coordsList) {
+        const lat = Array.isArray(c) ? c[0] : c.latitud;
+        const lng = Array.isArray(c) ? c[1] : c.longitud;
+        if (typeof lat === "number" && typeof lng === "number") {
+          bounds.extend([lng, lat]);
+        }
+      }
+      mbMap.fitBounds(bounds, { padding: 72, maxZoom, pitch: 46, duration: 750 });
+    };
+
+    mbMap.on("click", (e) => {
+      if (!state.pickingMapPlace) return;
+      completarPuntoSeleccionadoEnMapa(e.lngLat.lat, e.lngLat.lng);
+    });
+
+    for (const sec of sedesMapa) {
+      const pinEl = document.createElement("div");
+      pinEl.className = "tucan-campus-pin-mb";
+      pinEl.title = sec.nombre;
+      pinEl.textContent = "🎓";
+      pinEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        seleccionarSectorEnMapa(sec.id);
+      });
+      const mk = new window.mapboxgl.Marker({ element: pinEl })
+        .setLngLat([sec.longitud, sec.latitud])
+        .setPopup(
+          new window.mapboxgl.Popup({ offset: 22 }).setHTML(
+            `<div style="font-family:sans-serif;padding:2px 4px;"><strong>${esc(sec.nombre)}</strong><br/><span style="font-size:11px;color:#4B5563;">${esc(sec.barrio || "Campus Uniamazonia")}</span></div>`
+          )
+        )
+        .addTo(mbMap);
+      state.markers.set(sec.id, mk);
+    }
+
+    state.map = mbMap;
+    if (els.mapEnginePill) els.mapEnginePill.textContent = "MAPBOX 3D";
+    mbMap.on("load", () => {
+      pintarRutaEnMapa(true);
+      if (state.data) renderSeguimientoEnVivo(state.data);
+    });
+    return;
+  }
 
   if (state.mapEngine === "google" && window.google && window.google.maps) {
     const container = document.getElementById("campus-map");
@@ -1015,7 +1164,46 @@ function seleccionarSectorEnMapa(sectorId) {
 }
 
 function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
-  if (!state.map || !window.google?.maps) return;
+  if (!state.map) return;
+
+  if (state.mapEngine === "mapbox" && window.mapboxgl) {
+    if (!puntos || puntos.length < 2) return;
+    const latLngs = puntos.map((p) => (Array.isArray(p) ? p : [p.latitud, p.longitud]));
+    const coordinates = latLngs.map(([lat, lng]) => [Number(lng), Number(lat)]);
+    const geojson = {
+      type: "Feature",
+      geometry: { type: "LineString", coordinates }
+    };
+    const aplicarCapaMapbox = () => {
+      if (state.map.getSource("tucango-route-src")) {
+        state.map.getSource("tucango-route-src").setData(geojson);
+      } else {
+        state.map.addSource("tucango-route-src", { type: "geojson", data: geojson });
+        state.map.addLayer({
+          id: "tucango-route-casing",
+          type: "line",
+          source: "tucango-route-src",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#FFFFFF", "line-width": 8, "line-opacity": 0.9 }
+        });
+        state.map.addLayer({
+          id: "tucango-route-line",
+          type: "line",
+          source: "tucango-route-src",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#111827", "line-width": 4.5, "line-opacity": 0.96 }
+        });
+      }
+      if (ajustarEncuadre && typeof state.map.fitBoundsCompat === "function") {
+        state.map.fitBoundsCompat(latLngs, 16);
+      }
+    };
+    if (state.map.isStyleLoaded()) aplicarCapaMapbox();
+    else state.map.once("load", aplicarCapaMapbox);
+    return;
+  }
+
+  if (!window.google?.maps) return;
 
   if (state.routeLine) {
     if (typeof state.routeLine.setMap === "function") state.routeLine.setMap(null);
@@ -1205,8 +1393,48 @@ async function intentarGoogleRoutesApi(origen, destino, key) {
   return false;
 }
 
+async function intentarMapboxDirectionsApi(origen, destino, key) {
+  const token = state.mapConfig?.mapboxAccessToken;
+  if (!token) return false;
+  if (googleRoutesCache.has(key)) {
+    const cached = googleRoutesCache.get(key);
+    if (state.lastRouteKey === key) aplicarMetricasRutaOficial(cached);
+    return true;
+  }
+  try {
+    const coords = `${origen.longitud},${origen.latitud};${destino.longitud},${destino.latitud}`;
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&access_token=${encodeURIComponent(token)}`;
+    const res = await fetch(url);
+    if (!res.ok) return false;
+    const json = await res.json();
+    const route = json?.routes?.[0];
+    const lineCoords = route?.geometry?.coordinates;
+    if (!Array.isArray(lineCoords) || lineCoords.length < 2) return false;
+
+    const polilinea = lineCoords.map(([lng, lat]) => ({ latitud: lat, longitud: lng }));
+    const distanciaKm = Number(Math.max(0.5, Number(route.distance || 1000) / 1000).toFixed(2));
+    const duracionMin = Math.max(1, Math.round(Number(route.duration || 180) / 60));
+    const payload = {
+      distanciaKm,
+      duracionMin,
+      traficoTexto: "Mapbox 3D · Ruta vial",
+      pesado: false,
+      polilinea
+    };
+    googleRoutesCache.set(key, payload);
+    if (state.lastRouteKey === key) aplicarMetricasRutaOficial(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function intentarRutaVial(origen, destino, key) {
   if (origen.id === destino.id) return;
+  if (state.mapEngine === "mapbox" && state.mapConfig?.mapboxAccessToken) {
+    const ok = await intentarMapboxDirectionsApi(origen, destino, key);
+    if (ok) return;
+  }
   await intentarGoogleRoutesApi(origen, destino, key);
 }
 
@@ -1519,10 +1747,240 @@ function renderMetricasPorRol(data) {
   els.metricIngresos.textContent = "$0";
 }
 
+const TUCAN_MODELS = {
+  SOLICITADO: {
+    src: "/assets/models/tucan-moto-llegando.png",
+    tag: "BUSCANDO TUCÁN",
+    desc: "Conectando con Tucanes verificados con SOAT vigente cerca de ti.",
+    bannerTitle: "Buscando tu Tucán...",
+    bannerSubPrefix: "Tiempo estimado:"
+  },
+  ACEPTADO: {
+    src: "/assets/models/tucan-moto-llegando.png",
+    tag: "TUCÁN EN CAMINO",
+    desc: "Tu Tucán conduce hacia tu punto de recogida. Ten listo tu PIN.",
+    bannerTitle: "Tu Tucán está llegando",
+    bannerSubPrefix: "Tu Tucán llega en:"
+  },
+  EN_CURSO: {
+    src: "/assets/models/tucan-moto-estudiante.png",
+    tag: "VIAJE CON ESTUDIANTE",
+    desc: "Viajando seguro con tu Tucán hacia tu destino universitario.",
+    bannerTitle: "Viajando con tu Tucán",
+    bannerSubPrefix: "Llegas a tu destino en:"
+  },
+  FINALIZADO: {
+    src: "/assets/models/tucan-moto-llegada.png",
+    tag: "LLEGADA SEGURA",
+    desc: "¡Llegaste a tu destino! Confirma tu llegada segura en portería.",
+    bannerTitle: "¡Llegaste con tu Tucán!",
+    bannerSubPrefix: "Estado del trayecto:"
+  }
+};
+
+function obtenerModeloTucanPorEstado(estado) {
+  return TUCAN_MODELS[estado] || TUCAN_MODELS.ACEPTADO;
+}
+
+function calcularRumboGrados(lat1, lng1, lat2, lng2) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const toDeg = (rad) => (rad * 180) / Math.PI;
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+  const dLambda = toRad(lng2 - lng1);
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function interpolarPosicionEnPolilinea(puntos, progresoPct) {
+  if (!Array.isArray(puntos) || puntos.length === 0) return null;
+  const coords = puntos.map((p) =>
+    Array.isArray(p) ? [Number(p[0]), Number(p[1])] : [Number(p.latitud), Number(p.longitud)]
+  );
+  if (coords.length === 1) {
+    return { lat: coords[0][0], lng: coords[0][1], bearing: 90 };
+  }
+  const tTotal = Math.max(0, Math.min(1, Number(progresoPct || 0) / 100));
+  const segLengths = [];
+  let totalLen = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const dLat = coords[i + 1][0] - coords[i][0];
+    const dLng = coords[i + 1][1] - coords[i][1];
+    const len = Math.hypot(dLat, dLng);
+    segLengths.push(len);
+    totalLen += len;
+  }
+  if (totalLen === 0) {
+    return { lat: coords[0][0], lng: coords[0][1], bearing: 90 };
+  }
+  let targetDist = tTotal * totalLen;
+  for (let i = 0; i < segLengths.length; i++) {
+    const seg = segLengths[i];
+    if (targetDist <= seg || i === segLengths.length - 1) {
+      const localT = seg > 0 ? Math.max(0, Math.min(1, targetDist / seg)) : 0;
+      const lat = coords[i][0] + (coords[i + 1][0] - coords[i][0]) * localT;
+      const lng = coords[i][1] + (coords[i + 1][1] - coords[i][1]) * localT;
+      const bearing = calcularRumboGrados(coords[i][0], coords[i][1], coords[i + 1][0], coords[i + 1][1]);
+      return { lat, lng, bearing };
+    }
+    targetDist -= seg;
+  }
+  const last = coords[coords.length - 1];
+  return { lat: last[0], lng: last[1], bearing: 90 };
+}
+
+function limpiarVehiculoTucanEnMapa() {
+  if (state.vehicleAnimFrame) {
+    cancelAnimationFrame(state.vehicleAnimFrame);
+    state.vehicleAnimFrame = null;
+  }
+  if (state.vehicleMarker) {
+    if (typeof state.vehicleMarker.remove === "function") state.vehicleMarker.remove();
+    else if (typeof state.vehicleMarker.setMap === "function") state.vehicleMarker.setMap(null);
+    state.vehicleMarker = null;
+  }
+  state.vehicleMarkerEl = null;
+  state.vehiclePos = null;
+}
+
+function construirElementoVehiculoTucan(modelo, pillText, facingWest) {
+  const wrap = document.createElement("div");
+  wrap.className = "tucan-map-vehicle";
+  wrap.innerHTML = `
+    <div class="tucan-map-pill"><span class="eta-dot"></span><span class="tucan-map-pill-txt">${esc(pillText)}</span></div>
+    <div class="tucan-map-sprite-wrap${facingWest ? " facing-west" : ""}">
+      <div class="tucan-map-shadow"></div>
+      <img src="${esc(modelo.src)}" alt="${esc(modelo.tag)}" class="tucan-map-sprite" width="72" height="72" />
+    </div>
+  `;
+  return wrap;
+}
+
+function posicionarVehiculoEnMapa(lat, lng) {
+  if (!state.vehicleMarker) return;
+  if (state.mapEngine === "mapbox" && typeof state.vehicleMarker.setLngLat === "function") {
+    state.vehicleMarker.setLngLat([lng, lat]);
+  } else if ("position" in state.vehicleMarker && typeof state.vehicleMarker.setPosition !== "function") {
+    state.vehicleMarker.position = { lat, lng };
+  } else if (typeof state.vehicleMarker.setPosition === "function") {
+    state.vehicleMarker.setPosition({ lat, lng });
+  }
+}
+
+function actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante) {
+  if (!state.map || !viajeActivo || viajeActivo.estado === "SOLICITADO") {
+    limpiarVehiculoTucanEnMapa();
+    return;
+  }
+
+  const modelo = obtenerModeloTucanPorEstado(viajeActivo.estado);
+  const progreso =
+    viajeActivo.estado === "FINALIZADO"
+      ? 100
+      : viajeActivo.estado === "ACEPTADO"
+        ? Math.max(8, Math.min(35, Number(viajeActivo.progresoRuta || 12)))
+        : Math.max(5, Number(viajeActivo.progresoRuta || 15));
+
+  let target = interpolarPosicionEnPolilinea(state.lastPolilinea, progreso);
+  if (!target && viajeActivo.motorista?.latitud && viajeActivo.motorista?.longitud) {
+    target = {
+      lat: Number(viajeActivo.motorista.latitud),
+      lng: Number(viajeActivo.motorista.longitud),
+      bearing: 90
+    };
+  }
+  if (!target) {
+    target = { lat: FLORENCIA_CENTRO[0], lng: FLORENCIA_CENTRO[1], bearing: 90 };
+  }
+
+  const facingWest = target.bearing > 180 && target.bearing < 360;
+  state.vehicleFacingWest = facingWest;
+  const pillText =
+    viajeActivo.estado === "FINALIZADO"
+      ? "¡En destino!"
+      : viajeActivo.estado === "ACEPTADO"
+        ? `Tu Tucán · ${etaRestante} min`
+        : `En curso · ${etaRestante} min`;
+
+  if (!state.vehicleMarker) {
+    const el = construirElementoVehiculoTucan(modelo, pillText, facingWest);
+    state.vehicleMarkerEl = el;
+    if (state.mapEngine === "mapbox" && window.mapboxgl) {
+      state.vehicleMarker = new window.mapboxgl.Marker({ element: el, anchor: "bottom" })
+        .setLngLat([target.lng, target.lat])
+        .addTo(state.map);
+    } else if (window.google?.maps) {
+      const AdvancedMarker = window.google.maps.marker?.AdvancedMarkerElement;
+      if (AdvancedMarker && state.mapConfig?.googleMapsMapId) {
+        state.vehicleMarker = new AdvancedMarker({
+          map: state.map,
+          position: { lat: target.lat, lng: target.lng },
+          title: pillText,
+          content: el,
+          zIndex: 950
+        });
+      } else {
+        state.vehicleMarker = new window.google.maps.Marker({
+          map: state.map,
+          position: { lat: target.lat, lng: target.lng },
+          title: pillText,
+          icon: {
+            url: modelo.src,
+            scaledSize: new window.google.maps.Size(66, 66),
+            anchor: new window.google.maps.Point(33, 56)
+          },
+          zIndex: 950
+        });
+      }
+    }
+    state.vehiclePos = { lat: target.lat, lng: target.lng };
+    return;
+  }
+
+  // Actualizar sprite, etiqueta y dirección sin recrear el marcador
+  if (state.vehicleMarkerEl) {
+    const img = state.vehicleMarkerEl.querySelector(".tucan-map-sprite");
+    const txt = state.vehicleMarkerEl.querySelector(".tucan-map-pill-txt");
+    const wrap = state.vehicleMarkerEl.querySelector(".tucan-map-sprite-wrap");
+    if (img && img.getAttribute("src") !== modelo.src) img.setAttribute("src", modelo.src);
+    if (txt) txt.textContent = pillText;
+    if (wrap) wrap.classList.toggle("facing-west", facingWest);
+  } else if (typeof state.vehicleMarker.setIcon === "function" && window.google?.maps) {
+    state.vehicleMarker.setIcon({
+      url: modelo.src,
+      scaledSize: new window.google.maps.Size(66, 66),
+      anchor: new window.google.maps.Point(33, 56)
+    });
+  }
+
+  // Interpolación suave a 60 FPS entre posición anterior y nueva
+  const start = state.vehiclePos || { lat: target.lat, lng: target.lng };
+  const startTs = performance.now();
+  const durationMs = 650;
+  if (state.vehicleAnimFrame) cancelAnimationFrame(state.vehicleAnimFrame);
+  const step = (now) => {
+    const rawT = Math.min(1, (now - startTs) / durationMs);
+    const ease = 1 - Math.pow(1 - rawT, 3);
+    const curLat = start.lat + (target.lat - start.lat) * ease;
+    const curLng = start.lng + (target.lng - start.lng) * ease;
+    state.vehiclePos = { lat: curLat, lng: curLng };
+    posicionarVehiculoEnMapa(curLat, curLng);
+    if (rawT < 1) {
+      state.vehicleAnimFrame = requestAnimationFrame(step);
+    } else {
+      state.vehicleAnimFrame = null;
+    }
+  };
+  state.vehicleAnimFrame = requestAnimationFrame(step);
+}
+
 function renderSeguimientoEnVivo(data) {
   if (state.role !== "pasajero") {
     els.liveTrackingCard.classList.add("hidden");
+    if (els.mapRappiBanner) els.mapRappiBanner.classList.add("hidden");
     if (els.mobileTrackingDot) els.mobileTrackingDot.classList.add("hidden");
+    limpiarVehiculoTucanEnMapa();
     return;
   }
 
@@ -1546,13 +2004,17 @@ function renderSeguimientoEnVivo(data) {
 
   if (!viajeActivo) {
     els.liveTrackingCard.classList.add("hidden");
+    if (els.mapRappiBanner) els.mapRappiBanner.classList.add("hidden");
+    limpiarVehiculoTucanEnMapa();
     return;
   }
 
   els.liveTrackingCard.classList.remove("hidden");
   els.trackingPin.textContent = viajeActivo.pinSeguridad || "0000";
   const progreso = Number(viajeActivo.progresoRuta || 0);
+  const progresoVisual = viajeActivo.estado === "FINALIZADO" ? 100 : Math.max(4, progreso);
   els.trackingProgressBar.style.width = `${progreso}%`;
+  if (els.trackingProgressThumb) els.trackingProgressThumb.style.left = `${progresoVisual}%`;
   els.trackingProgressPct.textContent = `${progreso}% del tramo`;
   const etaRestante = Math.max(1, Math.round(((100 - progreso) / 100) * Math.max(2, state.routeMin)));
   els.trackingEtaLive.textContent =
@@ -1561,6 +2023,47 @@ function renderSeguimientoEnVivo(data) {
       : viajeActivo.estado === "SOLICITADO"
         ? "Buscando..."
         : `ETA ~${etaRestante} min`;
+
+  // Actualizar escenario 3D del Tucán + Banner flotante estilo Rappi
+  const modelo = obtenerModeloTucanPorEstado(viajeActivo.estado);
+  if (els.trackingModelImg && els.trackingModelImg.getAttribute("src") !== modelo.src) {
+    els.trackingModelImg.setAttribute("src", modelo.src);
+  }
+  if (els.trackingThumbImg && els.trackingThumbImg.getAttribute("src") !== modelo.src) {
+    els.trackingThumbImg.setAttribute("src", modelo.src);
+  }
+  if (els.trackingModelTag) els.trackingModelTag.textContent = modelo.tag;
+  if (els.trackingModelDesc) els.trackingModelDesc.textContent = modelo.desc;
+
+  if (els.mapRappiBanner) {
+    els.mapRappiBanner.classList.remove("hidden");
+    if (els.mapRappiModelImg && els.mapRappiModelImg.getAttribute("src") !== modelo.src) {
+      els.mapRappiModelImg.setAttribute("src", modelo.src);
+    }
+    if (els.mapRappiTitle) els.mapRappiTitle.textContent = modelo.bannerTitle;
+    if (els.mapRappiSubPrefix) els.mapRappiSubPrefix.textContent = modelo.bannerSubPrefix;
+    if (els.mapRappiEta) {
+      els.mapRappiEta.textContent =
+        viajeActivo.estado === "FINALIZADO"
+          ? "Completado"
+          : viajeActivo.estado === "SOLICITADO"
+            ? `~${state.routeMin} min`
+            : `${etaRestante} min`;
+    }
+    if (els.mapRappiProgressFill) els.mapRappiProgressFill.style.width = `${progresoVisual}%`;
+    if (els.mapRappiProgressThumb) {
+      els.mapRappiProgressThumb.style.left = `${progresoVisual}%`;
+      const thumbImg = els.mapRappiProgressThumb.querySelector("img");
+      if (thumbImg && thumbImg.getAttribute("src") !== modelo.src) {
+        thumbImg.setAttribute("src", modelo.src);
+      }
+    }
+    if (els.mapEnginePill) {
+      els.mapEnginePill.textContent = state.mapEngine === "mapbox" ? "MAPBOX 3D" : "3D LIVE";
+    }
+  }
+
+  actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante);
 
   const btns = [];
   if (els.trackingRadarStage) {
