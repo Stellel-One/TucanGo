@@ -2795,7 +2795,7 @@ function renderAll(data) {
   state.data = data;
   renderMetricasPorRol(data);
   const debeMostrarMapa = state.authUser?.rol !== "admin" || state.adminShowMap;
-  if (debeMostrarMapa && (state.map || (state.mapConfig && state.gmapsLoaded))) {
+  if (debeMostrarMapa && (state.map || (state.mapConfig && (state.gmapsLoaded || state.mapboxLoaded)))) {
     initMap(data.sectores || []);
   }
   renderSelectores(data);
