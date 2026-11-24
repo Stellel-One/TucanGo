@@ -87,7 +87,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "geolocation=(self), camera=(), microphone=()",
   "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://api.mapbox.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com https://*.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://*.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://maps.googleapis.com https://routes.googleapis.com https://*.googleapis.com https://*.gstatic.com https://cloudflareinsights.com;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://api.mapbox.com https://unpkg.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://static.cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; style-src 'self' 'unsafe-inline' https://api.mapbox.com https://unpkg.com https://fonts.googleapis.com https://*.googleapis.com; font-src 'self' data: https://fonts.gstatic.com https://*.gstatic.com https://tiles.basemaps.cartocdn.com https://*.basemaps.cartocdn.com; img-src 'self' data: blob: https:; connect-src 'self' data: blob: https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com https://router.project-osrm.org https://maps.googleapis.com https://routes.googleapis.com https://*.googleapis.com https://*.gstatic.com https://cloudflareinsights.com;"
 };
 
 // B6: Rate Limiting en memoria con backoff exponencial
@@ -862,21 +862,28 @@ export function crearServidor(
         const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN || null;
         const mapboxStyle =
           process.env.MAPBOX_STYLE_URL || "mapbox://styles/mapbox/streets-v12";
+        const maplibreStyle =
+          process.env.MAPLIBRE_STYLE_URL ||
+          "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
         const googleKey = process.env.GOOGLE_MAPS_API_KEY || null;
         const googleMapId =
           process.env.GOOGLE_MAPS_MAP_ID ||
           process.env.GOOGLE_MAPS_MAP_ID_OR_STYLE_ID ||
           "828229759a91b5f6f45066f4";
         const proveedorPreferido = (process.env.MAP_PROVIDER || "").toLowerCase();
-        const usarMapbox =
-          Boolean(mapboxToken) &&
-          (proveedorPreferido === "mapbox" || proveedorPreferido !== "google_maps");
+        const proveedorActivo =
+          mapboxToken && proveedorPreferido !== "google_maps" && proveedorPreferido !== "maplibre"
+            ? "mapbox"
+            : proveedorPreferido === "google_maps" && googleKey
+              ? "google_maps"
+              : "maplibre";
 
         sendJson(res, 200, {
-          proveedorActivo: usarMapbox ? "mapbox" : "google_maps",
+          proveedorActivo,
           mapboxConfigurado: Boolean(mapboxToken),
           mapboxAccessToken: mapboxToken,
           mapboxStyleUrl: mapboxStyle,
+          maplibreStyleUrl: maplibreStyle,
           googleMapsConfigurado: Boolean(googleKey),
           googleMapsApiKey: googleKey,
           googleMapsMapId: googleKey ? googleMapId : null,
@@ -886,7 +893,7 @@ export function crearServidor(
             llegada: "/assets/models/tucan-moto-llegada.png"
           },
           tileUrlDidi: "",
-          osrmRouteUrl: "",
+          osrmRouteUrl: "https://router.project-osrm.org/route/v1/driving",
           googleApisRequeridas: [
             "Maps JavaScript API",
             "Directions API (Routes API)",

@@ -421,6 +421,16 @@ function buscarLugarPorId(id) {
   return obtenerCatalogoLugares().find((item) => item.id === id) || null;
 }
 
+function esMotorVectorialGL() {
+  return state.mapEngine === "mapbox" || state.mapEngine === "maplibre";
+}
+
+function obtenerLibGL() {
+  if (state.mapEngine === "mapbox" && window.mapboxgl) return window.mapboxgl;
+  if (state.mapEngine === "maplibre" && window.maplibregl) return window.maplibregl;
+  return null;
+}
+
 async function cargarConfigMapa() {
   if (state.mapConfigPromise) {
     return state.mapConfigPromise;
@@ -441,15 +451,30 @@ async function cargarConfigMapa() {
         }
       }
 
+      if (cfg.proveedorActivo === "maplibre") {
+        const mlOk = await cargarScriptMapLibre();
+        if (mlOk) {
+          state.mapEngine = "maplibre";
+          state.mapboxLoaded = true;
+          state.mapConfig = cfg;
+          return;
+        }
+      }
+
       state.mapEngine = "google";
       if (cfg.googleMapsApiKey) {
         const ok = await cargarScriptGoogleMaps(cfg.googleMapsApiKey);
         state.gmapsLoaded = ok;
       } else {
-        state.gmapsLoaded = false;
-        console.warn("GOOGLE_MAPS_API_KEY no configurada en el servidor.");
+        const mlFallback = await cargarScriptMapLibre();
+        if (mlFallback) {
+          state.mapEngine = "maplibre";
+          state.mapboxLoaded = true;
+        } else {
+          state.gmapsLoaded = false;
+        }
       }
-      // Asignar mapConfig después de cargar Google Maps para evitar condiciones de carrera con SSE/renderAll
+      // Asignar mapConfig después de cargar el motor cartográfico
       state.mapConfig = cfg;
     } catch {
       state.gmapsLoaded = false;
@@ -457,6 +482,28 @@ async function cargarConfigMapa() {
     }
   })();
   return state.mapConfigPromise;
+}
+
+function cargarScriptMapLibre() {
+  if (window.maplibregl && window.maplibregl.Map) {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    if (!document.getElementById("maplibre-gl-css")) {
+      const link = document.createElement("link");
+      link.id = "maplibre-gl-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
+      document.head.appendChild(link);
+    }
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
+    script.async = true;
+    script.onload = () => resolve(Boolean(window.maplibregl && window.maplibregl.Map));
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+    setTimeout(() => resolve(Boolean(window.maplibregl && window.maplibregl.Map)), 12000);
+  });
 }
 
 function cargarScriptMapbox() {
@@ -611,19 +658,24 @@ function crearControlesNativosGoogle(gmap) {
 function initMap(sectores) {
   if (state.map) return;
   const sedesMapa = obtenerSedesActivas(sectores);
+  const glLib = obtenerLibGL();
 
-  if (
-    state.mapEngine === "mapbox" &&
-    window.mapboxgl &&
-    state.mapConfig?.mapboxAccessToken
-  ) {
+  if (esMotorVectorialGL() && glLib) {
     const container = document.getElementById("campus-map");
     if (!container) return;
 
-    window.mapboxgl.accessToken = state.mapConfig.mapboxAccessToken;
-    const mbMap = new window.mapboxgl.Map({
+    const esMapbox = state.mapEngine === "mapbox" && Boolean(state.mapConfig?.mapboxAccessToken);
+    if (esMapbox) {
+      glLib.accessToken = state.mapConfig.mapboxAccessToken;
+    }
+    const styleUrl = esMapbox
+      ? state.mapConfig.mapboxStyleUrl || "mapbox://styles/mapbox/streets-v12"
+      : state.mapConfig?.maplibreStyleUrl ||
+        "https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json";
+
+    const mbMap = new glLib.Map({
       container,
-      style: state.mapConfig.mapboxStyleUrl || "mapbox://styles/mapbox/streets-v12",
+      style: styleUrl,
       center: [FLORENCIA_CENTRO[1], FLORENCIA_CENTRO[0]],
       zoom: 15.2,
       pitch: 46,
@@ -637,9 +689,9 @@ function initMap(sectores) {
       ]
     });
 
-    mbMap.addControl(new window.mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+    mbMap.addControl(new glLib.NavigationControl({ visualizePitch: true }), "top-right");
     mbMap.addControl(
-      new window.mapboxgl.GeolocateControl({
+      new glLib.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
         showUserHeading: true
@@ -658,7 +710,7 @@ function initMap(sectores) {
     };
     mbMap.fitBoundsCompat = (coordsList, maxZoom = 16.5) => {
       if (!coordsList || coordsList.length === 0) return;
-      const bounds = new window.mapboxgl.LngLatBounds();
+      const bounds = new glLib.LngLatBounds();
       for (const c of coordsList) {
         const lat = Array.isArray(c) ? c[0] : c.latitud;
         const lng = Array.isArray(c) ? c[1] : c.longitud;
@@ -683,10 +735,10 @@ function initMap(sectores) {
         ev.stopPropagation();
         seleccionarSectorEnMapa(sec.id);
       });
-      const mk = new window.mapboxgl.Marker({ element: pinEl })
+      const mk = new glLib.Marker({ element: pinEl })
         .setLngLat([sec.longitud, sec.latitud])
         .setPopup(
-          new window.mapboxgl.Popup({ offset: 22 }).setHTML(
+          new glLib.Popup({ offset: 22 }).setHTML(
             `<div style="font-family:sans-serif;padding:2px 4px;"><strong>${esc(sec.nombre)}</strong><br/><span style="font-size:11px;color:#4B5563;">${esc(sec.barrio || "Campus Uniamazonia")}</span></div>`
           )
         )
@@ -695,7 +747,9 @@ function initMap(sectores) {
     }
 
     state.map = mbMap;
-    if (els.mapEnginePill) els.mapEnginePill.textContent = "MAPBOX 3D";
+    if (els.mapEnginePill) {
+      els.mapEnginePill.textContent = esMapbox ? "MAPBOX 3D" : "3D VECTOR";
+    }
     mbMap.on("load", () => {
       pintarRutaEnMapa(true);
       if (state.data) renderSeguimientoEnVivo(state.data);
@@ -1166,7 +1220,7 @@ function seleccionarSectorEnMapa(sectorId) {
 function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
   if (!state.map) return;
 
-  if (state.mapEngine === "mapbox" && window.mapboxgl) {
+  if (esMotorVectorialGL() && obtenerLibGL()) {
     if (!puntos || puntos.length < 2) return;
     const latLngs = puntos.map((p) => (Array.isArray(p) ? p : [p.latitud, p.longitud]));
     const coordinates = latLngs.map(([lat, lng]) => [Number(lng), Number(lat)]);
@@ -1196,6 +1250,9 @@ function dibujarPolilineaEnMapa(puntos, ajustarEncuadre = true) {
       }
       if (ajustarEncuadre && typeof state.map.fitBoundsCompat === "function") {
         state.map.fitBoundsCompat(latLngs, 16);
+      }
+      if (!state.vehicleMarker) {
+        actualizarVehiculoTucanEnMapa(null, state.routeMin || 3);
       }
     };
     if (state.map.isStyleLoaded()) aplicarCapaMapbox();
@@ -1429,13 +1486,54 @@ async function intentarMapboxDirectionsApi(origen, destino, key) {
   }
 }
 
+async function intentarOsrmRouteApi(origen, destino, key) {
+  if (googleRoutesCache.has(key)) {
+    const cached = googleRoutesCache.get(key);
+    if (state.lastRouteKey === key) aplicarMetricasRutaOficial(cached);
+    return true;
+  }
+  try {
+    const base = state.mapConfig?.osrmRouteUrl || "https://router.project-osrm.org/route/v1/driving";
+    const coords = `${origen.longitud},${origen.latitud};${destino.longitud},${destino.latitud}`;
+    const res = await fetch(`${base}/${coords}?overview=full&geometries=geojson`);
+    if (!res.ok) return false;
+    const json = await res.json();
+    const route = json?.routes?.[0];
+    const lineCoords = route?.geometry?.coordinates;
+    if (!Array.isArray(lineCoords) || lineCoords.length < 2) return false;
+
+    const polilinea = lineCoords.map(([lng, lat]) => ({ latitud: lat, longitud: lng }));
+    const distanciaKm = Number(Math.max(0.5, Number(route.distance || 1000) / 1000).toFixed(2));
+    const duracionMin = Math.max(1, Math.round(Number(route.duration || 180) / 60));
+    const payload = {
+      distanciaKm,
+      duracionMin,
+      traficoTexto: "3D Vector · Ruta vial",
+      pesado: false,
+      polilinea
+    };
+    googleRoutesCache.set(key, payload);
+    if (state.lastRouteKey === key) aplicarMetricasRutaOficial(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function intentarRutaVial(origen, destino, key) {
   if (origen.id === destino.id) return;
   if (state.mapEngine === "mapbox" && state.mapConfig?.mapboxAccessToken) {
     const ok = await intentarMapboxDirectionsApi(origen, destino, key);
     if (ok) return;
   }
-  await intentarGoogleRoutesApi(origen, destino, key);
+  if (state.mapEngine === "maplibre") {
+    const ok = await intentarOsrmRouteApi(origen, destino, key);
+    if (ok) return;
+  }
+  const gOk = await intentarGoogleRoutesApi(origen, destino, key);
+  if (!gOk) {
+    await intentarOsrmRouteApi(origen, destino, key);
+  }
 }
 
 async function actualizarRutaDesdeSectores() {
@@ -1859,7 +1957,7 @@ function construirElementoVehiculoTucan(modelo, pillText, facingWest) {
 
 function posicionarVehiculoEnMapa(lat, lng) {
   if (!state.vehicleMarker) return;
-  if (state.mapEngine === "mapbox" && typeof state.vehicleMarker.setLngLat === "function") {
+  if (esMotorVectorialGL() && typeof state.vehicleMarker.setLngLat === "function") {
     state.vehicleMarker.setLngLat([lng, lat]);
   } else if ("position" in state.vehicleMarker && typeof state.vehicleMarker.setPosition !== "function") {
     state.vehicleMarker.position = { lat, lng };
@@ -1869,21 +1967,30 @@ function posicionarVehiculoEnMapa(lat, lng) {
 }
 
 function actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante) {
-  if (!state.map || !viajeActivo || viajeActivo.estado === "SOLICITADO") {
+  if (!state.map) {
     limpiarVehiculoTucanEnMapa();
     return;
   }
 
-  const modelo = obtenerModeloTucanPorEstado(viajeActivo.estado);
-  const progreso =
-    viajeActivo.estado === "FINALIZADO"
+  const esPreviewLibre = !viajeActivo;
+  if (viajeActivo && viajeActivo.estado === "SOLICITADO") {
+    limpiarVehiculoTucanEnMapa();
+    return;
+  }
+
+  const modelo = esPreviewLibre
+    ? obtenerModeloTucanPorEstado("ACEPTADO")
+    : obtenerModeloTucanPorEstado(viajeActivo.estado);
+  const progreso = esPreviewLibre
+    ? 18
+    : viajeActivo.estado === "FINALIZADO"
       ? 100
       : viajeActivo.estado === "ACEPTADO"
         ? Math.max(8, Math.min(35, Number(viajeActivo.progresoRuta || 12)))
         : Math.max(5, Number(viajeActivo.progresoRuta || 15));
 
   let target = interpolarPosicionEnPolilinea(state.lastPolilinea, progreso);
-  if (!target && viajeActivo.motorista?.latitud && viajeActivo.motorista?.longitud) {
+  if (!target && viajeActivo?.motorista?.latitud && viajeActivo?.motorista?.longitud) {
     target = {
       lat: Number(viajeActivo.motorista.latitud),
       lng: Number(viajeActivo.motorista.longitud),
@@ -1896,18 +2003,20 @@ function actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante) {
 
   const facingWest = target.bearing > 180 && target.bearing < 360;
   state.vehicleFacingWest = facingWest;
-  const pillText =
-    viajeActivo.estado === "FINALIZADO"
+  const pillText = esPreviewLibre
+    ? `Tucán cerca · ${Math.max(1, etaRestante || state.routeMin || 3)} min`
+    : viajeActivo.estado === "FINALIZADO"
       ? "¡En destino!"
       : viajeActivo.estado === "ACEPTADO"
         ? `Tu Tucán · ${etaRestante} min`
         : `En curso · ${etaRestante} min`;
 
+  const glLib = obtenerLibGL();
   if (!state.vehicleMarker) {
     const el = construirElementoVehiculoTucan(modelo, pillText, facingWest);
     state.vehicleMarkerEl = el;
-    if (state.mapEngine === "mapbox" && window.mapboxgl) {
-      state.vehicleMarker = new window.mapboxgl.Marker({ element: el, anchor: "bottom" })
+    if (esMotorVectorialGL() && glLib) {
+      state.vehicleMarker = new glLib.Marker({ element: el, anchor: "bottom" })
         .setLngLat([target.lng, target.lat])
         .addTo(state.map);
     } else if (window.google?.maps) {
@@ -2005,7 +2114,7 @@ function renderSeguimientoEnVivo(data) {
   if (!viajeActivo) {
     els.liveTrackingCard.classList.add("hidden");
     if (els.mapRappiBanner) els.mapRappiBanner.classList.add("hidden");
-    limpiarVehiculoTucanEnMapa();
+    actualizarVehiculoTucanEnMapa(null, state.routeMin || 3);
     return;
   }
 

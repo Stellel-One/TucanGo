@@ -248,7 +248,13 @@ describe("TucanGo Beta v1 - API HTTP y Telemetría en Tiempo Real (SSE)", () => 
       const resConfig = await fetch(`${baseUrl}/api/mapa/config`);
       assert.equal(resConfig.status, 200);
       const cfg = (await resConfig.json()) as any;
-      assert.equal(cfg.proveedorActivo, "google_maps");
+      assert.equal(
+        ["mapbox", "maplibre", "google_maps"].includes(cfg.proveedorActivo),
+        true
+      );
+      assert.equal(cfg.modelosVehiculo?.llegando, "/assets/models/tucan-moto-llegando.png");
+      assert.equal(cfg.modelosVehiculo?.enCurso, "/assets/models/tucan-moto-estudiante.png");
+      assert.equal(cfg.modelosVehiculo?.llegada, "/assets/models/tucan-moto-llegada.png");
       assert.equal(cfg.tileUrlDidi, "");
       assert.equal(Array.isArray(cfg.googleApisRequeridas), true);
       if (process.env.GOOGLE_MAPS_API_KEY) {
