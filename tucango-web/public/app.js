@@ -1847,28 +1847,28 @@ function renderMetricasPorRol(data) {
 
 const TUCAN_MODELS = {
   SOLICITADO: {
-    src: "/assets/models/tucan-moto-llegando.png",
+    src: "/assets/models/tucan-moto-llegando.png?v=2",
     tag: "BUSCANDO TUCÁN",
     desc: "Conectando con Tucanes verificados con SOAT vigente cerca de ti.",
     bannerTitle: "Buscando tu Tucán...",
     bannerSubPrefix: "Tiempo estimado:"
   },
   ACEPTADO: {
-    src: "/assets/models/tucan-moto-llegando.png",
+    src: "/assets/models/tucan-moto-llegando.png?v=2",
     tag: "TUCÁN EN CAMINO",
     desc: "Tu Tucán conduce hacia tu punto de recogida. Ten listo tu PIN.",
     bannerTitle: "Tu Tucán está llegando",
     bannerSubPrefix: "Tu Tucán llega en:"
   },
   EN_CURSO: {
-    src: "/assets/models/tucan-moto-estudiante.png",
+    src: "/assets/models/tucan-moto-estudiante.png?v=2",
     tag: "VIAJE CON ESTUDIANTE",
     desc: "Viajando seguro con tu Tucán hacia tu destino universitario.",
     bannerTitle: "Viajando con tu Tucán",
     bannerSubPrefix: "Llegas a tu destino en:"
   },
   FINALIZADO: {
-    src: "/assets/models/tucan-moto-llegada.png",
+    src: "/assets/models/tucan-moto-llegada.png?v=2",
     tag: "LLEGADA SEGURA",
     desc: "¡Llegaste a tu destino! Confirma tu llegada segura en portería.",
     bannerTitle: "¡Llegaste con tu Tucán!",
@@ -1982,7 +1982,7 @@ function actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante) {
     ? obtenerModeloTucanPorEstado("ACEPTADO")
     : obtenerModeloTucanPorEstado(viajeActivo.estado);
   const progreso = esPreviewLibre
-    ? 18
+    ? 42
     : viajeActivo.estado === "FINALIZADO"
       ? 100
       : viajeActivo.estado === "ACEPTADO"

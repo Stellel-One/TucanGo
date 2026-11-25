@@ -1787,6 +1787,7 @@ export function crearServidor(
 
     res.writeHead(404, {
       "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
       ...SECURITY_HEADERS
     });
     res.end("Ruta no encontrada");
