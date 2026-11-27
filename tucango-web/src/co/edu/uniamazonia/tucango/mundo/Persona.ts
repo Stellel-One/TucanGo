@@ -11,6 +11,7 @@ export abstract class Persona {
   private _debeCambiarPassword: boolean;
   private _contactoEmergencia: string;
   private _sedeFavorita: string;
+  private _fotoPerfilUrl: string = "";
 
   constructor(
     identificacion: string,
@@ -121,6 +122,28 @@ export abstract class Persona {
     this._sedeFavorita = (valor || "PORVENIR").trim() || "PORVENIR";
   }
 
+  public get fotoPerfilUrl(): string {
+    return this._fotoPerfilUrl;
+  }
+
+  public set fotoPerfilUrl(valor: string) {
+    const limpio = (valor || "").trim();
+    if (!limpio) {
+      this._fotoPerfilUrl = "";
+      return;
+    }
+    if (limpio.length > 260_000) {
+      throw new ValidacionError("La foto de perfil supera el tamaño máximo permitido (200 KB).");
+    }
+    const esValida = /^(data:image\/(png|jpeg|jpg|webp);base64,|https?:\/\/|\/assets\/)/i.test(
+      limpio
+    );
+    if (!esValida) {
+      throw new ValidacionError("Formato de foto de perfil inválido. Usa PNG, JPG o WEBP.");
+    }
+    this._fotoPerfilUrl = limpio;
+  }
+
   public actualizarDatosBasicos(
     nombre: string,
     telefono: string,
@@ -186,6 +209,7 @@ export abstract class Persona {
     telefono: string;
     usuario: string;
     detalle: string;
+    fotoPerfilUrl: string;
     debeCambiarPassword: boolean;
   } {
     return {
@@ -196,6 +220,7 @@ export abstract class Persona {
       telefono: this._telefono,
       usuario: this._usuario,
       detalle: this.construirDetalle(),
+      fotoPerfilUrl: this._fotoPerfilUrl,
       debeCambiarPassword: this._debeCambiarPassword
     };
   }

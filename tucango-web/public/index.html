@@ -13,7 +13,7 @@
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Open+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="/styles.css?v=5.6" />
+  <link rel="stylesheet" href="/styles.css?v=5.7" />
 </head>
 <body>
   <header class="topbar">
@@ -319,21 +319,29 @@
             </div>
           </div>
 
-          <!-- Resumen limpio de ruta en moto + estado GPS en vivo (sin superposiciones) -->
+          <!-- Resumen limpio y compacto de ruta en moto / monitoreo territorial -->
           <div class="map-floating-bottom">
-            <div class="map-route-pill-box" id="map-route-summary">
-              <div class="route-pill">
-                <span class="route-dot"></span>
-                <strong id="overlay-dist">-- km</strong>
-                <span class="route-sep">·</span>
-                <span id="overlay-eta">-- min en moto</span>
-                <span class="route-sep" id="overlay-traffic-sep">·</span>
+            <div class="map-route-pill-box route-hud-v2" id="map-route-summary">
+              <div class="route-hud-metrics">
+                <div class="route-hud-stat">
+                  <span class="route-dot" aria-hidden="true"></span>
+                  <strong id="overlay-dist" class="route-hud-val">-- km</strong>
+                </div>
+                <span class="route-hud-divider" aria-hidden="true"></span>
+                <div class="route-hud-stat">
+                  <strong id="overlay-eta" class="route-hud-eta">-- min</strong>
+                </div>
+                <span id="overlay-traffic-sep" class="hidden"></span>
                 <span id="overlay-traffic-badge" class="route-traffic-chip">Ruta vial</span>
               </div>
-              <p class="route-sub" id="overlay-corridor">Sede Porvenir &rarr; Sede Centro / IDEMA</p>
-              <p class="route-gps-line" id="map-coords-readout">
-                Activa el GPS para detectar movimiento y calcular distancia hacia las sedes
-              </p>
+              <div class="route-hud-footer">
+                <p class="route-sub" id="overlay-corridor">Sede Porvenir &rarr; Sede Centro / IDEMA</p>
+                <div class="route-gps-row">
+                  <span class="route-gps-dot" aria-hidden="true"></span>
+                  <span class="route-gps-line" id="map-coords-readout">GPS inactivo</span>
+                  <button type="button" id="btn-hud-activar-gps" class="btn-hud-gps">Activar GPS</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -356,6 +364,10 @@
 
             <!-- NAVEGACIÓN MODULAR DE PESTAÑAS -->
             <div class="sheet-tabs-bar" role="tablist">
+              <button type="button" class="sheet-tab-btn hidden" data-tab="monitoreo" id="tab-monitoreo-desktop" role="tab">
+                <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-location"/></svg>
+                <span>Monitoreo</span>
+              </button>
               <button type="button" class="sheet-tab-btn active" data-tab="viajar" id="tab-viajar-desktop" role="tab">
                 <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-search"/></svg>
                 <span>Pedir Tucán</span>
@@ -364,15 +376,70 @@
                 <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#tg-moto"/></svg>
                 <span>Radar Tucán</span>
               </button>
-              <button type="button" class="sheet-tab-btn" data-tab="actividad" role="tab">
+              <button type="button" class="sheet-tab-btn" data-tab="actividad" id="tab-actividad-desktop" role="tab">
                 <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-activity"/></svg>
                 <span>Actividad</span>
               </button>
-              <button type="button" class="sheet-tab-btn" data-tab="perfil" role="tab">
+              <button type="button" class="sheet-tab-btn" data-tab="perfil" id="tab-perfil-desktop" role="tab">
                 <svg class="tg-icon tg-icon-sm" aria-hidden="true"><use href="/assets/icons/iconly-sprite.svg#iconly-profile"/></svg>
                 <span>Perfil</span>
               </button>
             </div>
+
+            <!-- VISTA EXCLUSIVA ADMIN: MONITOREO TERRITORIAL EN MAPA (SIN PEDIR TUCÁN NI ACTIVIDAD) -->
+            <section id="panel-admin-monitoreo" class="ops-stack hidden" aria-label="Monitoreo Territorial Uniamazonia">
+              <div class="admin-monitor-head">
+                <div>
+                  <span class="chip-mono chip-verified">MODO MONITOREO · LEY 1581</span>
+                  <h2 class="admin-monitor-title">Observatorio en Vivo</h2>
+                  <p class="muted-sub">Supervisión de cobertura por barrios, sedes campus y flota Tucán activa.</p>
+                </div>
+                <button type="button" id="btn-admin-volver-panel" class="btn-secondary btn-sm">
+                  &larr; Panel
+                </button>
+              </div>
+
+              <div class="admin-monitor-kpis">
+                <div class="monitor-kpi-tile">
+                  <span>Tucanes Activos</span>
+                  <strong class="mono-text text-canopy" id="monitor-kpi-tucanes">0</strong>
+                </div>
+                <div class="monitor-kpi-tile">
+                  <span>Viajes en Curso</span>
+                  <strong class="mono-text" id="monitor-kpi-viajes">0</strong>
+                </div>
+                <div class="monitor-kpi-tile">
+                  <span>Zonas Mapeadas</span>
+                  <strong class="mono-text" id="monitor-kpi-zonas">0</strong>
+                </div>
+              </div>
+
+              <div class="admin-monitor-card">
+                <span class="saved-places-title">Enfoque Rápido en Mapa 3D</span>
+                <div class="didi-shortcuts-row" style="margin-top: 8px;">
+                  <button type="button" class="shortcut-pill" data-admin-focus="PORVENIR">🎓 Sede Porvenir</button>
+                  <button type="button" class="shortcut-pill" data-admin-focus="CENTRO">🏛️ Sede Centro</button>
+                  <button type="button" class="shortcut-pill" data-admin-focus="ALL">🗺️ Toda Florencia</button>
+                </div>
+              </div>
+
+              <div class="admin-monitor-card">
+                <div class="card-header-compact">
+                  <h3>Zonas y Barrios Recurrentes</h3>
+                  <span class="chip-mono chip-neutral" id="monitor-zonas-count">0 zonas</span>
+                </div>
+                <p class="muted-sub">Toca una zona para enfocar la cámara 3D sobre el sector (datos anonimizados).</p>
+                <div id="admin-monitor-hotspots" class="admin-monitor-list"></div>
+              </div>
+
+              <div class="admin-monitor-card">
+                <div class="card-header-compact">
+                  <h3>Operación de Flota en Vivo</h3>
+                  <span class="chip-mono chip-verified" id="monitor-flota-count">0 activos</span>
+                </div>
+                <div id="admin-monitor-flota" class="admin-monitor-list"></div>
+              </div>
+            </section>
 
             <!-- VISTA PASAJERO (ESTUDIANTE UNIAMAZONIA) -->
             <section id="panel-pasajero" class="ops-stack">
@@ -712,14 +779,36 @@
                 </div>
                 <div class="profile-card-body">
                   <div class="profile-avatar-row">
-                    <div class="profile-avatar-circle" id="perfil-card-avatar">TG</div>
-                    <img
-                      src="/assets/brand/tucango-moto-logo.svg"
-                      alt="Sello TucanGo"
-                      class="profile-mini-seal"
-                      width="36"
-                      height="36"
-                    />
+                    <div class="profile-avatar-uploader">
+                      <div class="profile-avatar-circle" id="perfil-card-avatar">TG</div>
+                      <button
+                        type="button"
+                        id="btn-cambiar-foto-perfil"
+                        class="btn-avatar-camera"
+                        title="Subir o cambiar foto de perfil"
+                        aria-label="Cambiar foto de perfil"
+                      >
+                        📷
+                      </button>
+                      <input
+                        type="file"
+                        id="input-foto-perfil"
+                        accept="image/png,image/jpeg,image/webp"
+                        class="hidden"
+                      />
+                    </div>
+                    <div class="profile-avatar-actions">
+                      <button type="button" id="btn-quitar-foto-perfil" class="btn-link-subtle hidden">
+                        Quitar foto
+                      </button>
+                      <img
+                        src="/assets/brand/tucango-moto-logo.svg"
+                        alt="Sello TucanGo"
+                        class="profile-mini-seal"
+                        width="36"
+                        height="36"
+                      />
+                    </div>
                   </div>
                   <div class="profile-identity-meta">
                     <span class="profile-role-badge mono-text" id="perfil-card-rol">PASAJERO</span>
@@ -1037,6 +1126,6 @@
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
   <script src="/vendor/chartjs/chart.umd.min.js?v=4.4.8"></script>
-  <script src="/app.js?v=6.2"></script>
+  <script src="/app.js?v=6.3"></script>
 </body>
 </html>

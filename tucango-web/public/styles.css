@@ -3752,3 +3752,289 @@ button:disabled {
   0%, 100% { transform: scale(1); opacity: 0.9; }
   50% { transform: scale(0.88); opacity: 0.65; }
 }
+
+
+/* ==================== ROUTE HUD V2 (COMPACT GLASS TELEMETRY) ==================== */
+.map-route-pill-box.route-hud-v2 {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(15, 107, 54, 0.14);
+  border-radius: 16px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 28px rgba(11, 31, 20, 0.14);
+  max-width: 380px;
+}
+
+.route-hud-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.route-hud-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.route-hud-val {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.route-hud-eta {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.route-hud-divider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+
+.route-hud-footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.route-hud-v2 .route-sub {
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-gps-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.route-gps-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94A3B8;
+  flex-shrink: 0;
+}
+
+.route-gps-row.active .route-gps-dot {
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.route-hud-v2 .route-gps-line {
+  margin: 0;
+  font-family: "Open Sans", sans-serif;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748B;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-hud-gps {
+  border: 1px solid rgba(5, 150, 105, 0.28);
+  background: #ECFDF5;
+  color: #047857;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.btn-hud-gps:hover {
+  background: #D1FAE5;
+  transform: translateY(-1px);
+}
+
+/* ==================== ADMIN MONITORING DOCK ==================== */
+.admin-monitor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-monitor-title {
+  margin: 6px 0 2px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.admin-monitor-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.monitor-kpi-tile {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.monitor-kpi-tile span {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.monitor-kpi-tile strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.admin-monitor-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.admin-monitor-card h3 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.admin-monitor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.monitor-item-btn {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.monitor-item-btn:hover {
+  border-color: #059669;
+  background: #F0FDF4;
+}
+
+.monitor-item-btn strong {
+  display: block;
+  font-size: 12.5px;
+  color: #0F172A;
+}
+
+.monitor-item-btn small {
+  font-size: 11px;
+  color: #64748B;
+}
+
+/* ==================== PROFILE PHOTO UPLOADER ==================== */
+.profile-avatar-uploader {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.profile-avatar-circle {
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar-circle img,
+.session-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.session-avatar {
+  overflow: hidden;
+}
+
+.btn-avatar-camera {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #FFFFFF;
+  background: #059669;
+  color: #FFFFFF;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.35);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.btn-avatar-camera:hover {
+  background: #047857;
+  transform: scale(1.08);
+}
+
+.profile-avatar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-link-subtle {
+  border: 0;
+  background: transparent;
+  color: #DC2626;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.btn-link-subtle:hover {
+  background: #FEF2F2;
+}

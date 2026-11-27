@@ -11,6 +11,7 @@ export interface AdministradorSnapshot {
   debeCambiarPassword?: boolean;
   contactoEmergencia?: string;
   sedeFavorita?: string;
+  fotoPerfilUrl?: string;
 }
 
 export interface EstudianteSnapshot {
@@ -25,6 +26,7 @@ export interface EstudianteSnapshot {
   debeCambiarPassword?: boolean;
   contactoEmergencia?: string;
   sedeFavorita?: string;
+  fotoPerfilUrl?: string;
   barrioResidencia?: string;
   ubicacionesFrecuentes?: UbicacionFrecuente[];
 }
@@ -64,6 +66,7 @@ export interface MotoristaSnapshot {
   correoBienvenidaEnviado?: boolean;
   contactoEmergencia?: string;
   sedeFavorita?: string;
+  fotoPerfilUrl?: string;
   motos: MotoSnapshot[];
 }
 

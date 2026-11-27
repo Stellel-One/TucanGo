@@ -1208,7 +1208,7 @@ export function crearServidor(
             targetRol?: string;
             targetId?: string;
           }
-        >(req);
+        >(req, 320 * 1024);
 
         let rolEfectivo: "pasajero" | "motorista" | "admin" = sesion.rol;
         let idEfectivo = sesion.identificacion;

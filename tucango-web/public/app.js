@@ -83,6 +83,24 @@ const els = {
   adminTablaTucanes: document.getElementById("admin-tabla-tucanes"),
   panelPasajero: document.getElementById("panel-pasajero"),
   panelMotorista: document.getElementById("panel-motorista"),
+  panelAdminMonitoreo: document.getElementById("panel-admin-monitoreo"),
+  tabMonitoreoDesktop: document.getElementById("tab-monitoreo-desktop"),
+  tabViajarDesktop: document.getElementById("tab-viajar-desktop"),
+  tabMotoristaDesktop: document.getElementById("tab-motorista-desktop"),
+  tabActividadDesktop: document.getElementById("tab-actividad-desktop"),
+  tabPerfilDesktop: document.getElementById("tab-perfil-desktop"),
+  btnAdminVolverPanel: document.getElementById("btn-admin-volver-panel"),
+  monitorKpiTucanes: document.getElementById("monitor-kpi-tucanes"),
+  monitorKpiViajes: document.getElementById("monitor-kpi-viajes"),
+  monitorKpiZonas: document.getElementById("monitor-kpi-zonas"),
+  monitorZonasCount: document.getElementById("monitor-zonas-count"),
+  monitorFlotaCount: document.getElementById("monitor-flota-count"),
+  adminMonitorHotspots: document.getElementById("admin-monitor-hotspots"),
+  adminMonitorFlota: document.getElementById("admin-monitor-flota"),
+  btnHudActivarGps: document.getElementById("btn-hud-activar-gps"),
+  btnCambiarFotoPerfil: document.getElementById("btn-cambiar-foto-perfil"),
+  btnQuitarFotoPerfil: document.getElementById("btn-quitar-foto-perfil"),
+  inputFotoPerfil: document.getElementById("input-foto-perfil"),
   selectEstudiante: document.getElementById("select-estudiante"),
   selectMotorista: document.getElementById("select-motorista"),
   selectOrigen: document.getElementById("select-origen"),
@@ -291,18 +309,35 @@ async function postJson(url, payload) {
   return data;
 }
 
+function pintarAvatarElemento(el, nombre, fotoUrl) {
+  if (!el) return;
+  const url = (fotoUrl || "").trim();
+  if (url) {
+    el.innerHTML = `<img src="${esc(url)}" alt="${esc(nombre || "Perfil")}" />`;
+  } else {
+    el.textContent = iniciales(nombre);
+  }
+}
+
 function actualizarBannerSesion() {
   if (!state.authUser) return;
   const nombre = state.authUser.nombre || "TucanGo";
   els.sessionUserName.textContent =
     state.authUser.rol === "motorista" ? `${nombre.split(" ")[0]} · Tucán` : nombre;
-  els.sessionAvatarInitials.textContent = iniciales(nombre);
+  pintarAvatarElemento(
+    els.sessionAvatarInitials,
+    nombre,
+    state.authUser.fotoPerfilUrl || state.perfilActual?.fotoPerfilUrl || ""
+  );
 }
 
 function aplicarLayoutPorRol() {
   const esAdmin = state.authUser?.rol === "admin";
   if (els.btnAdminToggleMap) {
     els.btnAdminToggleMap.classList.toggle("hidden", !esAdmin);
+  }
+  if (els.btnHudActivarGps) {
+    els.btnHudActivarGps.classList.toggle("hidden", esAdmin || Boolean(state.realGps));
   }
 
   if (esAdmin && !state.adminShowMap) {
@@ -313,6 +348,9 @@ function aplicarLayoutPorRol() {
     els.adminDashboardView?.classList.add("hidden");
     els.didiStage?.classList.remove("hidden");
     if (els.btnAdminToggleMapLabel) els.btnAdminToggleMapLabel.textContent = "Volver al Panel";
+    if (esAdmin && state.currentTab !== "monitoreo" && state.currentTab !== "perfil") {
+      switchTab("monitoreo");
+    }
     if (state.map) {
       setTimeout(() => state.map.invalidateSize(), 200);
     }
@@ -320,18 +358,23 @@ function aplicarLayoutPorRol() {
 }
 
 function switchTab(tabName) {
-  state.currentTab = tabName;
+  const esAdmin = state.authUser?.rol === "admin";
+  const tabEfectivo =
+    esAdmin && tabName !== "monitoreo" && tabName !== "perfil" ? "monitoreo" : tabName;
+  state.currentTab = tabEfectivo;
 
   document.querySelectorAll("[data-tab], [data-mobile-tab]").forEach((btn) => {
     const t = btn.dataset.tab || btn.dataset.mobileTab;
-    btn.classList.toggle("active", t === tabName);
+    btn.classList.toggle("active", t === tabEfectivo);
   });
 
-  const esMotorista = tabName === "motorista";
-  const esActividad = tabName === "actividad";
-  const esPerfil = tabName === "perfil";
-  const esViajar = tabName === "viajar" || tabName === "tracking";
+  const esMonitoreo = tabEfectivo === "monitoreo";
+  const esMotorista = tabEfectivo === "motorista";
+  const esActividad = tabEfectivo === "actividad";
+  const esPerfil = tabEfectivo === "perfil";
+  const esViajar = tabEfectivo === "viajar" || tabEfectivo === "tracking";
 
+  els.panelAdminMonitoreo?.classList.toggle("hidden", !esMonitoreo);
   els.panelPasajero?.classList.toggle("hidden", !esViajar);
   els.panelMotorista?.classList.toggle("hidden", !esMotorista);
   els.sectionActividad?.classList.toggle("hidden", !esActividad);
@@ -340,8 +383,11 @@ function switchTab(tabName) {
   if (esPerfil) {
     cargarPerfilUsuario();
   }
+  if (esMonitoreo && state.data) {
+    renderPanelMonitoreoAdmin(state.data);
+  }
 
-  if (tabName === "tracking" && els.liveTrackingCard && !els.liveTrackingCard.classList.contains("hidden")) {
+  if (tabEfectivo === "tracking" && els.liveTrackingCard && !els.liveTrackingCard.classList.contains("hidden")) {
     els.liveTrackingCard.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -352,7 +398,7 @@ function switchTab(tabName) {
 
 function setRole(role) {
   const esAdmin = state.authUser?.rol === "admin";
-  const rolFinal = esAdmin ? role || "pasajero" : state.authUser?.rol || role;
+  const rolFinal = esAdmin ? "admin" : state.authUser?.rol || role;
   state.role = rolFinal;
   const esPasajero = rolFinal === "pasajero";
 
@@ -361,10 +407,13 @@ function setRole(role) {
     els.roleLockedBadge.classList.toggle("is-driver", !esPasajero && !esAdmin);
   }
 
-  const tabMotoristaDesktop = document.getElementById("tab-motorista-desktop");
-  if (tabMotoristaDesktop) {
-    tabMotoristaDesktop.classList.toggle("hidden", esAdmin || esPasajero);
-  }
+  // En modo Admin (monitoreo): solo Monitoreo + Perfil; jamás Pedir Tucán ni Actividad
+  els.tabMonitoreoDesktop?.classList.toggle("hidden", !esAdmin);
+  els.tabViajarDesktop?.classList.toggle("hidden", esAdmin || !esPasajero);
+  els.tabMotoristaDesktop?.classList.toggle("hidden", esAdmin || esPasajero);
+  els.tabActividadDesktop?.classList.toggle("hidden", esAdmin);
+  els.tabPerfilDesktop?.classList.remove("hidden");
+
   const tabMotoristaMobile = document.querySelector('[data-mobile-tab="motorista"]');
   if (tabMotoristaMobile) {
     tabMotoristaMobile.classList.toggle("hidden", esAdmin || esPasajero);
@@ -378,13 +427,102 @@ function setRole(role) {
   }
 
   els.mobileTabBtns.forEach((btn) => {
+    const t = btn.dataset.mobileTab;
     const forRole = btn.dataset.forRole;
-    btn.classList.toggle("hidden", !esAdmin && Boolean(forRole && forRole !== rolFinal));
+    if (esAdmin) {
+      btn.classList.toggle("hidden", t !== "perfil");
+    } else {
+      btn.classList.toggle("hidden", Boolean(forRole && forRole !== rolFinal));
+    }
   });
 
   aplicarLayoutPorRol();
-  switchTab(esPasajero ? "viajar" : "motorista");
+  switchTab(esAdmin ? "monitoreo" : esPasajero ? "viajar" : "motorista");
   actualizarBannerSesion();
+}
+
+function renderPanelMonitoreoAdmin(data) {
+  if (state.authUser?.rol !== "admin" || !data) return;
+  const puntos = data?.analiticaAdmin?.puntosRecurrentesMapa || [];
+  const motoristas = data?.motoristas || [];
+  const activos = motoristas.filter((m) => m.estadoAprobacion === "ACTIVO");
+  const enLinea = activos.filter((m) => m.disponible);
+  const viajesActivos = (data?.viajes || []).filter(
+    (v) => v.estado === "SOLICITADO" || v.estado === "ACEPTADO" || v.estado === "EN_CURSO"
+  );
+
+  if (els.monitorKpiTucanes) els.monitorKpiTucanes.textContent = String(enLinea.length || activos.length);
+  if (els.monitorKpiViajes) els.monitorKpiViajes.textContent = String(viajesActivos.length);
+  if (els.monitorKpiZonas) els.monitorKpiZonas.textContent = String(puntos.length);
+  if (els.monitorZonasCount) els.monitorZonasCount.textContent = `${puntos.length} zonas`;
+  if (els.monitorFlotaCount) els.monitorFlotaCount.textContent = `${enLinea.length} en línea`;
+
+  if (els.overlayDist) {
+    els.overlayDist.textContent = `${puntos.length} ${puntos.length === 1 ? "zona" : "zonas"}`;
+  }
+  if (els.overlayEta) {
+    els.overlayEta.textContent = `${viajesActivos.length} ${viajesActivos.length === 1 ? "viaje activo" : "viajes activos"}`;
+  }
+  if (els.overlayTrafficBadge) {
+    els.overlayTrafficBadge.textContent = "Ley 1581 · Anonimizado";
+    els.overlayTrafficBadge.classList.remove("heavy");
+  }
+  if (els.overlayCorridor) {
+    els.overlayCorridor.textContent = "Observatorio Territorial Uniamazonia · Florencia";
+  }
+  if (els.coordsReadout) {
+    els.coordsReadout.textContent = `${enLinea.length} Tucanes en línea · ${activos.length} verificados`;
+  }
+
+  if (els.adminMonitorHotspots) {
+    if (puntos.length === 0) {
+      els.adminMonitorHotspots.innerHTML =
+        '<p class="muted-sub" style="margin:4px 0;">Aún no hay barrios recurrentes registrados; mostrando sedes Uniamazonia.</p>';
+    } else {
+      els.adminMonitorHotspots.innerHTML = puntos
+        .map(
+          (p) => `
+          <button type="button" class="monitor-item-btn" data-fly-lat="${Number(p.latitud)}" data-fly-lng="${Number(p.longitud)}">
+            <div>
+              <strong>📍 ${esc(p.barrio || p.etiqueta)}</strong>
+              <small>${esc(p.etiqueta)} · ${Number(p.registros || 0)} reg. · ${Number(p.viajes || 0)} viajes</small>
+            </div>
+            <span class="chip-mono chip-neutral">Enfocar</span>
+          </button>`
+        )
+        .join("");
+    }
+  }
+
+  if (els.adminMonitorFlota) {
+    if (viajesActivos.length === 0 && activos.length === 0) {
+      els.adminMonitorFlota.innerHTML =
+        '<p class="muted-sub" style="margin:4px 0;">Sin viajes activos ni Tucanes en ruta en este momento.</p>';
+    } else {
+      const items = [];
+      for (const v of viajesActivos.slice(0, 6)) {
+        items.push(`
+          <div class="monitor-item-btn" style="cursor:default;">
+            <div>
+              <strong>🛵 ${esc(v.codigo)} · ${esc(v.origen)} → ${esc(v.destino)}</strong>
+              <small>${esc(v.motorista?.nombre || "Asignando Tucán")} · ${esc(v.estado)}</small>
+            </div>
+            <span class="chip-mono chip-verified">${esc(v.estado)}</span>
+          </div>`);
+      }
+      for (const m of enLinea.slice(0, 6)) {
+        items.push(`
+          <button type="button" class="monitor-item-btn" data-fly-lat="${Number(m.latitud || FLORENCIA_CENTRO[0])}" data-fly-lng="${Number(m.longitud || FLORENCIA_CENTRO[1])}">
+            <div>
+              <strong>✅ ${esc(m.nombre)}</strong>
+              <small>${esc(m.motoActiva?.placa || "SOAT Vigente")} · Disponible en campus</small>
+            </div>
+            <span class="chip-mono chip-verified">EN LÍNEA</span>
+          </button>`);
+      }
+      els.adminMonitorFlota.innerHTML = items.join("");
+    }
+  }
 }
 
 // --- MAPA NATIVO GOOGLE MAPS + FALLBACK RESILIENTE ---
@@ -1967,7 +2105,7 @@ function posicionarVehiculoEnMapa(lat, lng) {
 }
 
 function actualizarVehiculoTucanEnMapa(viajeActivo, etaRestante) {
-  if (!state.map) {
+  if (!state.map || state.authUser?.rol === "admin") {
     limpiarVehiculoTucanEnMapa();
     return;
   }
@@ -2798,6 +2936,9 @@ function renderAll(data) {
   if (debeMostrarMapa && (state.map || (state.mapConfig && (state.gmapsLoaded || state.mapboxLoaded)))) {
     initMap(data.sectores || []);
   }
+  if (state.authUser?.rol === "admin") {
+    renderPanelMonitoreoAdmin(data);
+  }
   renderSelectores(data);
   renderMarcadoresEnVivo(data);
   renderSeguimientoEnVivo(data);
@@ -3046,12 +3187,47 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-// --- PERFIL ---
+// --- PERFIL Y FOTO DE PERFIL ---
+function comprimirFotoPerfil(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen seleccionada."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("El archivo no es una imagen válida."));
+      img.onload = () => {
+        const size = 256;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas no disponible."));
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.84));
+      };
+      img.src = String(reader.result || "");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function pintarPerfilEnVista(perfil) {
   if (!perfil) return;
   state.perfilActual = perfil;
 
-  if (els.perfilCardAvatar) els.perfilCardAvatar.textContent = iniciales(perfil.nombre);
+  pintarAvatarElemento(els.perfilCardAvatar, perfil.nombre, perfil.fotoPerfilUrl || "");
+  if (els.btnQuitarFotoPerfil) {
+    els.btnQuitarFotoPerfil.classList.toggle("hidden", !perfil.fotoPerfilUrl);
+  }
+  if (state.authUser && perfil.identificacion === state.authUser.identificacion) {
+    state.authUser.fotoPerfilUrl = perfil.fotoPerfilUrl || "";
+    actualizarBannerSesion();
+  }
   if (els.perfilCardRol) {
     els.perfilCardRol.textContent =
       perfil.rol === "admin" ? "ADMINISTRADOR" : perfil.rol === "motorista" ? "TUCÁN VERIFICADO" : "ESTUDIANTE";
@@ -3179,6 +3355,70 @@ els.formPerfilUsuario?.addEventListener("submit", async (e) => {
     showToast(err.message, "error");
   } finally {
     if (els.btnGuardarPerfil) els.btnGuardarPerfil.disabled = false;
+  }
+});
+
+els.btnCambiarFotoPerfil?.addEventListener("click", () => {
+  els.inputFotoPerfil?.click();
+});
+
+els.inputFotoPerfil?.addEventListener("change", async (e) => {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  try {
+    const dataUrl = await comprimirFotoPerfil(file);
+    const res = await postJson("/api/auth/perfil", { fotoPerfilUrl: dataUrl });
+    if (res?.perfil) {
+      pintarPerfilEnVista(res.perfil);
+    }
+    showToast("Foto de perfil actualizada", "success");
+  } catch (err) {
+    showToast(err.message || "No se pudo subir la foto de perfil.", "error");
+  } finally {
+    e.target.value = "";
+  }
+});
+
+els.btnQuitarFotoPerfil?.addEventListener("click", async () => {
+  try {
+    const res = await postJson("/api/auth/perfil", { fotoPerfilUrl: "" });
+    if (res?.perfil) {
+      pintarPerfilEnVista(res.perfil);
+    }
+    showToast("Foto de perfil eliminada", "info");
+  } catch (err) {
+    showToast(err.message || "No se pudo eliminar la foto.", "error");
+  }
+});
+
+els.btnAdminVolverPanel?.addEventListener("click", () => {
+  state.adminShowMap = false;
+  aplicarLayoutPorRol();
+});
+
+els.btnHudActivarGps?.addEventListener("click", () => {
+  iniciarGeolocalizacionTiempoReal(true);
+});
+
+document.addEventListener("click", (ev) => {
+  const focusBtn = ev.target.closest("[data-admin-focus]");
+  if (focusBtn && state.map) {
+    const target = focusBtn.dataset.adminFocus;
+    if (target === "ALL") {
+      state.map.fitBoundsCompat?.(FLORENCIA_BOUNDS_COORDS, 14.5);
+    } else {
+      const sede = (state.data?.sectores || []).find((s) => s.id === target);
+      if (sede) state.map.setView?.([sede.latitud, sede.longitud], 16.5);
+    }
+    return;
+  }
+  const flyBtn = ev.target.closest("[data-fly-lat]");
+  if (flyBtn && state.map) {
+    const lat = Number(flyBtn.dataset.flyLat);
+    const lng = Number(flyBtn.dataset.flyLng);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      state.map.setView?.([lat, lng], 16.5);
+    }
   }
 });
 

@@ -118,6 +118,7 @@ export interface ActualizarPerfilDTO {
   cargo?: string;
   contactoEmergencia?: string;
   sedeFavorita?: string;
+  fotoPerfilUrl?: string;
 }
 
 /**
@@ -427,7 +428,8 @@ export class TucanGoFacade {
         passwordHash: a.passwordHash,
         debeCambiarPassword: a.debeCambiarPassword,
         contactoEmergencia: a.contactoEmergencia,
-        sedeFavorita: a.sedeFavorita
+        sedeFavorita: a.sedeFavorita,
+        fotoPerfilUrl: a.fotoPerfilUrl
       })),
       estudiantes: this.obtenerEstudiantes().map((e) => ({
         identificacion: e.identificacion,
@@ -441,6 +443,7 @@ export class TucanGoFacade {
         debeCambiarPassword: e.debeCambiarPassword,
         contactoEmergencia: e.contactoEmergencia,
         sedeFavorita: e.sedeFavorita,
+        fotoPerfilUrl: e.fotoPerfilUrl,
         barrioResidencia: e.barrioResidencia,
         ubicacionesFrecuentes: e.ubicacionesFrecuentes.map((u) => ({ ...u }))
       })),
@@ -469,6 +472,7 @@ export class TucanGoFacade {
         correoBienvenidaEnviado: m.correoBienvenidaEnviado,
         contactoEmergencia: m.contactoEmergencia,
         sedeFavorita: m.sedeFavorita,
+        fotoPerfilUrl: m.fotoPerfilUrl,
         motos: m.motos.map((moto) => ({
           placa: moto.placa,
           marca: moto.marca,
@@ -545,6 +549,7 @@ export class TucanGoFacade {
         );
         if (aSnap.contactoEmergencia) admin.contactoEmergencia = aSnap.contactoEmergencia;
         if (aSnap.sedeFavorita) admin.sedeFavorita = aSnap.sedeFavorita;
+        if (aSnap.fotoPerfilUrl) admin.fotoPerfilUrl = aSnap.fotoPerfilUrl;
         this._administradores.set(admin.identificacion, admin);
       }
     } else {
@@ -567,6 +572,7 @@ export class TucanGoFacade {
       );
       if (estSnap.contactoEmergencia) est.contactoEmergencia = estSnap.contactoEmergencia;
       if (estSnap.sedeFavorita) est.sedeFavorita = estSnap.sedeFavorita;
+      if (estSnap.fotoPerfilUrl) est.fotoPerfilUrl = estSnap.fotoPerfilUrl;
       if (estSnap.usuario) est.usuario = estSnap.usuario;
       this._estudiantes.set(est.identificacion, est);
     }
@@ -607,6 +613,7 @@ export class TucanGoFacade {
       );
       if (motSnap.contactoEmergencia) mot.contactoEmergencia = motSnap.contactoEmergencia;
       if (motSnap.sedeFavorita) mot.sedeFavorita = motSnap.sedeFavorita;
+      if (motSnap.fotoPerfilUrl) mot.fotoPerfilUrl = motSnap.fotoPerfilUrl;
       if (motSnap.usuario) mot.usuario = motSnap.usuario;
       for (const motoSnap of motSnap.motos) {
         const moto = new Moto(
@@ -1386,6 +1393,7 @@ export class TucanGoFacade {
         detalle: `ADMIN · ${admin.cargo}`,
         contactoEmergencia: admin.contactoEmergencia,
         sedeFavorita: admin.sedeFavorita,
+        fotoPerfilUrl: admin.fotoPerfilUrl,
         estadisticas: {
           // El admin no viaja ni recibe calificaciones: se reporta la operación
           // de la plataforma, no estadísticas personales ficticias.
@@ -1419,6 +1427,7 @@ export class TucanGoFacade {
         estadoAprobacion: mot.estadoAprobacion,
         contactoEmergencia: mot.contactoEmergencia,
         sedeFavorita: mot.sedeFavorita,
+        fotoPerfilUrl: mot.fotoPerfilUrl || mot.fotoRostroUrl || "",
         moto: moto
           ? {
               placa: moto.placa,
@@ -1462,6 +1471,7 @@ export class TucanGoFacade {
       detalle: `${est.carrera} · ${est.codigoEstudiantil}`,
       contactoEmergencia: est.contactoEmergencia,
       sedeFavorita: est.sedeFavorita,
+      fotoPerfilUrl: est.fotoPerfilUrl,
       estadisticas: {
         totalViajesUsuario: viajesEst.length,
         viajesCompletados: completados.length,
@@ -1803,6 +1813,9 @@ export class TucanGoFacade {
         contactoEmergencia: dto.contactoEmergencia,
         sedeFavorita: dto.sedeFavorita
       });
+      if (dto.fotoPerfilUrl !== undefined) {
+        admin.fotoPerfilUrl = dto.fotoPerfilUrl;
+      }
     } else if (rol === "motorista") {
       const mot = this.obtenerMotoristas().find((m) => m.identificacion.toLowerCase() === id);
       if (!mot) throw new NoAutenticadoError("Motorista no encontrado.");
@@ -1818,6 +1831,9 @@ export class TucanGoFacade {
         contactoEmergencia: dto.contactoEmergencia,
         sedeFavorita: dto.sedeFavorita
       });
+      if (dto.fotoPerfilUrl !== undefined) {
+        mot.fotoPerfilUrl = dto.fotoPerfilUrl;
+      }
     } else {
       const est = this.obtenerEstudiantes().find((e) => e.identificacion.toLowerCase() === id);
       if (!est) throw new NoAutenticadoError("Estudiante no encontrado.");
@@ -1831,6 +1847,9 @@ export class TucanGoFacade {
         contactoEmergencia: dto.contactoEmergencia,
         sedeFavorita: dto.sedeFavorita
       });
+      if (dto.fotoPerfilUrl !== undefined) {
+        est.fotoPerfilUrl = dto.fotoPerfilUrl;
+      }
     }
 
     this.persistir();
